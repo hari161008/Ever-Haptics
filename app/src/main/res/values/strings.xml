@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hapticks</string>
+
+    <string name="accessibility_service_label">Hapticks</string>
+    <string name="accessibility_service_summary">Adds haptic feedback to taps and toggles system-wide.</string>
+    <string name="accessibility_service_description">Hapticks listens for tap and switch-related accessibility events so it can trigger the device vibrator. It does not read, store, or transmit any on-screen content. You can turn it off at any time from Settings > Accessibility.</string>
+
+    <string name="home_greeting">Hello</string>
+    <string name="home_subtitle">Tune how your phone feels</string>
+
+    <string name="screen_title">Feel Every Tap</string>
+    <string name="section_pattern">Pattern</string>
+    <string name="section_pattern_subtitle">Pick the texture of each tap</string>
+
+    <string name="toggle_tap_title">Custom Tap Haptics</string>
+    <string name="toggle_tap_subtitle">Taps, switches, and toggles—uses the pattern and intensity below</string>
+
+    <string name="intensity_label">Intensity</string>
+    <string name="intensity_value">%1$d%%</string>
+    <string name="test_haptic">Test Haptic</string>
+
+    <string name="pattern_click">Click</string>
+    <string name="pattern_click_desc">Crisp, confirmed tap</string>
+    <string name="pattern_tick">Tick</string>
+    <string name="pattern_tick_desc">Subtle, low-energy pulse</string>
+    <string name="pattern_heavy_click">Heavy</string>
+    <string name="pattern_heavy_click_desc">Strong, punchy feedback</string>
+    <string name="pattern_double_click">Double</string>
+    <string name="pattern_double_click_desc">Two rapid taps in sequence</string>
+    <string name="pattern_soft_bump">Soft Bump</string>
+    <string name="pattern_soft_bump_desc">Gentle tap like hitting a soft wall</string>
+    <string name="pattern_double_tick">Double Tick</string>
+    <string name="pattern_double_tick_desc">Firm bump-bump boundary feel</string>
+    <string name="pattern_selected">Selected</string>
+    <string name="pattern_not_selected">Not selected</string>
+
+    <string name="enable_service_title">Turn on accessibility service</string>
+    <string name="enable_service_body">Hapticks needs the accessibility service to fire haptic feedback when you tap or flip switches in any app. Your content is never read or stored.</string>
+    <string name="enable_service_cta">Open Accessibility settings</string>
+    <string name="back">Back</string>
+
+    <string name="home_feel_every_tap_title">Feel Every Tap</string>
+    <string name="home_feel_every_tap_subtitle">Adds responsive touch feedback across apps and system UI for a more refined, premium feel</string>
+    <string name="home_edge_haptics_title">Edge Haptics</string>
+    <string name="home_edge_haptics_subtitle">Feel a firm pulse the instant a scroll hits the absolute top or bottom in any app.</string>
+    <string name="home_tactile_scrolling_title">Tactile Scrolling</string>
+    <string name="home_tactile_scrolling_subtitle">Adds a subtle, rhythmic click as you scroll for a more grounded, physical experience.</string>
+    <string name="home_coming_soon_title">Coming Soon</string>
+    <string name="home_coming_soon_subtitle">More haptic experiences are on the way. Stay tuned.</string>
+
+    <!-- Edge Haptics screen (accessibility scroll bounds) -->
+    <string name="edge_screen_title">Edge Haptics</string>
+    <string name="edge_info_title">Accessibility</string>
+    <string name="edge_info_body">Turn on the Hapticks accessibility service under Settings → Accessibility. Edge pulses use the pattern and intensity you choose below.</string>
+    <string name="edge_a11y_scroll_bound_title">Edge Haptics (Accessibility)</string>
+    <string name="edge_a11y_scroll_bound_subtitle">Uses the accessibility scroll-edge path to fire a pulse when you hit the top or bottom of a scrollable surface.</string>
+    <string name="edge_a11y_guide_title">How it works and limits</string>
+    <string name="edge_a11y_guide_body">Hapticks listens for accessibility scroll events and compares scroll position to the reported range. When you move onto the top or bottom edge from inside the content, it plays your chosen edge pattern once.\n\nLimits: Only vertical lists and pages that expose scrollY and maxScrollY through TYPE_VIEW_SCROLLED are supported. Horizontal carousels, many games, some WebViews, and heavily custom drawn surfaces often send no usable data, so you may feel nothing there. Pulses follow how often the app posts scroll updates, so timing can feel less tight than the LSPosed EdgeEffect path. The main Hapticks accessibility service must stay on.</string>
+    <string name="edge_lsposed_title">Advanced Edge Haptics (LSPosed)</string>
+    <string name="edge_lsposed_subtitle">Uses a more precise method to detect when you hit the edge of a scroll. Enabling this provides a cleaner feel and prevents double vibrations.</string>
+    <string name="edge_lsposed_what_title">What this does</string>
+    <string name="edge_lsposed_what_body">This switches the app to hook scroll edge effects via LSPosed (libxposed path), which tracks overscroll at the system level for a cleaner pulse and helps avoid duplicate vibrations with the accessibility scroll path. Use the steps below only when you intend to run the module in LSPosed.</string>
+    <string name="edge_lsposed_setup_title">How to set up</string>
+    <string name="edge_lsposed_setup_body">For the best results, enable this app in LSPosed Manager: 
+\n1. Open LSPosed.
+\n2. Locate this app and enable its module.
+\n3. Select all the apps you want to apply the module to in the module scope.
+\n4. Restart the affected apps or your phone to apply changes.</string>
+    <string name="edge_lsposed_status_overline">LSPosed</string>
+    <string name="edge_lsposed_status_active">Active</string>
+    <string name="edge_lsposed_status_inactive">Not active</string>
+    <string name="edge_lsposed_status_active_body">Great! The module is running smoothly. Edge haptics will work in the apps you have selected.</string>
+    <string name="edge_lsposed_status_inactive_body">To get started, turn on the Hapticks module in LSPosed Manager, set your app scope, and reboot or force-stop the selected apps. When you are done, come back to this screen.</string>
+    <string name="edge_lsposed_status_icon_active_cd">LSPosed connected, happy status icon</string>
+    <string name="edge_lsposed_status_icon_inactive_cd">LSPosed not connected, sad status icon</string>
+    <string name="edge_test_button">Test edge haptic</string>
+    <string name="edge_test_no_vibrator">Device has no vibrator</string>
+
+    <!-- Scroll haptic screen -->
+    <string name="scroll_toggle_title">Enable Tactile Scrolling</string>
+    <string name="scroll_toggle_subtitle">Use accessibility scroll events to fire a soft haptic cadence while lists and pages move</string>
+    <string name="scroll_haptic_screen_test_button">Test scroll haptic</string>
+    <string name="scroll_haptics_title">Tactile Scrolling</string>
+    <string name="scroll_events_per_unit_title">Haptic events per scroll distance</string>
+    <string name="scroll_events_per_unit_subtitle">How many pulses to play per about 100 pixels of list or page movement. Higher feels denser; lower feels more spaced out.</string>
+    <string name="scroll_events_per_unit_value">%1$s / 100 px</string>
+    <string name="scroll_intensity_title">Pulse strength</string>
+    <string name="scroll_intensity_subtitle">How strong each scroll pulse feels while you move through content.</string>
+
+    <string name="scroll_vibs_per_event_title">Vibrations per scroll</string>
+    <string name="scroll_vibs_per_event_subtitle">Fixed number of vibrations fired per scroll event. Higher values add more texture to every movement.</string>
+    <string name="scroll_vibs_per_event_value">%1$d per event</string>
+    <string name="scroll_speed_vib_scale_title">Speed-based vibrations</string>
+    <string name="scroll_speed_vib_scale_subtitle">Adds extra vibrations when scrolling faster. Higher values make fast flings feel more intense than slow drags.</string>
+    <string name="scroll_speed_vib_scale_value">%1$d%%</string>
+    <string name="scroll_tail_cutoff_title">Cut off after scroll ends</string>
+    <string name="scroll_tail_cutoff_subtitle">Suppresses trailing vibrations that continue after you stop scrolling. Increase to silence more of the fling tail.</string>
+    <string name="scroll_tail_cutoff_value_off">Off</string>
+    <string name="scroll_tail_cutoff_value_ms">%1$d ms</string>
+
+    <!-- Settings screen -->
+    <string name="settings_header_caption">Preferences</string>
+    <string name="settings_header_title">Settings</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_dynamic_color_title">Dynamic Color</string>
+    <string name="settings_theme_mode_title">Theme Mode</string>
+    <string name="settings_theme_mode_system">System</string>
+    <string name="settings_theme_mode_light">Light</string>
+    <string name="settings_theme_mode_dark">Dark</string>
+    <string name="settings_amoled_title">AMOLED mode</string>
+    <string name="settings_amoled_subtitle">Use a pure black theme, useful for AMOLED screens to reduce eye strain and save battery.</string>
+    <string name="settings_amoled_subtitle_light">Applies when the app is in dark theme</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_github_title">GitHub Repository</string>
+    <string name="settings_github_subtitle">View source code and contribute</string>
+
+</resources>
