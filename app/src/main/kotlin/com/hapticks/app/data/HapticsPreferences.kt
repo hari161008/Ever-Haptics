@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.hapticks.app.haptics.HapticPattern
 import kotlinx.coroutines.flow.Flow
@@ -79,6 +80,9 @@ class HapticsPreferences(context: Context) {
                 },
                 amoledBlack = prefs[Keys.AMOLED_BLACK] ?: HapticsSettings.Default.amoledBlack,
                 seedColor = prefs[Keys.SEED_COLOR] ?: HapticsSettings.Default.seedColor,
+                tapExcludedPackages = prefs[Keys.TAP_EXCLUDED_PACKAGES] ?: emptySet(),
+                scrollExcludedPackages = prefs[Keys.SCROLL_EXCLUDED_PACKAGES] ?: emptySet(),
+                edgeExcludedPackages = prefs[Keys.EDGE_EXCLUDED_PACKAGES] ?: emptySet(),
             )
         }
 
@@ -124,6 +128,10 @@ class HapticsPreferences(context: Context) {
 
     suspend fun setEdgeLsposedLibxposedPath(enabled: Boolean) = edit { it[Keys.EDGE_LSPOSED_LIBXPOSED_PATH] = enabled }
 
+    suspend fun setTapExcludedPackages(packages: Set<String>) = edit { it[Keys.TAP_EXCLUDED_PACKAGES] = packages }
+    suspend fun setScrollExcludedPackages(packages: Set<String>) = edit { it[Keys.SCROLL_EXCLUDED_PACKAGES] = packages }
+    suspend fun setEdgeExcludedPackages(packages: Set<String>) = edit { it[Keys.EDGE_EXCLUDED_PACKAGES] = packages }
+
     suspend fun setUseDynamicColors(enabled: Boolean) = edit { it[Keys.USE_DYNAMIC_COLORS] = enabled }
     suspend fun setThemeMode(mode: ThemeMode) = edit { it[Keys.THEME_MODE] = mode.name }
     suspend fun setAmoledBlack(enabled: Boolean) = edit { it[Keys.AMOLED_BLACK] = enabled }
@@ -152,6 +160,9 @@ class HapticsPreferences(context: Context) {
         val EDGE_INTENSITY = floatPreferencesKey("edge_intensity")
         val A11Y_SCROLL_BOUND_EDGE = booleanPreferencesKey("a11y_scroll_bound_edge")
         val EDGE_LSPOSED_LIBXPOSED_PATH = booleanPreferencesKey("edge_lsposed_libxposed_path")
+        val TAP_EXCLUDED_PACKAGES = stringSetPreferencesKey("tap_excluded_packages")
+        val SCROLL_EXCLUDED_PACKAGES = stringSetPreferencesKey("scroll_excluded_packages")
+        val EDGE_EXCLUDED_PACKAGES = stringSetPreferencesKey("edge_excluded_packages")
         val USE_DYNAMIC_COLORS = booleanPreferencesKey("use_dynamic_colors")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val AMOLED_BLACK = booleanPreferencesKey("amoled_black")

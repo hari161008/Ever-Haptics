@@ -42,59 +42,76 @@ class HapticsAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val ev = event ?: return
-        val fromOwnApp = isAccessibilityEventFromOwnApplication(ev)
-        if (fromOwnApp && ev.eventType != AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            return
-        }
-
         val type = ev.eventType
+        val pkg = ev.packageName?.toString()
 
-        if (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
-            if (current.tapEnabled && InteractableViewHaptics.hasToggleLikeContentChange(ev)) {
-                InteractableViewHaptics.handle(engine, current, ev)
-            }
-            return
-        }
+        // Ignore non-scroll events from our own app to prevent double-firing
+        // (scroll events are still processed so the Hapticks UI itself can be tested)
+        val fromOwnApp = isAccessibilityEventFromOwnApplication(ev)
+        if (fromOwnApp && type != AccessibilityEvent.TYPE_VIEW_SCROLLED) return
 
-        if (type == AccessibilityEvent.TYPE_VIEW_CLICKED) {
-            InteractableViewHaptics.handle(engine, current, ev)
-            return
-        }
-
-        if (type == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            var consumedByEdge = false
-            if (current.a11yScrollBoundEdge) {
-                if (ScrollAbsoluteEdgeVibration.onViewScrolled(ev) ==
-                    ScrollAbsoluteEdgeVibration.Result.PlayEdgeHaptic
+        when (type) {
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+                if (current.tapEnabled &&
+                    !current.tapExcludedPackages.contains(pkg) &&
+                    InteractableViewHaptics.hasToggleLikeContentChange(ev)
                 ) {
-                    engine.play(current.edgePattern, current.edgeIntensity, throttleMs = EDGE_THROTTLE_MS)
-                    consumedByEdge = true
+                    InteractableViewHaptics.handle(engine, current, ev)
                 }
             }
-            if (current.scrollEnabled && !consumedByEdge) {
-                when (val scroll = ScrollContentVibration.onViewScrolled(ev, current)) {
-                    is ScrollContentVibration.Decision.Play -> {
-                        val count = scroll.count
-                        if (count <= 1) {
-                            engine.play(
-                                current.scrollPattern,
-                                scroll.intensity,
-                                throttleMs = 0L,
-                            )
-                        } else {
-                            scope.launch {
-                                repeat(count) { i ->
-                                    if (i > 0) delay(45L)
-                                    engine.play(
-                                        current.scrollPattern,
-                                        scroll.intensity,
-                                        throttleMs = 0L,
-                                    )
+
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                if (!current.tapExcludedPackages.contains(pkg)) {
+                    InteractableViewHaptics.handle(engine, current, ev)
+                }
+            }
+
+            AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
+                var consumedByEdge = false
+
+                // Edge haptics (fires at list boundaries)
+                if (current.a11yScrollBoundEdge && !current.edgeExcludedPackages.contains(pkg)) {
+                    if (ScrollAbsoluteEdgeVibration.onViewScrolled(ev) ==
+                        ScrollAbsoluteEdgeVibration.Result.PlayEdgeHaptic
+                    ) {
+                        engine.play(
+                            current.edgePattern,
+                            current.edgeIntensity,
+                            throttleMs = EDGE_THROTTLE_MS,
+                        )
+                        consumedByEdge = true
+                    }
+                }
+
+                // Scroll content haptics
+                if (current.scrollEnabled &&
+                    !consumedByEdge &&
+                    !current.scrollExcludedPackages.contains(pkg)
+                ) {
+                    when (val scroll = ScrollContentVibration.onViewScrolled(ev, current)) {
+                        is ScrollContentVibration.Decision.Play -> {
+                            val count = scroll.count
+                            if (count <= 1) {
+                                engine.play(
+                                    current.scrollPattern,
+                                    scroll.intensity,
+                                    throttleMs = 0L,
+                                )
+                            } else {
+                                scope.launch {
+                                    repeat(count) { i ->
+                                        if (i > 0) delay(42L)
+                                        engine.play(
+                                            current.scrollPattern,
+                                            scroll.intensity,
+                                            throttleMs = 0L,
+                                        )
+                                    }
                                 }
                             }
                         }
+                        ScrollContentVibration.Decision.None -> Unit
                     }
-                    ScrollContentVibration.Decision.None -> Unit
                 }
             }
         }

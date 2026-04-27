@@ -94,6 +94,32 @@ class FeelEveryTapViewModel(
         viewModelScope.launch { preferences.setScrollTailCutoffMs(value) }
     }
 
+    fun setTapExcludedPackages(packages: Set<String>) {
+        viewModelScope.launch { preferences.setTapExcludedPackages(packages) }
+    }
+
+    fun setScrollExcludedPackages(packages: Set<String>) {
+        viewModelScope.launch { preferences.setScrollExcludedPackages(packages) }
+    }
+
+    fun resetTapDefaults() {
+        viewModelScope.launch {
+            preferences.setIntensity(HapticsSettings.Default.intensity)
+            preferences.setPattern(HapticsSettings.Default.pattern)
+        }
+    }
+
+    fun resetScrollDefaults() {
+        viewModelScope.launch {
+            preferences.setScrollHapticEventsPerHundredPx(HapticsSettings.Default.scrollHapticEventsPerHundredPx)
+            preferences.setScrollIntensity(HapticsSettings.Default.scrollIntensity)
+            preferences.setScrollVibrationsPerEvent(HapticsSettings.Default.scrollVibrationsPerEvent)
+            preferences.setScrollSpeedVibrationScale(HapticsSettings.Default.scrollSpeedVibrationScale)
+            preferences.setScrollTailCutoffMs(HapticsSettings.Default.scrollTailCutoffMs)
+            preferences.setScrollPattern(HapticsSettings.Default.scrollPattern)
+        }
+    }
+
     /** Plays the configured tap pattern (for the dedicated test control only). */
     fun testHaptic() {
         val s = settings.value

@@ -1,13 +1,17 @@
 package com.hapticks.app.ui.screens.everytap
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
+import androidx.compose.material.icons.rounded.AppBlocking
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -57,6 +61,7 @@ internal fun FeelEveryTapInteractionSection(
     settings: HapticsSettings,
     onTapEnabledChange: (Boolean) -> Unit,
     onIntensityCommit: (Float) -> Unit,
+    onOpenAppExclusions: () -> Unit,
 ) {
     SectionCard {
         HapticToggleRow(
@@ -74,6 +79,56 @@ internal fun FeelEveryTapInteractionSection(
         FeelEveryTapIntensityControl(
             intensity = settings.intensity,
             onIntensityCommit = onIntensityCommit,
+        )
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 0.5.dp,
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
+        AppExclusionRow(
+            excludedCount = settings.tapExcludedPackages.size,
+            onClick = onOpenAppExclusions,
+        )
+    }
+}
+
+@Composable
+private fun AppExclusionRow(excludedCount: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.AppBlocking,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.app_exclusions_row_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = if (excludedCount == 0) {
+                    stringResource(R.string.app_exclusions_row_subtitle_none)
+                } else {
+                    stringResource(R.string.app_exclusions_row_subtitle_some, excludedCount)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
         )
     }
 }

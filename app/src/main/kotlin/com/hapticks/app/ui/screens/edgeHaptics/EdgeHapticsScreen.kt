@@ -1,6 +1,7 @@
 package com.hapticks.app.ui.screens.edgehaptics
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +19,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.SentimentDissatisfied
 import androidx.compose.material.icons.filled.SentimentSatisfied
+import androidx.compose.material.icons.rounded.AppBlocking
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.SwipeVertical
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -35,6 +39,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -78,6 +83,8 @@ fun EdgeHapticsScreen(
     onTestEdgeHaptic: () -> Unit,
     onTestEventConsumed: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
+    onResetToDefaults: () -> Unit,
+    onOpenAppExclusions: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -156,6 +163,41 @@ fun EdgeHapticsScreen(
                     } else if (settings.a11yScrollBoundEdge) {
                         A11yScrollBoundEdgeGuideBlock()
                     }
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = 0.5.dp,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
+                    AppExclusionRow(
+                        excludedCount = settings.edgeExcludedPackages.size,
+                        onClick = onOpenAppExclusions,
+                    )
+                }
+            }
+
+            item(key = "edge_reset") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onResetToDefaults) {
+                        Icon(
+                            imageVector = Icons.Rounded.RestartAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.size(4.dp))
+                        Text(
+                            text = stringResource(R.string.reset_to_defaults),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                }
+            }
+
+            item(key = "edge_intensity_section") {
+                SectionCard {
                     IntensityControl(
                         intensity = settings.edgeIntensity,
                         onIntensityCommit = onIntensityCommit,
@@ -411,6 +453,47 @@ private fun TestEventSnackbar(
             EdgeHapticsViewModel.TestEvent.Fired -> Unit
         }
         onConsumed()
+    }
+}
+
+@Composable
+private fun AppExclusionRow(excludedCount: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.AppBlocking,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.app_exclusions_row_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = if (excludedCount == 0) {
+                    stringResource(R.string.app_exclusions_row_subtitle_none)
+                } else {
+                    stringResource(R.string.app_exclusions_row_subtitle_some, excludedCount)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
+        )
     }
 }
 

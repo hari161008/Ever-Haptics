@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.screens.scrollhaptics
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,11 +10,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
+import androidx.compose.material.icons.rounded.AppBlocking
+import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.SwipeVertical
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -26,6 +31,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -67,7 +73,9 @@ fun ScrollHapticsScreen(
     onSpeedVibScaleCommit: (Float) -> Unit,
     onTailCutoffMsCommit: (Int) -> Unit,
     onTestHaptic: () -> Unit,
+    onResetToDefaults: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
+    onOpenAppExclusions: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -125,6 +133,36 @@ fun ScrollHapticsScreen(
                         thickness = 0.5.dp,
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
+                    AppExclusionRow(
+                        excludedCount = settings.scrollExcludedPackages.size,
+                        onClick = onOpenAppExclusions,
+                    )
+                }
+            }
+
+            item(key = "scroll_sliders_reset") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onResetToDefaults) {
+                        Icon(
+                            imageVector = Icons.Rounded.RestartAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.size(4.dp))
+                        Text(
+                            text = stringResource(R.string.reset_to_defaults),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                }
+            }
+
+            item(key = "scroll_vib_count_section") {
+                SectionCard {
                     ScrollPulseDensityControl(
                         eventsPerHundredPx = settings.scrollHapticEventsPerHundredPx,
                         onCommit = onScrollHapticDensityCommit,
@@ -138,11 +176,11 @@ fun ScrollHapticsScreen(
                         intensity = settings.scrollIntensity,
                         onIntensityCommit = onIntensityCommit,
                     )
-                }
-            }
-
-            item(key = "scroll_vib_count_section") {
-                SectionCard {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = 0.5.dp,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
                     VibsPerEventControl(
                         value = settings.scrollVibrationsPerEvent,
                         onCommit = onVibrationsPerEventCommit,
@@ -189,6 +227,47 @@ fun ScrollHapticsScreen(
                 Spacer(modifier = Modifier.height(4.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun AppExclusionRow(excludedCount: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.AppBlocking,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.app_exclusions_row_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = if (excludedCount == 0) {
+                    stringResource(R.string.app_exclusions_row_subtitle_none)
+                } else {
+                    stringResource(R.string.app_exclusions_row_subtitle_some, excludedCount)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
+        )
     }
 }
 

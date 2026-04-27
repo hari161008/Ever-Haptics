@@ -99,6 +99,18 @@
     <string name="scroll_tail_cutoff_value_off">Off</string>
     <string name="scroll_tail_cutoff_value_ms">%1$d ms</string>
 
+    <!-- App Exclusions -->
+    <string name="app_exclusions_title">App Exclusions</string>
+    <string name="app_exclusions_row_title">App Exclusions</string>
+    <string name="app_exclusions_row_subtitle_none">No apps excluded</string>
+    <string name="app_exclusions_row_subtitle_some">%1$d app(s) excluded</string>
+    <string name="app_exclusions_select_all">Select All</string>
+    <string name="app_exclusions_deselect_all">Deselect All</string>
+    <string name="app_exclusions_no_apps">No apps found</string>
+
+    <!-- Reset -->
+    <string name="reset_to_defaults">Reset to defaults</string>
+
     <!-- Settings screen -->
     <string name="settings_header_caption">Preferences</string>
     <string name="settings_header_title">Settings</string>

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Hapticks
 
 Hapticks is an Android app + LSPosed module that adds haptic feedback across apps and system UI to make your phone feel more responsive and premium.
@@ -34,7 +33,3 @@ Right now, LSPosed is needed to make the edge haptics work across the whole syst
 ## Notes
 
 This is still a work in progress. The goal is to make haptics feel natural, fast, and consistent across all apps without adding lag or using too much battery.
-=======
-# Hapticks-Fork
-This app is the fork of Hapticks with some more features
->>>>>>> 6f146ed1e83374277e354d021ee6cb8638b09444

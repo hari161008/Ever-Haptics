@@ -77,6 +77,17 @@ class EdgeHapticsViewModel(
         }
     }
 
+    fun setEdgeExcludedPackages(packages: Set<String>) {
+        viewModelScope.launch { preferences.setEdgeExcludedPackages(packages) }
+    }
+
+    fun resetEdgeDefaults() {
+        viewModelScope.launch {
+            preferences.setEdgeIntensity(HapticsSettings.Default.edgeIntensity)
+            preferences.setEdgePattern(HapticsSettings.Default.edgePattern)
+        }
+    }
+
     /** Edge waveform test (dedicated test button only). */
     fun testEdgeHaptic() {
         viewModelScope.launch {

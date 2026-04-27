@@ -25,6 +25,11 @@ data class HapticsSettings(
     val a11yScrollBoundEdge: Boolean = false,
     val edgeLsposedLibxposedPath: Boolean = false,
 
+    // App Exclusion Settings
+    val tapExcludedPackages: Set<String> = emptySet(),
+    val scrollExcludedPackages: Set<String> = emptySet(),
+    val edgeExcludedPackages: Set<String> = emptySet(),
+
     // Theme Default Settings
     val useDynamicColors: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
