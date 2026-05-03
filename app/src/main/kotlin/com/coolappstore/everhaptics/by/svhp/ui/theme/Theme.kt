@@ -1,4 +1,4 @@
-package com.hapticks.app.ui.theme
+package com.coolappstore.everhaptics.by.svhp.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import com.hapticks.app.data.ThemeMode
+import com.coolappstore.everhaptics.by.svhp.data.ThemeMode
 
 private val HapticksDarkColorScheme = darkColorScheme(
     primary = HapticksSage,

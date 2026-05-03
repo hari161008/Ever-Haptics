@@ -1,4 +1,4 @@
-package com.hapticks.app.ui.screens.tapHaptics
+package com.coolappstore.everhaptics.by.svhp.ui.screens.tapHaptics
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,15 +32,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.hapticks.app.ui.haptics.SliderTickStepsDefault
-import com.hapticks.app.ui.haptics.performHapticSliderTick
-import com.hapticks.app.ui.haptics.slider01ToTickIndex
+import com.coolappstore.everhaptics.by.svhp.ui.haptics.SliderTickStepsDefault
+import com.coolappstore.everhaptics.by.svhp.ui.haptics.performHapticSliderTick
+import com.coolappstore.everhaptics.by.svhp.ui.haptics.slider01ToTickIndex
 import com.hapticks.app.R
-import com.hapticks.app.data.HapticsSettings
-import com.hapticks.app.haptics.HapticPattern
-import com.hapticks.app.ui.components.HapticToggleRow
-import com.hapticks.app.ui.components.PatternSelector
-import com.hapticks.app.ui.components.SectionCard
+import com.coolappstore.everhaptics.by.svhp.data.HapticsSettings
+import com.coolappstore.everhaptics.by.svhp.haptics.HapticPattern
+import com.coolappstore.everhaptics.by.svhp.ui.components.HapticToggleRow
+import com.coolappstore.everhaptics.by.svhp.ui.components.PatternSelector
+import com.coolappstore.everhaptics.by.svhp.ui.components.SectionCard
 import kotlin.math.roundToInt
 
 @Composable

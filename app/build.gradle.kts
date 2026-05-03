@@ -5,7 +5,7 @@ plugins {
 }
 
 fun getVersionName(): String {
-    return System.getenv("GITHUB_REF_NAME") ?: "1.0.0"
+    return System.getenv("GITHUB_REF_NAME") ?: "3.0.0"
 }
 
 fun getVersionCode(): Int {
@@ -17,7 +17,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.hapticks.app"
+        applicationId = "com.coolappstore.everhaptics.by.svhp"
         minSdk = 33
         targetSdk = 36
         versionCode = getVersionCode()

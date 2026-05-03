@@ -1,9 +1,9 @@
-package com.hapticks.app.service.accessibility.scrolled
+package com.coolappstore.everhaptics.by.svhp.service.accessibility.scrolled
 
 import android.os.Build
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
-import com.hapticks.app.data.HapticsSettings
+import com.coolappstore.everhaptics.by.svhp.data.HapticsSettings
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -144,7 +144,10 @@ internal object ScrollContentVibration {
         val currentVp = pos.toFloat() * vpScale
         val cmToPx = 157f // ~1cm at 400dpi
         val eventsPerHundredPx = (settings.scrollHapticEventsPerCm * 100f / cmToPx).coerceIn(0.1f, 20f)
-        val rate = eventsPerHundredPx
+        val rate = eventsPerHundredPx.coerceIn(
+            0.1f,
+            20f,
+        )
         val flingScale = flingCreditGainScale(smoothedV)
         val k = (rate / REFERENCE_PX) * flingScale
         val signedFromAnchor = currentVp - prev.emitAnchorVp
@@ -181,6 +184,7 @@ internal object ScrollContentVibration {
 
         if (pulses <= 0) return Decision.None
 
+        // Tail cutoff (only if enabled)
         if (settings.scrollTailCutoffEnabled) {
             val tailCutoffMs = settings.scrollTailCutoffMs.toLong()
             if (tailCutoffMs > 0L &&
@@ -192,11 +196,15 @@ internal object ScrollContentVibration {
             }
         }
 
-        val baseIntensity = if (settings.scrollIntensityEnabled) settings.scrollIntensity.coerceIn(0f, 1f) else 0.45f
+        val baseIntensity = if (settings.scrollIntensityEnabled) {
+            settings.scrollIntensity.coerceIn(0f, 1f)
+        } else { 0.45f }
         val intensityScale = slowDragIntensityScale(smoothedV)
         val pulseIntensity = (baseIntensity * intensityScale).coerceIn(0.05f, 1f)
 
-        val baseCount = if (settings.scrollVibrationsPerEventEnabled) settings.scrollVibrationsPerEvent.coerceIn(1f, 3f).roundToInt() else 1
+        val baseCount = if (settings.scrollVibrationsPerEventEnabled) {
+            settings.scrollVibrationsPerEvent.coerceIn(1f, 3f).roundToInt()
+        } else { 1 }
 
         val speedExtra = if (settings.scrollSpeedVibrationEnabled && settings.scrollSpeedVibrationScale > 0f) {
             val fraction = (smoothedV / FLING_BLEND_END_VPS).coerceIn(0f, 1f)

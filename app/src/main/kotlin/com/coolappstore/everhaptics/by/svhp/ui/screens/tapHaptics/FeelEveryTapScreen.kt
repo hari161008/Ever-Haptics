@@ -1,4 +1,4 @@
-package com.hapticks.app.ui.screens.tapHaptics
+package com.coolappstore.everhaptics.by.svhp.ui.screens.tapHaptics
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,9 +28,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hapticks.app.R
-import com.hapticks.app.data.HapticsSettings
-import com.hapticks.app.haptics.HapticPattern
-import com.hapticks.app.ui.components.HapticTestButton
+import com.coolappstore.everhaptics.by.svhp.data.HapticsSettings
+import com.coolappstore.everhaptics.by.svhp.haptics.HapticPattern
+import com.coolappstore.everhaptics.by.svhp.ui.components.HapticTestButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +81,6 @@ fun FeelEveryTapScreen(
             contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-
             item(key = "interaction_section") {
                 FeelEveryTapInteractionSection(
                     settings = settings,

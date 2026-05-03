@@ -1,4 +1,6 @@
-package com.hapticks.app
+package com.coolappstore.everhaptics.by.svhp
+
+import com.hapticks.app.R
 
 import android.content.Intent
 import android.os.Bundle
@@ -17,22 +19,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.hapticks.app.R
-import com.hapticks.app.ui.components.BottomTab
-import com.hapticks.app.ui.components.FloatingBottomBar
-import com.hapticks.app.ui.components.SlidingBottomTabHost
-import com.hapticks.app.ui.screens.AppExclusionsScreen
-import com.hapticks.app.ui.screens.HomeScreen
-import com.hapticks.app.ui.screens.SettingsScreen
-import com.hapticks.app.ui.screens.tapHaptics.FeelEveryTapScreen
-import com.hapticks.app.ui.screens.scrollhaptics.ScrollHapticsScreen
-import com.hapticks.app.ui.screens.charginghaptics.ChargingHapticsScreen
-import com.hapticks.app.ui.screens.buttonhaptics.ButtonHapticsScreen
-import com.hapticks.app.ui.screens.navhaptics.NavBarHapticsScreen
-import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
-import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
-import com.hapticks.app.ui.theme.HapticksTheme
-import com.hapticks.app.viewmodel.FeelEveryTapViewModel
+import com.coolappstore.everhaptics.by.svhp.ui.components.BottomTab
+import com.coolappstore.everhaptics.by.svhp.ui.components.FloatingBottomBar
+import com.coolappstore.everhaptics.by.svhp.ui.components.SlidingBottomTabHost
+import com.coolappstore.everhaptics.by.svhp.ui.screens.AppExclusionsScreen
+import com.coolappstore.everhaptics.by.svhp.ui.screens.tapHaptics.FeelEveryTapScreen
+import com.coolappstore.everhaptics.by.svhp.ui.screens.HomeScreen
+import com.coolappstore.everhaptics.by.svhp.ui.screens.scrollhaptics.ScrollHapticsScreen
+import com.coolappstore.everhaptics.by.svhp.ui.screens.SettingsScreen
+import com.coolappstore.everhaptics.by.svhp.ui.screens.charginghaptics.ChargingHapticsScreen
+import com.coolappstore.everhaptics.by.svhp.ui.screens.buttonhaptics.ButtonHapticsScreen
+import com.coolappstore.everhaptics.by.svhp.ui.screens.navhaptics.NavBarHapticsScreen
+import com.coolappstore.everhaptics.by.svhp.ui.screens.unlockHaptics.UnlockHapticsScreen
+import com.coolappstore.everhaptics.by.svhp.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
+import com.coolappstore.everhaptics.by.svhp.ui.theme.HapticksTheme
+import com.coolappstore.everhaptics.by.svhp.viewmodel.FeelEveryTapViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -82,7 +83,10 @@ class MainActivity : ComponentActivity() {
                             }
                             Route.HOME, Route.SETTINGS -> {
                                 val bottomTab = if (route == Route.HOME) BottomTab.HOME else BottomTab.SETTINGS
-                                SlidingBottomTabHost(selectedTab = bottomTab, modifier = Modifier.fillMaxSize()) { tab ->
+                                SlidingBottomTabHost(
+                                    selectedTab = bottomTab,
+                                    modifier = Modifier.fillMaxSize(),
+                                ) { tab ->
                                     when (tab) {
                                         BottomTab.HOME -> HomeScreen(
                                             globalEnabled = settings.globalEnabled,
@@ -111,7 +115,6 @@ class MainActivity : ComponentActivity() {
                                 ScrollHapticsScreen(
                                     settings = settings,
                                     isServiceEnabled = isServiceEnabled,
-                                    onOpenAccessibilitySettings = ::openAccessibilitySettings,
                                     onScrollEnabledChange = viewModel::setScrollEnabled,
                                     onScrollHorizontalEnabledChange = viewModel::setScrollHorizontalEnabled,
                                     onScrollHapticEventsPerCmCommit = viewModel::commitScrollHapticEventsPerCm,
@@ -199,11 +202,13 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        if (route == Route.HOME || route == Route.SETTINGS) {
+                        if ((route == Route.HOME) || (route == Route.SETTINGS)) {
                             FloatingBottomBar(
                                 selectedTab = if (route == Route.HOME) BottomTab.HOME else BottomTab.SETTINGS,
-                                onTabSelected = { tab -> route = if (tab == BottomTab.HOME) Route.HOME else Route.SETTINGS },
-                                modifier = Modifier.align(Alignment.BottomCenter),
+                                onTabSelected = { tab ->
+                                    route = if (tab == BottomTab.HOME) Route.HOME else Route.SETTINGS
+                                },
+                                modifier = Modifier.align(Alignment.BottomCenter)
                             )
                         }
                     }
@@ -221,10 +226,14 @@ class MainActivity : ComponentActivity() {
         HOME, FEEL_EVERY_TAP, TAP_APP_EXCLUSIONS,
         TACTILE_SCROLLING, SCROLL_APP_EXCLUSIONS,
         CHARGING_HAPTICS, BUTTON_HAPTICS,
-        NAVBAR_HAPTICS, UNLOCK_HAPTICS, SETTINGS
+        NAVBAR_HAPTICS, UNLOCK_HAPTICS,
+        SETTINGS
     }
 
     private fun openAccessibilitySettings() {
-        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
     }
 }

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hapticks</string>
+    <string name="app_name">Ever Haptics</string>
 
-    <string name="accessibility_service_label">Hapticks</string>
+    <string name="accessibility_service_label">Ever Haptics</string>
     <string name="accessibility_service_summary">Adds haptic feedback to taps and toggles system-wide.</string>
-    <string name="accessibility_service_description">Hapticks listens for tap and switch-related accessibility events so it can trigger the device vibrator. It does not read, store, or transmit any on-screen content. You can turn it off at any time from Settings > Accessibility.</string>
+    <string name="accessibility_service_description">Ever Haptics listens for tap and switch-related accessibility events so it can trigger the device vibrator. It does not read, store, or transmit any on-screen content. You can turn it off at any time from Settings > Accessibility.</string>
 
     <string name="home_greeting">Hello</string>
     <string name="home_subtitle">Tune how your phone feels</string>
@@ -36,7 +36,7 @@
     <string name="pattern_not_selected">Not selected</string>
 
     <string name="enable_service_title">Turn on accessibility service</string>
-    <string name="enable_service_body">Hapticks needs the accessibility service to fire haptic feedback when you tap or flip switches in any app. Your content is never read or stored.</string>
+    <string name="enable_service_body">Ever Haptics needs the accessibility service to fire haptic feedback when you tap or flip switches in any app. Your content is never read or stored.</string>
     <string name="enable_service_cta">Open Accessibility settings</string>
     <string name="back">Back</string>
 
@@ -58,7 +58,7 @@
     <string name="edge_a11y_scroll_bound_title">Edge Haptics (Accessibility)</string>
     <string name="edge_a11y_scroll_bound_subtitle">Uses the accessibility scroll-edge path to fire a pulse when you hit the top or bottom of a scrollable surface.</string>
     <string name="edge_a11y_guide_title">How it works and limits</string>
-    <string name="edge_a11y_guide_body">Hapticks listens for accessibility scroll events and compares scroll position to the reported range. When you move onto the top or bottom edge from inside the content, it plays your chosen edge pattern once.\n\nLimits: Only vertical lists and pages that expose scrollY and maxScrollY through TYPE_VIEW_SCROLLED are supported. Horizontal carousels, many games, some WebViews, and heavily custom drawn surfaces often send no usable data, so you may feel nothing there. Pulses follow how often the app posts scroll updates, so timing can feel less tight than the LSPosed EdgeEffect path. The main Hapticks accessibility service must stay on.</string>
+    <string name="edge_a11y_guide_body">Ever Haptics listens for accessibility scroll events and compares scroll position to the reported range. When you move onto the top or bottom edge from inside the content, it plays your chosen edge pattern once.\n\nLimits: Only vertical lists and pages that expose scrollY and maxScrollY through TYPE_VIEW_SCROLLED are supported. Horizontal carousels, many games, some WebViews, and heavily custom drawn surfaces often send no usable data, so you may feel nothing there. Pulses follow how often the app posts scroll updates, so timing can feel less tight than the LSPosed EdgeEffect path. The main Hapticks accessibility service must stay on.</string>
     <string name="edge_lsposed_title">Advanced Edge Haptics (LSPosed)</string>
     <string name="edge_lsposed_subtitle">Uses a more precise method to detect when you hit the edge of a scroll. Enabling this provides a cleaner feel and prevents double vibrations.</string>
     <string name="edge_lsposed_what_title">What this does</string>
@@ -151,5 +151,46 @@
     <string name="settings_section_about">About</string>
     <string name="settings_github_title">GitHub Repository</string>
     <string name="settings_github_subtitle">View source code and contribute</string>
+
+
+    <!-- Global Toggle -->
+    <string name="home_global_toggle_title">Ever Haptics</string>
+    <string name="home_global_toggle_on">All features are active</string>
+    <string name="home_global_toggle_off">All features are paused</string>
+
+    <!-- New Feature Cards -->
+    <string name="home_navbar_haptics_title">Navigation Bar Haptics</string>
+    <string name="home_navbar_haptics_subtitle">Feel a haptic when the home button is triggered on the navigation bar.</string>
+    <string name="home_unlock_haptics_title">Unlock Haptics</string>
+    <string name="home_unlock_haptics_subtitle">Feel a satisfying vibration every time you unlock your device.</string>
+
+    <!-- Scroll cm strings -->
+    <string name="scroll_events_per_cm_title">Haptic Events in Centimeters</string>
+    <string name="scroll_events_per_cm_subtitle">How many haptic pulses per centimeter scrolled. Default is 1 cm.</string>
+    <string name="scroll_events_per_cm_label">Events per cm</string>
+
+    <!-- Charging duration strings -->
+    <string name="charging_duration_title">Vibration Duration</string>
+    <string name="charging_duration_subtitle">How long the vibration lasts when charger is connected or disconnected.</string>
+    <string name="charging_duration_short">Short (2s)</string>
+    <string name="charging_duration_medium">Medium (2.5s)</string>
+    <string name="charging_duration_long">Long (3s)</string>
+
+    <!-- NavBar Haptics screen -->
+    <string name="navbar_haptics_title">Navigation Bar Haptics</string>
+    <string name="navbar_haptics_section">Home Button</string>
+    <string name="navbar_haptics_toggle_title">Navigation Bar Haptics</string>
+    <string name="navbar_haptics_toggle_subtitle">Play a haptic when the home button on the navigation bar is triggered</string>
+    <string name="navbar_haptics_test">Test Navigation Haptic</string>
+
+    <!-- Unlock Haptics screen -->
+    <string name="unlock_haptics_title">Unlock Haptics</string>
+    <string name="unlock_haptics_section">Device Unlock</string>
+    <string name="unlock_haptics_toggle_title">Unlock Haptics</string>
+    <string name="unlock_haptics_toggle_subtitle">Play a haptic when the device is unlocked</string>
+    <string name="unlock_haptics_test">Test Unlock Haptic</string>
+
+    <!-- Version -->
+    <string name="app_version">v3.0.0</string>
 
 </resources>
