@@ -30,6 +30,7 @@ import com.hapticks.app.ui.screens.charginghaptics.ChargingHapticsScreen
 import com.hapticks.app.ui.screens.buttonhaptics.ButtonHapticsScreen
 import com.hapticks.app.ui.screens.navhaptics.NavBarHapticsScreen
 import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
+import com.hapticks.app.ui.screens.notificationhaptics.NotificationHapticsScreen
 import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.theme.HapticksTheme
 import com.hapticks.app.viewmodel.FeelEveryTapViewModel
@@ -94,6 +95,7 @@ class MainActivity : ComponentActivity() {
                                             onOpenButtonHaptics = { route = Route.BUTTON_HAPTICS },
                                             onOpenNavBarHaptics = { route = Route.NAVBAR_HAPTICS },
                                             onOpenUnlockHaptics = { route = Route.UNLOCK_HAPTICS },
+                                            onOpenNotificationHaptics = { route = Route.NOTIFICATION_HAPTICS },
                                             onOpenAccessibilitySettings = ::openAccessibilitySettings,
                                         )
                                         BottomTab.SETTINGS -> SettingsScreen(
@@ -197,6 +199,40 @@ class MainActivity : ComponentActivity() {
                                     onBack = { route = Route.HOME },
                                 )
                             }
+                            Route.NOTIFICATION_HAPTICS -> {
+                                BackHandler { route = Route.HOME }
+                                NotificationHapticsScreen(
+                                    callHapticEnabled = settings.callHapticEnabled,
+                                    callPattern = settings.callHapticPattern,
+                                    callIntensity = settings.callHapticIntensity,
+                                    callCustomSequence = settings.callHapticCustomSequence,
+                                    onCallEnabledChange = viewModel::setCallHapticEnabled,
+                                    onCallPatternSelected = viewModel::setCallHapticPattern,
+                                    onCallIntensityCommit = viewModel::commitCallHapticIntensity,
+                                    onCallCustomSequenceSave = viewModel::setCallHapticCustomSequence,
+                                    onTestCallHaptic = viewModel::testCallHaptic,
+                                    notifHapticEnabled = settings.notifHapticEnabled,
+                                    notifPattern = settings.notifHapticPattern,
+                                    notifIntensity = settings.notifHapticIntensity,
+                                    notifCustomSequence = settings.notifHapticCustomSequence,
+                                    onNotifEnabledChange = viewModel::setNotifHapticEnabled,
+                                    onNotifPatternSelected = viewModel::setNotifHapticPattern,
+                                    onNotifIntensityCommit = viewModel::commitNotifHapticIntensity,
+                                    onNotifCustomSequenceSave = viewModel::setNotifHapticCustomSequence,
+                                    onTestNotifHaptic = viewModel::testNotifHaptic,
+                                    alarmHapticEnabled = settings.alarmHapticEnabled,
+                                    alarmPattern = settings.alarmHapticPattern,
+                                    alarmIntensity = settings.alarmHapticIntensity,
+                                    alarmCustomSequence = settings.alarmHapticCustomSequence,
+                                    onAlarmEnabledChange = viewModel::setAlarmHapticEnabled,
+                                    onAlarmPatternSelected = viewModel::setAlarmHapticPattern,
+                                    onAlarmIntensityCommit = viewModel::commitAlarmHapticIntensity,
+                                    onAlarmCustomSequenceSave = viewModel::setAlarmHapticCustomSequence,
+                                    onTestAlarmHaptic = viewModel::testAlarmHaptic,
+                                    onResetToDefaults = viewModel::resetNotificationHapticsDefaults,
+                                    onBack = { route = Route.HOME },
+                                )
+                            }
                         }
 
                         if (route == Route.HOME || route == Route.SETTINGS) {
@@ -221,7 +257,8 @@ class MainActivity : ComponentActivity() {
         HOME, FEEL_EVERY_TAP, TAP_APP_EXCLUSIONS,
         TACTILE_SCROLLING, SCROLL_APP_EXCLUSIONS,
         CHARGING_HAPTICS, BUTTON_HAPTICS,
-        NAVBAR_HAPTICS, UNLOCK_HAPTICS, SETTINGS
+        NAVBAR_HAPTICS, UNLOCK_HAPTICS, SETTINGS,
+        NOTIFICATION_HAPTICS
     }
 
     private fun openAccessibilitySettings() {

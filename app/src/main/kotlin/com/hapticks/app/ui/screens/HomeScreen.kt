@@ -36,6 +36,7 @@ fun HomeScreen(
     onOpenButtonHaptics: () -> Unit,
     onOpenNavBarHaptics: () -> Unit,
     onOpenUnlockHaptics: () -> Unit,
+    onOpenNotificationHaptics: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -59,6 +60,7 @@ fun HomeScreen(
                 FeatureCard(title = stringResource(R.string.home_button_haptics_title), subtitle = stringResource(R.string.home_button_haptics_subtitle), icon = Icons.Rounded.RadioButtonChecked, onClick = onOpenButtonHaptics, enabled = globalEnabled)
                 FeatureCard(title = stringResource(R.string.home_navbar_haptics_title), subtitle = stringResource(R.string.home_navbar_haptics_subtitle), icon = Icons.Rounded.Home, onClick = onOpenNavBarHaptics, enabled = globalEnabled)
                 FeatureCard(title = stringResource(R.string.home_unlock_haptics_title), subtitle = stringResource(R.string.home_unlock_haptics_subtitle), icon = Icons.Rounded.LockOpen, onClick = onOpenUnlockHaptics, enabled = globalEnabled)
+                FeatureCard(title = "Calls, Alerts & Alarms", subtitle = "Custom haptic patterns for incoming calls, notifications, and alarms", icon = Icons.Rounded.NotificationsActive, onClick = onOpenNotificationHaptics, enabled = globalEnabled)
             }
             Spacer(Modifier.height(120.dp))
         }

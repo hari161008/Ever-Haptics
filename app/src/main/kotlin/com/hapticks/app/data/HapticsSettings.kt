@@ -1,6 +1,7 @@
 package com.hapticks.app.data
 
 import androidx.compose.runtime.Immutable
+import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.haptics.HapticPattern
 
 @Immutable
@@ -52,6 +53,21 @@ data class HapticsSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val amoledBlack: Boolean = false,
     val seedColor: Int = 0xFF6750A4.toInt(),
+    // Call haptics
+    val callHapticEnabled: Boolean = false,
+    val callHapticPattern: HapticPattern = HapticPattern.HEAVY_CLICK,
+    val callHapticIntensity: Float = 1.0f,
+    val callHapticCustomSequence: CustomHapticSequence = CustomHapticSequence(),
+    // Notification haptics
+    val notifHapticEnabled: Boolean = false,
+    val notifHapticPattern: HapticPattern = HapticPattern.CLICK,
+    val notifHapticIntensity: Float = 0.7f,
+    val notifHapticCustomSequence: CustomHapticSequence = CustomHapticSequence(),
+    // Alarm haptics
+    val alarmHapticEnabled: Boolean = false,
+    val alarmHapticPattern: HapticPattern = HapticPattern.DOUBLE_CLICK,
+    val alarmHapticIntensity: Float = 1.0f,
+    val alarmHapticCustomSequence: CustomHapticSequence = CustomHapticSequence(),
 ) {
     companion object {
         const val MIN_SCROLL_EVENTS_PER_CM = 0.2f

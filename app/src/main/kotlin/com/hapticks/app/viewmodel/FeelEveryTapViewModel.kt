@@ -118,6 +118,24 @@ class FeelEveryTapViewModel(
     fun setUnlockHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setUnlockHapticPattern(pattern) } }
     fun commitUnlockHapticIntensity(intensity: Float) { viewModelScope.launch { preferences.setUnlockHapticIntensity(intensity) } }
 
+    // Call haptics
+    fun setCallHapticEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setCallHapticEnabled(enabled) } }
+    fun setCallHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setCallHapticPattern(pattern) } }
+    fun commitCallHapticIntensity(intensity: Float) { viewModelScope.launch { preferences.setCallHapticIntensity(intensity) } }
+    fun setCallHapticCustomSequence(seq: com.hapticks.app.haptics.CustomHapticSequence) { viewModelScope.launch { preferences.setCallHapticCustomSequence(seq) } }
+
+    // Notification haptics
+    fun setNotifHapticEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setNotifHapticEnabled(enabled) } }
+    fun setNotifHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setNotifHapticPattern(pattern) } }
+    fun commitNotifHapticIntensity(intensity: Float) { viewModelScope.launch { preferences.setNotifHapticIntensity(intensity) } }
+    fun setNotifHapticCustomSequence(seq: com.hapticks.app.haptics.CustomHapticSequence) { viewModelScope.launch { preferences.setNotifHapticCustomSequence(seq) } }
+
+    // Alarm haptics
+    fun setAlarmHapticEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setAlarmHapticEnabled(enabled) } }
+    fun setAlarmHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setAlarmHapticPattern(pattern) } }
+    fun commitAlarmHapticIntensity(intensity: Float) { viewModelScope.launch { preferences.setAlarmHapticIntensity(intensity) } }
+    fun setAlarmHapticCustomSequence(seq: com.hapticks.app.haptics.CustomHapticSequence) { viewModelScope.launch { preferences.setAlarmHapticCustomSequence(seq) } }
+
     fun resetButtonHapticsDefaults() {
         viewModelScope.launch {
             preferences.setVolumeHapticPattern(HapticsSettings.Default.volumeHapticPattern)
@@ -130,6 +148,23 @@ class FeelEveryTapViewModel(
             preferences.setNavBarHapticIntensity(HapticsSettings.Default.navBarHapticIntensity)
             preferences.setUnlockHapticPattern(HapticsSettings.Default.unlockHapticPattern)
             preferences.setUnlockHapticIntensity(HapticsSettings.Default.unlockHapticIntensity)
+        }
+    }
+
+    fun resetNotificationHapticsDefaults() {
+        viewModelScope.launch {
+            preferences.setCallHapticEnabled(HapticsSettings.Default.callHapticEnabled)
+            preferences.setCallHapticPattern(HapticsSettings.Default.callHapticPattern)
+            preferences.setCallHapticIntensity(HapticsSettings.Default.callHapticIntensity)
+            preferences.setCallHapticCustomSequence(HapticsSettings.Default.callHapticCustomSequence)
+            preferences.setNotifHapticEnabled(HapticsSettings.Default.notifHapticEnabled)
+            preferences.setNotifHapticPattern(HapticsSettings.Default.notifHapticPattern)
+            preferences.setNotifHapticIntensity(HapticsSettings.Default.notifHapticIntensity)
+            preferences.setNotifHapticCustomSequence(HapticsSettings.Default.notifHapticCustomSequence)
+            preferences.setAlarmHapticEnabled(HapticsSettings.Default.alarmHapticEnabled)
+            preferences.setAlarmHapticPattern(HapticsSettings.Default.alarmHapticPattern)
+            preferences.setAlarmHapticIntensity(HapticsSettings.Default.alarmHapticIntensity)
+            preferences.setAlarmHapticCustomSequence(HapticsSettings.Default.alarmHapticCustomSequence)
         }
     }
 
@@ -151,6 +186,35 @@ class FeelEveryTapViewModel(
     fun testBrightnessHaptic() { val s = settings.value; engine.play(s.brightnessHapticPattern, s.brightnessHapticIntensity) }
     fun testNavBarHaptic() { val s = settings.value; engine.play(s.navBarHapticPattern, s.navBarHapticIntensity) }
     fun testUnlockHaptic() { val s = settings.value; engine.play(s.unlockHapticPattern, s.unlockHapticIntensity) }
+
+    fun testCallHaptic() {
+        val s = settings.value
+        if (!s.callHapticCustomSequence.isEmpty) {
+            viewModelScope.launch { playCustomSequenceOnEngine(s.callHapticCustomSequence) }
+        } else { engine.play(s.callHapticPattern, s.callHapticIntensity) }
+    }
+    fun testNotifHaptic() {
+        val s = settings.value
+        if (!s.notifHapticCustomSequence.isEmpty) {
+            viewModelScope.launch { playCustomSequenceOnEngine(s.notifHapticCustomSequence) }
+        } else { engine.play(s.notifHapticPattern, s.notifHapticIntensity) }
+    }
+    fun testAlarmHaptic() {
+        val s = settings.value
+        if (!s.alarmHapticCustomSequence.isEmpty) {
+            viewModelScope.launch { playCustomSequenceOnEngine(s.alarmHapticCustomSequence) }
+        } else { engine.play(s.alarmHapticPattern, s.alarmHapticIntensity) }
+    }
+    private suspend fun playCustomSequenceOnEngine(seq: com.hapticks.app.haptics.CustomHapticSequence) {
+        val sorted = seq.beats.sortedBy { it.offsetMs }
+        val startMs = System.currentTimeMillis()
+        for (beat in sorted) {
+            val now = System.currentTimeMillis() - startMs
+            val waitMs = beat.offsetMs - now
+            if (waitMs > 0) delay(waitMs)
+            engine.playOneShot(60L, beat.amplitude)
+        }
+    }
 
     companion object {
         private fun isAccessibilityServiceEnabled(context: Context): Boolean {

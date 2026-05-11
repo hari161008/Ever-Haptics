@@ -13,6 +13,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.hapticks.app.haptics.CustomHapticSequence
+import com.hapticks.app.haptics.HapticBeat
 import com.hapticks.app.haptics.HapticPattern
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -78,6 +80,18 @@ class HapticsPreferences(context: Context) {
                 themeMode = try { ThemeMode.valueOf(prefs[Keys.THEME_MODE] ?: HapticsSettings.Default.themeMode.name) } catch (_: Exception) { ThemeMode.SYSTEM },
                 amoledBlack = prefs[Keys.AMOLED_BLACK] ?: HapticsSettings.Default.amoledBlack,
                 seedColor = prefs[Keys.SEED_COLOR] ?: HapticsSettings.Default.seedColor,
+                callHapticEnabled = prefs[Keys.CALL_HAPTIC_ENABLED] ?: HapticsSettings.Default.callHapticEnabled,
+                callHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.CALL_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.CALL_HAPTIC_PATTERN) } ?: HapticsSettings.Default.callHapticPattern,
+                callHapticIntensity = (prefs[Keys.CALL_HAPTIC_INTENSITY] ?: HapticsSettings.Default.callHapticIntensity).coerceIn(0f, 1f),
+                callHapticCustomSequence = parseCustomSequence(prefs[Keys.CALL_HAPTIC_CUSTOM_SEQUENCE]),
+                notifHapticEnabled = prefs[Keys.NOTIF_HAPTIC_ENABLED] ?: HapticsSettings.Default.notifHapticEnabled,
+                notifHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.NOTIF_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.NOTIF_HAPTIC_PATTERN) } ?: HapticsSettings.Default.notifHapticPattern,
+                notifHapticIntensity = (prefs[Keys.NOTIF_HAPTIC_INTENSITY] ?: HapticsSettings.Default.notifHapticIntensity).coerceIn(0f, 1f),
+                notifHapticCustomSequence = parseCustomSequence(prefs[Keys.NOTIF_HAPTIC_CUSTOM_SEQUENCE]),
+                alarmHapticEnabled = prefs[Keys.ALARM_HAPTIC_ENABLED] ?: HapticsSettings.Default.alarmHapticEnabled,
+                alarmHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.ALARM_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.ALARM_HAPTIC_PATTERN) } ?: HapticsSettings.Default.alarmHapticPattern,
+                alarmHapticIntensity = (prefs[Keys.ALARM_HAPTIC_INTENSITY] ?: HapticsSettings.Default.alarmHapticIntensity).coerceIn(0f, 1f),
+                alarmHapticCustomSequence = parseCustomSequence(prefs[Keys.ALARM_HAPTIC_CUSTOM_SEQUENCE]),
             )
         }
 
@@ -128,6 +142,21 @@ class HapticsPreferences(context: Context) {
     suspend fun setUnlockHapticEnabled(enabled: Boolean) = edit { it[Keys.UNLOCK_HAPTIC_ENABLED] = enabled }
     suspend fun setUnlockHapticPattern(pattern: HapticPattern) = edit { it[Keys.UNLOCK_HAPTIC_PATTERN] = pattern.name }
     suspend fun setUnlockHapticIntensity(intensity: Float) = edit { it[Keys.UNLOCK_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
+
+    suspend fun setCallHapticEnabled(enabled: Boolean) = edit { it[Keys.CALL_HAPTIC_ENABLED] = enabled }
+    suspend fun setCallHapticPattern(pattern: HapticPattern) = edit { it[Keys.CALL_HAPTIC_PATTERN] = pattern.name }
+    suspend fun setCallHapticIntensity(intensity: Float) = edit { it[Keys.CALL_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
+    suspend fun setCallHapticCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.CALL_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
+
+    suspend fun setNotifHapticEnabled(enabled: Boolean) = edit { it[Keys.NOTIF_HAPTIC_ENABLED] = enabled }
+    suspend fun setNotifHapticPattern(pattern: HapticPattern) = edit { it[Keys.NOTIF_HAPTIC_PATTERN] = pattern.name }
+    suspend fun setNotifHapticIntensity(intensity: Float) = edit { it[Keys.NOTIF_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
+    suspend fun setNotifHapticCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.NOTIF_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
+
+    suspend fun setAlarmHapticEnabled(enabled: Boolean) = edit { it[Keys.ALARM_HAPTIC_ENABLED] = enabled }
+    suspend fun setAlarmHapticPattern(pattern: HapticPattern) = edit { it[Keys.ALARM_HAPTIC_PATTERN] = pattern.name }
+    suspend fun setAlarmHapticIntensity(intensity: Float) = edit { it[Keys.ALARM_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
+    suspend fun setAlarmHapticCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.ALARM_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
 
     private suspend inline fun edit(crossinline block: (MutablePreferences) -> Unit) {
         try { dataStore.edit { block(it) } } catch (e: IOException) { Log.w(TAG, "DataStore write failed", e) }
@@ -181,6 +210,33 @@ class HapticsPreferences(context: Context) {
         val UNLOCK_HAPTIC_ENABLED = booleanPreferencesKey("unlock_haptic_enabled")
         val UNLOCK_HAPTIC_PATTERN = stringPreferencesKey("unlock_haptic_pattern")
         val UNLOCK_HAPTIC_INTENSITY = floatPreferencesKey("unlock_haptic_intensity")
+        val CALL_HAPTIC_ENABLED = booleanPreferencesKey("call_haptic_enabled")
+        val CALL_HAPTIC_PATTERN = stringPreferencesKey("call_haptic_pattern")
+        val CALL_HAPTIC_INTENSITY = floatPreferencesKey("call_haptic_intensity")
+        val CALL_HAPTIC_CUSTOM_SEQUENCE = stringPreferencesKey("call_haptic_custom_sequence")
+        val NOTIF_HAPTIC_ENABLED = booleanPreferencesKey("notif_haptic_enabled")
+        val NOTIF_HAPTIC_PATTERN = stringPreferencesKey("notif_haptic_pattern")
+        val NOTIF_HAPTIC_INTENSITY = floatPreferencesKey("notif_haptic_intensity")
+        val NOTIF_HAPTIC_CUSTOM_SEQUENCE = stringPreferencesKey("notif_haptic_custom_sequence")
+        val ALARM_HAPTIC_ENABLED = booleanPreferencesKey("alarm_haptic_enabled")
+        val ALARM_HAPTIC_PATTERN = stringPreferencesKey("alarm_haptic_pattern")
+        val ALARM_HAPTIC_INTENSITY = floatPreferencesKey("alarm_haptic_intensity")
+        val ALARM_HAPTIC_CUSTOM_SEQUENCE = stringPreferencesKey("alarm_haptic_custom_sequence")
     }
-    private companion object { const val TAG = "HapticsPrefs" }
+    private companion object {
+        const val TAG = "HapticsPrefs"
+        /** Serialize beats as "offsetMs:amplitude;offsetMs:amplitude;..." */
+        fun serializeCustomSequence(seq: CustomHapticSequence): String =
+            seq.beats.joinToString(";") { "${it.offsetMs}:${it.amplitude}" }
+        fun parseCustomSequence(raw: String?): CustomHapticSequence {
+            if (raw.isNullOrBlank()) return CustomHapticSequence()
+            return try {
+                val beats = raw.split(";").mapNotNull { token ->
+                    val parts = token.split(":")
+                    if (parts.size == 2) HapticBeat(parts[0].toLong(), parts[1].toInt()) else null
+                }
+                CustomHapticSequence(beats)
+            } catch (_: Exception) { CustomHapticSequence() }
+        }
+    }
 }
