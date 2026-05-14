@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,6 +32,8 @@ import com.hapticks.app.ui.screens.buttonhaptics.ButtonHapticsScreen
 import com.hapticks.app.ui.screens.navhaptics.NavBarHapticsScreen
 import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
 import com.hapticks.app.ui.screens.notificationhaptics.NotificationHapticsScreen
+import com.hapticks.app.ui.screens.notificationhaptics.CustomHapticEditorScreen
+import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.theme.HapticksTheme
 import com.hapticks.app.viewmodel.FeelEveryTapViewModel
@@ -56,6 +59,11 @@ class MainActivity : ComponentActivity() {
             ) {
                 ProvideHapticksEdgeOverscrollHaptics {
                     var route by rememberSaveable { mutableStateOf(Route.HOME) }
+
+                    // Custom haptic editor state — hoisted so it survives recomposition
+                    var customEditorLabel by remember { mutableStateOf("") }
+                    var customEditorSequence by remember { mutableStateOf(CustomHapticSequence()) }
+                    var customEditorOnSave by remember { mutableStateOf<(CustomHapticSequence) -> Unit>({}) }
 
                     Box(modifier = Modifier.fillMaxSize()) {
                         when (route) {
@@ -230,7 +238,22 @@ class MainActivity : ComponentActivity() {
                                     onAlarmCustomSequenceSave = viewModel::setAlarmHapticCustomSequence,
                                     onTestAlarmHaptic = viewModel::testAlarmHaptic,
                                     onResetToDefaults = viewModel::resetNotificationHapticsDefaults,
+                                    onOpenCustomEditor = { label, sequence, onSave ->
+                                        customEditorLabel = label
+                                        customEditorSequence = sequence
+                                        customEditorOnSave = onSave
+                                        route = Route.CUSTOM_HAPTIC_EDITOR
+                                    },
                                     onBack = { route = Route.HOME },
+                                )
+                            }
+                            Route.CUSTOM_HAPTIC_EDITOR -> {
+                                BackHandler { route = Route.NOTIFICATION_HAPTICS }
+                                CustomHapticEditorScreen(
+                                    label = customEditorLabel,
+                                    initialSequence = customEditorSequence,
+                                    onSave = { seq -> customEditorOnSave(seq) },
+                                    onBack = { route = Route.NOTIFICATION_HAPTICS },
                                 )
                             }
                         }
@@ -258,7 +281,7 @@ class MainActivity : ComponentActivity() {
         TACTILE_SCROLLING, SCROLL_APP_EXCLUSIONS,
         CHARGING_HAPTICS, BUTTON_HAPTICS,
         NAVBAR_HAPTICS, UNLOCK_HAPTICS, SETTINGS,
-        NOTIFICATION_HAPTICS
+        NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR
     }
 
     private fun openAccessibilitySettings() {
