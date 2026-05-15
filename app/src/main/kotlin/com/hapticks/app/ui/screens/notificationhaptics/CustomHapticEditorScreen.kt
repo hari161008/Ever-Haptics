@@ -4,11 +4,8 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -391,19 +388,51 @@ private fun RecordingControls(
     onClear: () -> Unit,
 ) {
     val ctx = LocalContext.current
+
+    // Pulsing border alpha when recording
+    val infiniteTransition = rememberInfiniteTransition(label = "rec_pulse")
+    val borderAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "border_alpha",
+    )
+    val recDotAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(500, easing = LinearEasing), RepeatMode.Reverse),
+        label = "rec_dot",
+    )
+
+    val borderColor by animateColorAsState(
+        targetValue = if (isRecording) MaterialTheme.colorScheme.error.copy(alpha = if (isRecording) borderAlpha else 0.5f)
+        else MaterialTheme.colorScheme.outlineVariant,
+        animationSpec = tween(200),
+        label = "rec_border",
+    )
+
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, if (isRecording) MaterialTheme.colorScheme.error.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(if (isRecording) 2.dp else 1.dp, borderColor),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Rounded.FiberManualRecord, null, tint = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Rounded.FiberManualRecord, null,
+                        tint = (if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                            .let { if (isRecording) it.copy(alpha = recDotAlpha) else it },
+                        modifier = Modifier.size(16.dp),
+                    )
                     Text("Recorder", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                 }
-                if (isRecording) {
+                AnimatedVisibility(
+                    visible = isRecording,
+                    enter = fadeIn(tween(200)) + scaleIn(tween(200, easing = FastOutSlowInEasing)),
+                    exit = fadeOut(tween(160)) + scaleOut(tween(160)),
+                ) {
                     Surface(color = MaterialTheme.colorScheme.errorContainer, shape = CircleShape) {
                         Text("REC  ${"%.1f".format(elapsedMs / 1000f)}s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), fontWeight = FontWeight.Bold)
                     }
