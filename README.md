@@ -50,7 +50,7 @@ GitHub: [Download](https://github.com/hari161008/Ever-Haptics) ⬇️
 
 ---
 
-# Features of Ever Dialer .✦ ݁˖
+# Features of Ever Haptics .✦ ݁˖
 
 ┈➤
 
