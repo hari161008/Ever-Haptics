@@ -137,15 +137,24 @@ class NotificationHapticService : NotificationListenerService() {
     /** Heuristic to catch call notifications that don't use CATEGORY_CALL */
     private fun isIncomingCallNotification(sbn: StatusBarNotification): Boolean {
         val notification = sbn.notification ?: return false
+        // Apps that properly set CATEGORY_CALL (WhatsApp, Telegram, modern dialers) are already
+        // handled by the CATEGORY_CALL branch above. This heuristic is only for legacy apps that
+        // use a phone/dialer package but omit the category.
         val extras = notification.extras
         val title = extras.getCharSequence("android.title")?.toString()?.lowercase() ?: ""
         val text = extras.getCharSequence("android.text")?.toString()?.lowercase() ?: ""
         val callPkg = sbn.packageName.lowercase()
-        val knownDialers = listOf("dialer", "phone", "telecom", "call", "truecaller", "whatsapp", "telegram")
-        val hasCallKeyword = knownDialers.any { callPkg.contains(it) } ||
-                title.contains("incoming") || text.contains("incoming call") ||
-                title.contains("calling") || text.contains("calling")
-        return hasCallKeyword && notification.category != Notification.CATEGORY_ALARM
+
+        // Only match packages that are clearly telephony/dialer apps (not messaging apps like
+        // WhatsApp or Telegram which would cause false positives on regular messages).
+        val isLikelyDialerPackage = listOf("dialer", "phone", "telecom", "incallui", "truecaller")
+            .any { callPkg.contains(it) }
+
+        // Require explicit "incoming call" phrasing — avoid matching generic uses of "calling".
+        val hasExplicitCallText = text.contains("incoming call") || title.contains("incoming call")
+
+        return isLikelyDialerPackage && hasExplicitCallText &&
+                notification.category != Notification.CATEGORY_ALARM
     }
 
     private suspend fun fireHaptic(

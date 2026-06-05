@@ -12,11 +12,8 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,18 +21,19 @@ import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.ui.components.BottomTab
 import com.hapticks.app.ui.components.FloatingBottomBar
 import com.hapticks.app.ui.components.SlidingBottomTabHost
+import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.screens.AppExclusionsScreen
 import com.hapticks.app.ui.screens.HomeScreen
 import com.hapticks.app.ui.screens.SettingsScreen
-import com.hapticks.app.ui.screens.tapHaptics.FeelEveryTapScreen
-import com.hapticks.app.ui.screens.scrollhaptics.ScrollHapticsScreen
-import com.hapticks.app.ui.screens.charginghaptics.ChargingHapticsScreen
 import com.hapticks.app.ui.screens.buttonhaptics.ButtonHapticsScreen
+import com.hapticks.app.ui.screens.charginghaptics.ChargingHapticsScreen
+import com.hapticks.app.ui.screens.keyboardhaptics.KeyboardHapticsScreen
 import com.hapticks.app.ui.screens.navhaptics.NavBarHapticsScreen
-import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
-import com.hapticks.app.ui.screens.notificationhaptics.NotificationHapticsScreen
 import com.hapticks.app.ui.screens.notificationhaptics.CustomHapticEditorScreen
-import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
+import com.hapticks.app.ui.screens.notificationhaptics.NotificationHapticsScreen
+import com.hapticks.app.ui.screens.scrollhaptics.ScrollHapticsScreen
+import com.hapticks.app.ui.screens.tapHaptics.FeelEveryTapScreen
+import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
 import com.hapticks.app.ui.theme.HapticksTheme
 import com.hapticks.app.viewmodel.FeelEveryTapViewModel
 
@@ -60,32 +58,37 @@ class MainActivity : ComponentActivity() {
             ) {
                 ProvideHapticksEdgeOverscrollHaptics {
                     var route by rememberSaveable { mutableStateOf(Route.HOME) }
+                    var previousRoute by rememberSaveable { mutableStateOf(Route.HOME) }
 
                     var customEditorLabel by remember { mutableStateOf("") }
                     var customEditorSequence by remember { mutableStateOf(CustomHapticSequence()) }
                     var customEditorOnSave by remember { mutableStateOf<(CustomHapticSequence) -> Unit>({}) }
+
+                    fun openCustomEditor(origin: Route, label: String, sequence: CustomHapticSequence, onSave: (CustomHapticSequence) -> Unit) {
+                        customEditorLabel = label
+                        customEditorSequence = sequence
+                        customEditorOnSave = onSave
+                        previousRoute = origin
+                        route = Route.CUSTOM_HAPTIC_EDITOR
+                    }
 
                     Box(modifier = Modifier.fillMaxSize()) {
                         AnimatedContent(
                             targetState = route,
                             transitionSpec = {
                                 when {
-                                    targetState == Route.HOME || targetState == Route.SETTINGS -> {
+                                    targetState == Route.HOME || targetState == Route.SETTINGS ->
                                         (slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 3 } + fadeIn(tween(260)))
                                             .togetherWith(slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(200)))
-                                    }
-                                    targetState == Route.CUSTOM_HAPTIC_EDITOR -> {
+                                    targetState == Route.CUSTOM_HAPTIC_EDITOR ->
                                         (slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 2 } + fadeIn(tween(280)))
                                             .togetherWith(fadeOut(tween(180)))
-                                    }
-                                    initialState == Route.CUSTOM_HAPTIC_EDITOR -> {
+                                    initialState == Route.CUSTOM_HAPTIC_EDITOR ->
                                         fadeIn(tween(240))
                                             .togetherWith(slideOutVertically(tween(320, easing = FastOutSlowInEasing)) { it / 2 } + fadeOut(tween(220)))
-                                    }
-                                    else -> {
+                                    else ->
                                         (slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { it } + fadeIn(tween(260)))
                                             .togetherWith(slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 3 } + fadeOut(tween(200)))
-                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxSize(),
@@ -107,6 +110,7 @@ class MainActivity : ComponentActivity() {
                                                 onOpenNavBarHaptics = { route = Route.NAVBAR_HAPTICS },
                                                 onOpenUnlockHaptics = { route = Route.UNLOCK_HAPTICS },
                                                 onOpenNotificationHaptics = { route = Route.NOTIFICATION_HAPTICS },
+                                                onOpenKeyboardHaptics = { route = Route.KEYBOARD_HAPTICS },
                                                 onOpenAccessibilitySettings = ::openAccessibilitySettings,
                                             )
                                             BottomTab.SETTINGS -> SettingsScreen(
@@ -119,6 +123,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 }
+
                                 Route.FEEL_EVERY_TAP -> {
                                     BackHandler { route = Route.HOME }
                                     FeelEveryTapScreen(
@@ -126,12 +131,15 @@ class MainActivity : ComponentActivity() {
                                         onTapEnabledChange = viewModel::setTapEnabled,
                                         onIntensityCommit = viewModel::commitIntensity,
                                         onPatternSelected = viewModel::setPattern,
+                                        onTapCustomSequenceSave = viewModel::setTapHapticCustomSequence,
                                         onTestHaptic = viewModel::testHaptic,
                                         onResetToDefaults = viewModel::resetTapDefaults,
                                         onOpenAppExclusions = { route = Route.TAP_APP_EXCLUSIONS },
+                                        onOpenCustomEditor = { label, seq, onSave -> openCustomEditor(Route.FEEL_EVERY_TAP, label, seq, onSave) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
+
                                 Route.TAP_APP_EXCLUSIONS -> {
                                     BackHandler { route = Route.FEEL_EVERY_TAP }
                                     AppExclusionsScreen(
@@ -141,6 +149,7 @@ class MainActivity : ComponentActivity() {
                                         onBack = { route = Route.FEEL_EVERY_TAP },
                                     )
                                 }
+
                                 Route.TACTILE_SCROLLING -> {
                                     BackHandler { route = Route.HOME }
                                     ScrollHapticsScreen(
@@ -159,12 +168,13 @@ class MainActivity : ComponentActivity() {
                                         onSpeedVibScaleCommit = viewModel::commitScrollSpeedVibScale,
                                         onTailCutoffEnabledChange = viewModel::setScrollTailCutoffEnabled,
                                         onTailCutoffMsCommit = viewModel::commitScrollTailCutoffMs,
-                                        onTestHaptic = viewModel::testHaptic,
+                                        onTestHaptic = viewModel::testScrollHaptic,
                                         onResetToDefaults = viewModel::resetScrollDefaults,
                                         onOpenAppExclusions = { route = Route.SCROLL_APP_EXCLUSIONS },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
+
                                 Route.SCROLL_APP_EXCLUSIONS -> {
                                     BackHandler { route = Route.TACTILE_SCROLLING }
                                     AppExclusionsScreen(
@@ -174,6 +184,7 @@ class MainActivity : ComponentActivity() {
                                         onBack = { route = Route.TACTILE_SCROLLING },
                                     )
                                 }
+
                                 Route.CHARGING_HAPTICS -> {
                                     BackHandler { route = Route.HOME }
                                     ChargingHapticsScreen(
@@ -181,13 +192,16 @@ class MainActivity : ComponentActivity() {
                                         onChargingVibEnabledChange = viewModel::setChargingVibEnabled,
                                         onChargingVibOnConnectChange = viewModel::setChargingVibOnConnect,
                                         onChargingVibOnDisconnectChange = viewModel::setChargingVibOnDisconnect,
-                                        onDurationIndexChange = viewModel::setChargingVibDurationIndex,
+                                        onPatternSelected = viewModel::setChargingVibPattern,
                                         onIntensityCommit = viewModel::commitChargingVibIntensity,
+                                        onCustomSequenceSaved = viewModel::setChargingVibCustomSequence,
                                         onTestHaptic = viewModel::testChargingHaptic,
                                         onResetToDefaults = viewModel::resetChargingDefaults,
+                                        onOpenCustomEditor = { openCustomEditor(Route.CHARGING_HAPTICS, "charging", settings.chargingVibCustomSequence, viewModel::setChargingVibCustomSequence) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
+
                                 Route.BUTTON_HAPTICS -> {
                                     BackHandler { route = Route.HOME }
                                     ButtonHapticsScreen(
@@ -195,12 +209,15 @@ class MainActivity : ComponentActivity() {
                                         onVolumeHapticEnabledChange = viewModel::setVolumeHapticEnabled,
                                         onVolumePatternSelected = viewModel::setVolumeHapticPattern,
                                         onVolumeIntensityCommit = viewModel::commitVolumeHapticIntensity,
+                                        onVolumeOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "volume", settings.volumeHapticCustomSequence, viewModel::setVolumeHapticCustomSequence) },
                                         onPowerHapticEnabledChange = viewModel::setPowerHapticEnabled,
                                         onPowerPatternSelected = viewModel::setPowerHapticPattern,
                                         onPowerIntensityCommit = viewModel::commitPowerHapticIntensity,
+                                        onPowerOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "power", settings.powerHapticCustomSequence, viewModel::setPowerHapticCustomSequence) },
                                         onBrightnessHapticEnabledChange = viewModel::setBrightnessHapticEnabled,
                                         onBrightnessPatternSelected = viewModel::setBrightnessHapticPattern,
                                         onBrightnessIntensityCommit = viewModel::commitBrightnessHapticIntensity,
+                                        onBrightnessOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "brightness", settings.brightnessHapticCustomSequence, viewModel::setBrightnessHapticCustomSequence) },
                                         onTestVolumeHaptic = viewModel::testVolumeHaptic,
                                         onTestPowerHaptic = viewModel::testPowerHaptic,
                                         onTestBrightnessHaptic = viewModel::testBrightnessHaptic,
@@ -208,6 +225,7 @@ class MainActivity : ComponentActivity() {
                                         onBack = { route = Route.HOME },
                                     )
                                 }
+
                                 Route.NAVBAR_HAPTICS -> {
                                     BackHandler { route = Route.HOME }
                                     NavBarHapticsScreen(
@@ -216,10 +234,12 @@ class MainActivity : ComponentActivity() {
                                         onPatternSelected = viewModel::setNavBarHapticPattern,
                                         onIntensityCommit = viewModel::commitNavBarHapticIntensity,
                                         onTestHaptic = viewModel::testNavBarHaptic,
-                                        onResetToDefaults = viewModel::resetButtonHapticsDefaults,
+                                        onResetToDefaults = viewModel::resetNavBarDefaults,
+                                        onOpenCustomEditor = { openCustomEditor(Route.NAVBAR_HAPTICS, "navbar", settings.navBarHapticCustomSequence, viewModel::setNavBarHapticCustomSequence) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
+
                                 Route.UNLOCK_HAPTICS -> {
                                     BackHandler { route = Route.HOME }
                                     UnlockHapticsScreen(
@@ -228,10 +248,26 @@ class MainActivity : ComponentActivity() {
                                         onPatternSelected = viewModel::setUnlockHapticPattern,
                                         onIntensityCommit = viewModel::commitUnlockHapticIntensity,
                                         onTestHaptic = viewModel::testUnlockHaptic,
-                                        onResetToDefaults = viewModel::resetButtonHapticsDefaults,
+                                        onResetToDefaults = viewModel::resetUnlockDefaults,
+                                        onOpenCustomEditor = { openCustomEditor(Route.UNLOCK_HAPTICS, "unlock", settings.unlockHapticCustomSequence, viewModel::setUnlockHapticCustomSequence) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
+
+                                Route.KEYBOARD_HAPTICS -> {
+                                    BackHandler { route = Route.HOME }
+                                    KeyboardHapticsScreen(
+                                        settings = settings,
+                                        onKeyboardHapticEnabledChange = viewModel::setKeyboardHapticEnabled,
+                                        onPatternSelected = viewModel::setKeyboardHapticPattern,
+                                        onIntensityCommit = viewModel::commitKeyboardHapticIntensity,
+                                        onTestHaptic = viewModel::testKeyboardHaptic,
+                                        onResetToDefaults = viewModel::resetKeyboardDefaults,
+                                        onOpenCustomEditor = { openCustomEditor(Route.KEYBOARD_HAPTICS, "keyboard", settings.keyboardHapticCustomSequence, viewModel::setKeyboardHapticCustomSequence) },
+                                        onBack = { route = Route.HOME },
+                                    )
+                                }
+
                                 Route.NOTIFICATION_HAPTICS -> {
                                     BackHandler { route = Route.HOME }
                                     NotificationHapticsScreen(
@@ -263,22 +299,19 @@ class MainActivity : ComponentActivity() {
                                         onAlarmCustomSequenceSave = viewModel::setAlarmHapticCustomSequence,
                                         onTestAlarmHaptic = viewModel::testAlarmHaptic,
                                         onResetToDefaults = viewModel::resetNotificationHapticsDefaults,
-                                        onOpenCustomEditor = { label, sequence, onSave ->
-                                            customEditorLabel = label
-                                            customEditorSequence = sequence
-                                            customEditorOnSave = onSave
-                                            route = Route.CUSTOM_HAPTIC_EDITOR
-                                        },
+                                        onOpenCustomEditor = { label, sequence, onSave -> openCustomEditor(Route.NOTIFICATION_HAPTICS, label, sequence, onSave) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
+
                                 Route.CUSTOM_HAPTIC_EDITOR -> {
-                                    BackHandler { route = Route.NOTIFICATION_HAPTICS }
+                                    val origin = previousRoute
+                                    BackHandler { route = origin }
                                     CustomHapticEditorScreen(
                                         label = customEditorLabel,
                                         initialSequence = customEditorSequence,
                                         onSave = { seq -> customEditorOnSave(seq) },
-                                        onBack = { route = Route.NOTIFICATION_HAPTICS },
+                                        onBack = { route = origin },
                                     )
                                 }
                             }
@@ -310,8 +343,8 @@ class MainActivity : ComponentActivity() {
         HOME, FEEL_EVERY_TAP, TAP_APP_EXCLUSIONS,
         TACTILE_SCROLLING, SCROLL_APP_EXCLUSIONS,
         CHARGING_HAPTICS, BUTTON_HAPTICS,
-        NAVBAR_HAPTICS, UNLOCK_HAPTICS, SETTINGS,
-        NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR
+        NAVBAR_HAPTICS, UNLOCK_HAPTICS, KEYBOARD_HAPTICS,
+        SETTINGS, NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR
     }
 
     private fun openAccessibilitySettings() {

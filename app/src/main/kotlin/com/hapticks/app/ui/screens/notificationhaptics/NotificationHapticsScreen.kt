@@ -1,10 +1,13 @@
 package com.hapticks.app.ui.screens.notificationhaptics
 
+import android.Manifest
+import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.provider.Settings as AndroidSettings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -30,26 +33,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.hapticks.app.R
 import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.haptics.HapticPattern
+import com.hapticks.app.service.notification.NotificationHapticService
+import com.hapticks.app.ui.components.FeatureColors
+import com.hapticks.app.ui.components.FeatureIcon
 import com.hapticks.app.ui.components.HapticTestButton
+import com.hapticks.app.ui.components.ScreenIconHeader
 import com.hapticks.app.ui.components.HapticToggleRow
 import com.hapticks.app.ui.components.SectionCard
 import com.hapticks.app.ui.haptics.SliderTickStepsDefault
 import com.hapticks.app.ui.haptics.performHapticSliderTick
 import com.hapticks.app.ui.haptics.slider01ToTickIndex
-import com.hapticks.app.service.notification.NotificationHapticService
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,23 +95,15 @@ fun NotificationHapticsScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             LargeTopAppBar(
                 title = { Text("Calls, Alerts & Alarms", style = MaterialTheme.typography.displaySmall) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface) } },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background,
-                ),
+                colors = TopAppBarDefaults.largeTopAppBarColors(containerColor = MaterialTheme.colorScheme.background, scrolledContainerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
@@ -114,14 +113,17 @@ fun NotificationHapticsScreen(
             contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item("notif_access") { NotificationAccessCard() }
+            item("icon_header") {
+                ScreenIconHeader(icon = Icons.Rounded.NotificationsActive, featureColor = FeatureColors.Notifications, subtitle = "Custom haptic patterns for incoming calls, notifications, and alarms.")
+            }
+            item("notif_access") { NotificationListenerCard() }
+            item("phone_perm") { PhonePermissionCard() }
             item("notice") { SystemHapticsNoticeCard() }
 
             item("reset") {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onClick = onResetToDefaults) {
-                        Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.size(4.dp))
+                        Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.size(4.dp))
                         Text("Reset to defaults", style = MaterialTheme.typography.labelLarge)
                     }
                 }
@@ -129,22 +131,16 @@ fun NotificationHapticsScreen(
 
             item("call_header") { SectionHeader(icon = Icons.Rounded.Call, title = "Incoming Call") }
             item("call_toggle") {
-                SectionCard {
-                    HapticToggleRow(title = "Call Haptic", subtitle = "Play a repeating haptic pattern when a call arrives", checked = callHapticEnabled, onCheckedChange = onCallEnabledChange, leadingIcon = Icons.Rounded.Call)
-                }
+                SectionCard { HapticToggleRow(title = "Call Haptic", subtitle = "Play a repeating haptic pattern when a call arrives", checked = callHapticEnabled, onCheckedChange = onCallEnabledChange) }
             }
             item("call_content") {
                 AnimatedVisibility(visible = callHapticEnabled) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         SectionCard {
                             PatternSelectorWithCustom(
-                                pattern = callPattern,
-                                intensity = callIntensity,
-                                customSequence = callCustomSequence,
-                                onPatternSelected = onCallPatternSelected,
-                                onIntensityCommit = onCallIntensityCommit,
-                                onOpenCustomEditor = { onOpenCustomEditor("call", callCustomSequence, onCallCustomSequenceSave) },
-                                label = "call",
+                                pattern = callPattern, intensity = callIntensity, customSequence = callCustomSequence,
+                                onPatternSelected = onCallPatternSelected, onIntensityCommit = onCallIntensityCommit,
+                                onOpenCustomEditor = { onOpenCustomEditor("call", callCustomSequence, onCallCustomSequenceSave) }, label = "call",
                             )
                         }
                         HapticTestButton("Test Call Haptic", onTestCallHaptic, enabled = callHapticEnabled)
@@ -154,22 +150,16 @@ fun NotificationHapticsScreen(
 
             item("notif_header") { SectionHeader(icon = Icons.Rounded.Notifications, title = "Notifications") }
             item("notif_toggle") {
-                SectionCard {
-                    HapticToggleRow(title = "Notification Haptic", subtitle = "Play a haptic pattern when a notification arrives", checked = notifHapticEnabled, onCheckedChange = onNotifEnabledChange, leadingIcon = Icons.Rounded.Notifications)
-                }
+                SectionCard { HapticToggleRow(title = "Notification Haptic", subtitle = "Play a haptic pattern when a notification arrives", checked = notifHapticEnabled, onCheckedChange = onNotifEnabledChange) }
             }
             item("notif_content") {
                 AnimatedVisibility(visible = notifHapticEnabled) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         SectionCard {
                             PatternSelectorWithCustom(
-                                pattern = notifPattern,
-                                intensity = notifIntensity,
-                                customSequence = notifCustomSequence,
-                                onPatternSelected = onNotifPatternSelected,
-                                onIntensityCommit = onNotifIntensityCommit,
-                                onOpenCustomEditor = { onOpenCustomEditor("notification", notifCustomSequence, onNotifCustomSequenceSave) },
-                                label = "notification",
+                                pattern = notifPattern, intensity = notifIntensity, customSequence = notifCustomSequence,
+                                onPatternSelected = onNotifPatternSelected, onIntensityCommit = onNotifIntensityCommit,
+                                onOpenCustomEditor = { onOpenCustomEditor("notification", notifCustomSequence, onNotifCustomSequenceSave) }, label = "notification",
                             )
                         }
                         HapticTestButton("Test Notification Haptic", onTestNotifHaptic, enabled = notifHapticEnabled)
@@ -179,22 +169,16 @@ fun NotificationHapticsScreen(
 
             item("alarm_header") { SectionHeader(icon = Icons.Rounded.Alarm, title = "Alarm") }
             item("alarm_toggle") {
-                SectionCard {
-                    HapticToggleRow(title = "Alarm Haptic", subtitle = "Play a haptic pattern when an alarm fires", checked = alarmHapticEnabled, onCheckedChange = onAlarmEnabledChange, leadingIcon = Icons.Rounded.Alarm)
-                }
+                SectionCard { HapticToggleRow(title = "Alarm Haptic", subtitle = "Play a haptic pattern when an alarm fires", checked = alarmHapticEnabled, onCheckedChange = onAlarmEnabledChange) }
             }
             item("alarm_content") {
                 AnimatedVisibility(visible = alarmHapticEnabled) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         SectionCard {
                             PatternSelectorWithCustom(
-                                pattern = alarmPattern,
-                                intensity = alarmIntensity,
-                                customSequence = alarmCustomSequence,
-                                onPatternSelected = onAlarmPatternSelected,
-                                onIntensityCommit = onAlarmIntensityCommit,
-                                onOpenCustomEditor = { onOpenCustomEditor("alarm", alarmCustomSequence, onAlarmCustomSequenceSave) },
-                                label = "alarm",
+                                pattern = alarmPattern, intensity = alarmIntensity, customSequence = alarmCustomSequence,
+                                onPatternSelected = onAlarmPatternSelected, onIntensityCommit = onAlarmIntensityCommit,
+                                onOpenCustomEditor = { onOpenCustomEditor("alarm", alarmCustomSequence, onAlarmCustomSequenceSave) }, label = "alarm",
                             )
                         }
                         HapticTestButton("Test Alarm Haptic", onTestAlarmHaptic, enabled = alarmHapticEnabled)
@@ -207,62 +191,139 @@ fun NotificationHapticsScreen(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification listener access card — live re-check on resume
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
-private fun NotificationAccessCard() {
+private fun NotificationListenerCard() {
     val ctx = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
     fun isListenerEnabled(): Boolean {
+        val cn = ComponentName(ctx, NotificationHapticService::class.java)
         val flat = try {
             AndroidSettings.Secure.getString(ctx.contentResolver, "enabled_notification_listeners") ?: ""
-        } catch (e: Exception) { "" }
-        val pkgName = ctx.packageName
-        val serviceName = NotificationHapticService::class.java.name
+        } catch (_: Exception) { "" }
+        if (flat.isBlank()) return false
         return flat.split(":").any { entry ->
-            val t = entry.trim()
-            t.startsWith(pkgName) && (t.contains(serviceName.substringAfterLast(".")))
+            val parsed = try { ComponentName.unflattenFromString(entry.trim()) } catch (_: Exception) { null }
+            parsed == cn
         }
     }
 
     var isGranted by remember { mutableStateOf(isListenerEnabled()) }
     DisposableEffect(lifecycle) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) isGranted = isListenerEnabled()
-        }
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) isGranted = isListenerEnabled() }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    if (isGranted) return
+
+    PermissionCard(
+        icon = Icons.Rounded.NotificationsOff,
+        title = "Notification access required",
+        body = "Grant notification listener access so Ever Haptics can detect calls, notifications, and alarms.",
+        buttonLabel = "Grant",
+        isError = true,
+        onClick = {
+            ctx.startActivity(Intent(AndroidSettings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
+        },
+    )
+}
+
+@Composable
+private fun PhonePermissionCard() {
+    val ctx = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+
+    fun isPhonePermGranted(): Boolean =
+        ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
+
+    var isGranted by remember { mutableStateOf(isPhonePermGranted()) }
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        isGranted = granted
+    }
+
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) isGranted = isPhonePermGranted() }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
 
     if (isGranted) return
 
-    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+    PermissionCard(
+        icon = Icons.Rounded.PhoneDisabled,
+        title = "Phone permission required",
+        body = "Grant phone state access so Ever Haptics can detect incoming calls accurately.",
+        buttonLabel = "Grant",
+        isError = false,
+        onClick = { launcher.launch(Manifest.permission.READ_PHONE_STATE) },
+    )
+}
+
+@Composable
+private fun PermissionCard(
+    icon: ImageVector,
+    title: String,
+    body: String,
+    buttonLabel: String,
+    isError: Boolean,
+    onClick: () -> Unit,
+) {
+    val bg = if (isError) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer
+    val fg = if (isError) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer
+    val btnBg = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
+    val btnFg = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onSecondary
+
+    Surface(color = bg, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.NotificationsOff, null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(20.dp))
+            Icon(icon, null, tint = fg, modifier = Modifier.size(20.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Notification access required", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onErrorContainer, fontWeight = FontWeight.Bold)
-                Text("Grant notification listener access so Ever Haptics can fire haptics for calls, notifications, and alarms.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                Text(title, style = MaterialTheme.typography.titleSmall, color = fg, fontWeight = FontWeight.Bold)
+                Text(body, style = MaterialTheme.typography.bodySmall, color = fg)
             }
-            Button(
-                onClick = { ctx.startActivity(android.content.Intent(AndroidSettings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                shape = RoundedCornerShape(10.dp),
-            ) { Text("Grant", color = MaterialTheme.colorScheme.onError) }
+            Button(onClick = onClick, colors = ButtonDefaults.buttonColors(containerColor = btnBg), shape = RoundedCornerShape(10.dp)) {
+                Text(buttonLabel, color = btnFg)
+            }
         }
     }
 }
 
 @Composable
 private fun SystemHapticsNoticeCard() {
+    val ctx = LocalContext.current
     Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-            Icon(Icons.Rounded.Info, null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(20.dp).padding(top = 2.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Turn off system haptics for calls & notifications", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onTertiaryContainer, fontWeight = FontWeight.Bold)
-                Text("For best results, disable your system's default vibration for calls, notifications, and alarms in:\nSettings → Sound & vibration → Vibration & haptics\n\nOtherwise system and Ever Haptics patterns may overlap.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                Icon(Icons.Rounded.Info, null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(20.dp).padding(top = 2.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Turn off system haptics for calls & notifications", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onTertiaryContainer, fontWeight = FontWeight.Bold)
+                    Text("For best results, disable your system's default vibration for calls, notifications, and alarms. Otherwise system and Ever Haptics patterns may overlap.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                }
+            }
+            Button(
+                onClick = {
+                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        Intent("android.settings.VIBRATION_SETTINGS")
+                    } else {
+                        Intent(AndroidSettings.ACTION_SOUND_SETTINGS)
+                    }.apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+                    try {
+                        ctx.startActivity(intent)
+                    } catch (_: Exception) {
+                        try {
+                            ctx.startActivity(Intent(AndroidSettings.ACTION_SOUND_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
+                        } catch (_: Exception) {
+                            ctx.startActivity(Intent(AndroidSettings.ACTION_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK })
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onTertiaryContainer, contentColor = MaterialTheme.colorScheme.tertiaryContainer),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Rounded.Vibration, null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.size(8.dp))
+                Text("Open Vibration Settings", style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -276,48 +337,24 @@ private fun SectionHeader(icon: ImageVector, title: String) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Pattern selector with Custom card that opens the editor
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
 private fun PatternSelectorWithCustom(
-    pattern: HapticPattern,
-    intensity: Float,
-    customSequence: CustomHapticSequence,
-    onPatternSelected: (HapticPattern) -> Unit,
-    onIntensityCommit: (Float) -> Unit,
-    onOpenCustomEditor: () -> Unit,
-    label: String,
+    pattern: HapticPattern, intensity: Float, customSequence: CustomHapticSequence,
+    onPatternSelected: (HapticPattern) -> Unit, onIntensityCommit: (Float) -> Unit,
+    onOpenCustomEditor: () -> Unit, label: String,
 ) {
     val isCustomActive = !customSequence.isEmpty
     val patterns = remember { HapticPattern.entries }
-
     Column(Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             patterns.chunked(2).forEach { rowItems ->
                 Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    rowItems.forEach { p ->
-                        PatternCard(
-                            pattern = p,
-                            isSelected = !isCustomActive && p == pattern,
-                            onClick = { onPatternSelected(p) },
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                        )
-                    }
+                    rowItems.forEach { p -> PatternCard(pattern = p, isSelected = !isCustomActive && p == pattern, onClick = { onPatternSelected(p) }, modifier = Modifier.weight(1f).fillMaxHeight()) }
                     if (rowItems.size == 1) Box(Modifier.weight(1f).fillMaxHeight())
                 }
             }
-            // Custom card — opens editor screen
-            CustomPatternCard(
-                isSelected = isCustomActive,
-                beatCount = customSequence.beats.size,
-                durationMs = customSequence.durationMs,
-                onClick = onOpenCustomEditor,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            CustomPatternCard(isSelected = isCustomActive, beatCount = customSequence.beats.size, durationMs = customSequence.durationMs, onClick = onOpenCustomEditor, modifier = Modifier.fillMaxWidth())
         }
-
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
         IntensitySlider(intensity = intensity, onIntensityCommit = onIntensityCommit)
     }
@@ -332,21 +369,13 @@ private fun PatternCard(pattern: HapticPattern, isSelected: Boolean, onClick: ()
     val descColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant
     val stateDesc = stringResource(if (isSelected) R.string.pattern_selected else R.string.pattern_not_selected)
     val interactionSource = remember { MutableInteractionSource() }
-
     Surface(
-        modifier = modifier.heightIn(min = 132.dp)
-            .selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true))
-            .semantics { this.stateDescription = stateDesc },
-        color = containerColor,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(borderWidth, borderColor),
+        modifier = modifier.heightIn(min = 132.dp).selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)).semantics { this.stateDescription = stateDesc },
+        color = containerColor, shape = RoundedCornerShape(24.dp), border = BorderStroke(borderWidth, borderColor),
     ) {
         Column(Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Top)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Box(
-                    modifier = Modifier.size(40.dp).background(color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
+                Box(modifier = Modifier.size(40.dp).background(color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
                     Icon(pattern.icon, null, tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                 }
                 SelectionDot(isSelected)
@@ -359,38 +388,19 @@ private fun PatternCard(pattern: HapticPattern, isSelected: Boolean, onClick: ()
 }
 
 @Composable
-private fun CustomPatternCard(
-    isSelected: Boolean,
-    beatCount: Int,
-    durationMs: Long,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun CustomPatternCard(isSelected: Boolean, beatCount: Int, durationMs: Long, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val containerColor by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh, spring(stiffness = 300f), label = "cc")
     val borderColor by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant, spring(stiffness = 300f), label = "cb")
     val borderWidth by animateDpAsState(if (isSelected) 1.5.dp else 1.dp, label = "cbw")
     val interactionSource = remember { MutableInteractionSource() }
-
-    Surface(
-        modifier = modifier.selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)),
-        color = containerColor,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(borderWidth, borderColor),
-    ) {
+    Surface(modifier = modifier.selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)), color = containerColor, shape = RoundedCornerShape(24.dp), border = BorderStroke(borderWidth, borderColor)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(
-                modifier = Modifier.size(40.dp).background(color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
+            Box(modifier = Modifier.size(40.dp).background(color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
                 Icon(Icons.Rounded.Draw, null, tint = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.secondary, modifier = Modifier.size(22.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("Custom", style = MaterialTheme.typography.titleMedium, color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface)
-                Text(
-                    if (isSelected && beatCount > 0) "$beatCount beats · ${durationMs}ms" else "Record your own haptic rhythm",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(if (isSelected && beatCount > 0) "$beatCount beats · ${durationMs}ms" else "Record your own haptic rhythm", style = MaterialTheme.typography.bodySmall, color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.Rounded.ChevronRight, null, tint = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
@@ -417,13 +427,6 @@ private fun IntensitySlider(intensity: Float, onIntensityCommit: (Float) -> Unit
                 Text("${(draft * 100f).roundToInt()}%", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
             }
         }
-        Slider(
-            value = draft,
-            onValueChange = { draft = it; val t = slider01ToTickIndex(it); if (t != lastTick) { lastTick = t; ctx.performHapticSliderTick() } },
-            onValueChangeFinished = { onIntensityCommit(draft) },
-            valueRange = 0f..1f,
-            steps = SliderTickStepsDefault,
-            colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-        )
+        Slider(value = draft, onValueChange = { draft = it; val t = slider01ToTickIndex(it); if (t != lastTick) { lastTick = t; ctx.performHapticSliderTick() } }, onValueChangeFinished = { onIntensityCommit(draft) }, valueRange = 0f..1f, steps = SliderTickStepsDefault, colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest))
     }
 }

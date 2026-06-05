@@ -10,6 +10,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -24,15 +26,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-// removed unused Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-// removed unused LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-// removed unused Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hapticks.app.haptics.CustomHapticSequence
@@ -41,12 +40,9 @@ import com.hapticks.app.ui.haptics.performHapticSliderTick
 import com.hapticks.app.ui.haptics.slider01ToTickIndex
 import com.hapticks.app.ui.haptics.SliderTickStepsDefault
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Editor Screen
-// ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,25 +62,19 @@ fun CustomHapticEditorScreen(
         else @Suppress("DEPRECATION") ctx.getSystemService(android.content.Context.VIBRATOR_SERVICE) as Vibrator
     }
 
-    // Mutable list of beats – each is (offsetMs, amplitude 0..255)
     var beats by remember(initialSequence) {
         mutableStateOf(initialSequence.beats.sortedBy { it.offsetMs }.toMutableList() as List<HapticBeat>)
     }
 
-    // Recording state
     var isRecording by remember { mutableStateOf(false) }
     var recordingStartMs by remember { mutableLongStateOf(0L) }
     var elapsedMs by remember { mutableLongStateOf(0L) }
     var recordStrength by remember { mutableFloatStateOf(0.8f) }
     var lastStrengthTick by remember { mutableIntStateOf(slider01ToTickIndex(0.8f)) }
 
-    // Playback
     var isPlaying by remember { mutableStateOf(false) }
-
-    // Expanded beat editor index
     var expandedIndex by remember { mutableIntStateOf(-1) }
 
-    // Unsaved changes guard
     val hasChanges = beats != initialSequence.beats.sortedBy { it.offsetMs }
 
     LaunchedEffect(isRecording) {
@@ -126,7 +116,6 @@ fun CustomHapticEditorScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Preview
                     OutlinedButton(
                         onClick = {
                             if (!isPlaying && beats.isNotEmpty()) {
@@ -145,8 +134,6 @@ fun CustomHapticEditorScreen(
                         Spacer(Modifier.size(4.dp))
                         Text(if (isPlaying) "Playing…" else "Preview")
                     }
-
-                    // Save
                     Button(
                         onClick = { onSave(CustomHapticSequence(beats)); onBack() },
                         enabled = beats.isNotEmpty() && !isRecording,
@@ -167,15 +154,12 @@ fun CustomHapticEditorScreen(
             contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-
-            // ── Timeline visualizer ──────────────────────────────────────────
             item("timeline") {
                 TimelineVisualizer(
                     beats = beats,
                     elapsedMs = elapsedMs,
                     isRecording = isRecording,
                     onTapToAdd = { fractionX ->
-                        // Tap on timeline to add a beat at that time position
                         val totalMs = beats.maxOfOrNull { it.offsetMs }?.plus(500L) ?: 3000L
                         val offsetMs = (fractionX * totalMs).toLong().coerceAtLeast(0L)
                         val amp = (recordStrength * 255f).roundToInt().coerceIn(1, 255)
@@ -185,7 +169,6 @@ fun CustomHapticEditorScreen(
                 )
             }
 
-            // ── Recording controls ───────────────────────────────────────────
             item("rec_controls") {
                 RecordingControls(
                     isRecording = isRecording,
@@ -215,10 +198,11 @@ fun CustomHapticEditorScreen(
                         beats = emptyList()
                         expandedIndex = -1
                     },
+                    vibrator = vibrator,
+                    recordingStartMs = recordingStartMs,
                 )
             }
 
-            // ── Beat list header ─────────────────────────────────────────────
             if (beats.isNotEmpty()) {
                 item("list_header") {
                     Row(Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -227,7 +211,6 @@ fun CustomHapticEditorScreen(
                     }
                 }
 
-                // ── Individual beat rows ─────────────────────────────────────
                 itemsIndexed(beats, key = { idx, _ -> idx }) { index, beat ->
                     BeatEditorRow(
                         index = index,
@@ -255,7 +238,6 @@ fun CustomHapticEditorScreen(
                 }
 
                 item("add_beat") {
-                    // Add beat at end button
                     OutlinedButton(
                         onClick = {
                             val lastOffset = beats.lastOrNull()?.offsetMs ?: 0L
@@ -279,10 +261,6 @@ fun CustomHapticEditorScreen(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Timeline visualizer with tap-to-add
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
 private fun TimelineVisualizer(
     beats: List<HapticBeat>,
@@ -291,7 +269,6 @@ private fun TimelineVisualizer(
     onTapToAdd: (fractionX: Float) -> Unit,
 ) {
     val totalMs = maxOf(elapsedMs, beats.maxOfOrNull { it.offsetMs }?.plus(500L) ?: 3000L)
-
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(20.dp),
@@ -306,12 +283,8 @@ private fun TimelineVisualizer(
                 }
                 Text("${(totalMs / 1000f).let { "%.1f".format(it) }}s · tap to add", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                modifier = Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .pointerInput(totalMs) {
                         detectTapGestures { offset ->
@@ -329,53 +302,23 @@ private fun TimelineVisualizer(
                         modifier = Modifier.align(Alignment.Center).padding(horizontal = 16.dp),
                     )
                 }
-
-                // Time grid lines
                 for (i in 1..9) {
-                    Box(
-                        Modifier
-                            .fillMaxHeight()
-                            .width(1.dp)
-                            .offset(x = (i * 10).dp)  // rough guide lines
-                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                            .align(Alignment.CenterStart),
-                    )
+                    Box(Modifier.fillMaxHeight().width(1.dp).offset(x = (i * 10).dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)).align(Alignment.CenterStart))
                 }
-
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     val totalWidthDp = maxWidth
                     beats.forEachIndexed { idx, beat ->
                         val xFraction = (beat.offsetMs.toFloat() / totalMs.toFloat()).coerceIn(0f, 0.97f)
                         val heightFraction = (beat.amplitude / 255f).coerceIn(0.15f, 1f)
                         val barColor = amplitudeToColor(beat.amplitude, MaterialTheme.colorScheme)
-                        Box(
-                            modifier = Modifier
-                                .offset(x = totalWidthDp * xFraction)
-                                .width(6.dp)
-                                .fillMaxHeight(heightFraction)
-                                .clip(RoundedCornerShape(3.dp))
-                                .background(barColor)
-                                .align(Alignment.CenterStart),
-                        )
-                        // Beat index label
-                        Text(
-                            "${idx + 1}",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp),
-                            color = barColor,
-                            modifier = Modifier
-                                .offset(x = totalWidthDp * xFraction - 1.dp, y = (-32).dp)
-                                .align(Alignment.BottomStart),
-                        )
+                        Box(modifier = Modifier.offset(x = totalWidthDp * xFraction).width(6.dp).fillMaxHeight(heightFraction).clip(RoundedCornerShape(3.dp)).background(barColor).align(Alignment.CenterStart))
+                        Text("${idx + 1}", style = MaterialTheme.typography.labelSmall.copy(fontSize = 7.sp), color = barColor, modifier = Modifier.offset(x = totalWidthDp * xFraction - 1.dp, y = (-32).dp).align(Alignment.BottomStart))
                     }
                 }
             }
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Recording controls panel
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun RecordingControls(
@@ -386,29 +329,17 @@ private fun RecordingControls(
     onTapBeat: () -> Unit,
     onStartStop: () -> Unit,
     onClear: () -> Unit,
+    vibrator: Vibrator,
+    recordingStartMs: Long,
 ) {
-    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    // Pulsing border alpha when recording
     val infiniteTransition = rememberInfiniteTransition(label = "rec_pulse")
-    val borderAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "border_alpha",
-    )
-    val recDotAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(500, easing = LinearEasing), RepeatMode.Reverse),
-        label = "rec_dot",
-    )
-
+    val borderAlpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 0.9f, animationSpec = infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "border_alpha")
+    val recDotAlpha by infiniteTransition.animateFloat(initialValue = 0.4f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(500, easing = LinearEasing), RepeatMode.Reverse), label = "rec_dot")
     val borderColor by animateColorAsState(
-        targetValue = if (isRecording) MaterialTheme.colorScheme.error.copy(alpha = if (isRecording) borderAlpha else 0.5f)
-        else MaterialTheme.colorScheme.outlineVariant,
-        animationSpec = tween(200),
-        label = "rec_border",
+        targetValue = if (isRecording) MaterialTheme.colorScheme.error.copy(alpha = if (isRecording) borderAlpha else 0.5f) else MaterialTheme.colorScheme.outlineVariant,
+        animationSpec = tween(200), label = "rec_border",
     )
 
     Surface(
@@ -422,17 +353,12 @@ private fun RecordingControls(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(
                         Icons.Rounded.FiberManualRecord, null,
-                        tint = (if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
-                            .let { if (isRecording) it.copy(alpha = recDotAlpha) else it },
+                        tint = (if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant).let { if (isRecording) it.copy(alpha = recDotAlpha) else it },
                         modifier = Modifier.size(16.dp),
                     )
                     Text("Recorder", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                 }
-                AnimatedVisibility(
-                    visible = isRecording,
-                    enter = fadeIn(tween(200)) + scaleIn(tween(200, easing = FastOutSlowInEasing)),
-                    exit = fadeOut(tween(160)) + scaleOut(tween(160)),
-                ) {
+                AnimatedVisibility(visible = isRecording, enter = fadeIn(tween(200)) + scaleIn(tween(200, easing = FastOutSlowInEasing)), exit = fadeOut(tween(160)) + scaleOut(tween(160))) {
                     Surface(color = MaterialTheme.colorScheme.errorContainer, shape = CircleShape) {
                         Text("REC  ${"%.1f".format(elapsedMs / 1000f)}s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), fontWeight = FontWeight.Bold)
                     }
@@ -443,14 +369,7 @@ private fun RecordingControls(
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Rounded.Vibration, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 Text("Strength", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(56.dp))
-                Slider(
-                    value = strength,
-                    onValueChange = onStrengthChange,
-                    valueRange = 0.1f..1f,
-                    steps = 17,
-                    modifier = Modifier.weight(1f),
-                    colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                )
+                Slider(value = strength, onValueChange = onStrengthChange, valueRange = 0.1f..1f, steps = 17, modifier = Modifier.weight(1f), colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest))
                 Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
                     Text("${(strength * 100f).roundToInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
                 }
@@ -458,9 +377,31 @@ private fun RecordingControls(
 
             // Controls row
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                // TAP BEAT button with continuous vibration on long press
+                val tapBeatInteraction = remember { MutableInteractionSource() }
+                val isPressed by tapBeatInteraction.collectIsPressedAsState()
+
+                // Continuous vibration while button is held
+                LaunchedEffect(isPressed, isRecording) {
+                    if (isPressed && isRecording) {
+                        while (isActive) {
+                            val offsetMs = System.currentTimeMillis() - recordingStartMs
+                            val amp = (strength * 255f).roundToInt().coerceIn(1, 255)
+                            onTapBeat()
+                            vibrator.vibrate(VibrationEffect.createOneShot(80, amp))
+                            delay(80L)
+                        }
+                    }
+                }
+
                 Button(
-                    onClick = onTapBeat,
+                    onClick = {
+                        // Single tap when not held: onTapBeat is called via LaunchedEffect
+                        // This handles the case where the user just taps quickly
+                        if (!isPressed) onTapBeat()
+                    },
                     enabled = isRecording,
+                    interactionSource = tapBeatInteraction,
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -477,8 +418,7 @@ private fun RecordingControls(
 
                 IconButton(
                     onClick = onStartStop,
-                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(14.dp))
-                        .background(if (isRecording) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(if (isRecording) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer),
                 ) {
                     Icon(if (isRecording) Icons.Rounded.Stop else Icons.Rounded.FiberManualRecord, if (isRecording) "Stop" else "Record", tint = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                 }
@@ -493,10 +433,6 @@ private fun RecordingControls(
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Individual beat editor row
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun BeatEditorRow(
@@ -513,69 +449,32 @@ private fun BeatEditorRow(
     onPreview: () -> Unit,
 ) {
     val ctx = LocalContext.current
-    val containerColor by animateColorAsState(
-        if (isExpanded) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f) else MaterialTheme.colorScheme.surfaceContainerHigh,
-        spring(stiffness = 300f), label = "bc",
-    )
-    val borderColor by animateColorAsState(
-        if (isExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-        spring(stiffness = 300f), label = "bb",
-    )
+    val containerColor by animateColorAsState(if (isExpanded) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f) else MaterialTheme.colorScheme.surfaceContainerHigh, spring(stiffness = 300f), label = "bc")
+    val borderColor by animateColorAsState(if (isExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, spring(stiffness = 300f), label = "bb")
     val barColor = amplitudeToColor(beat.amplitude, MaterialTheme.colorScheme)
 
-    Surface(
-        color = containerColor,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(if (isExpanded) 1.5.dp else 1.dp, borderColor),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    Surface(color = containerColor, shape = RoundedCornerShape(16.dp), border = BorderStroke(if (isExpanded) 1.5.dp else 1.dp, borderColor), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth()) {
-            // Summary row (always visible)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                // Beat number + amplitude bar
-                Box(
-                    modifier = Modifier.size(36.dp).background(barColor.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).border(1.dp, barColor.copy(alpha = 0.4f), RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(modifier = Modifier.size(36.dp).background(barColor.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).border(1.dp, barColor.copy(alpha = 0.4f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
                     Text("${index + 1}", style = MaterialTheme.typography.labelLarge, color = barColor, fontWeight = FontWeight.Bold)
                 }
-
                 Column(Modifier.weight(1f)) {
                     Text("${beat.offsetMs}ms", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
                     Text("Strength ${(beat.amplitude / 255f * 100f).roundToInt()}%", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-
-                // Amplitude mini-bar
-                Box(
-                    modifier = Modifier.width(4.dp).height(32.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                    contentAlignment = Alignment.BottomCenter,
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().fillMaxHeight(beat.amplitude / 255f).clip(RoundedCornerShape(2.dp)).background(barColor),
-                    )
+                Box(modifier = Modifier.width(4.dp).height(32.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.BottomCenter) {
+                    Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(beat.amplitude / 255f).clip(RoundedCornerShape(2.dp)).background(barColor))
                 }
-
-                IconButton(onClick = onPreview, modifier = Modifier.size(34.dp)) {
-                    Icon(Icons.Rounded.Vibration, "Preview", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                }
-                IconButton(onClick = onToggleExpand, modifier = Modifier.size(34.dp)) {
-                    Icon(if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                }
-                IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) {
-                    Icon(Icons.Rounded.Close, "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
-                }
+                IconButton(onClick = onPreview, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.Vibration, "Preview", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }
+                IconButton(onClick = onToggleExpand, modifier = Modifier.size(34.dp)) { Icon(if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) }
+                IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.Close, "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp)) }
             }
 
-            // Expanded editor
             AnimatedVisibility(visible = isExpanded, enter = expandVertically(), exit = shrinkVertically()) {
                 Column(Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-                    // Time offset editor
                     var offsetDraft by remember(beat.offsetMs) { mutableLongStateOf(beat.offsetMs) }
                     var offsetTick by remember { mutableIntStateOf(0) }
                     val minOffset = (prevBeatOffsetMs?.plus(10L)) ?: 0L
@@ -593,11 +492,7 @@ private fun BeatEditorRow(
                         }
                         Slider(
                             value = offsetDraft.toFloat(),
-                            onValueChange = {
-                                offsetDraft = it.toLong()
-                                val t = (it / 100).toInt()
-                                if (t != offsetTick) { offsetTick = t; ctx.performHapticSliderTick() }
-                            },
+                            onValueChange = { offsetDraft = it.toLong(); val t = (it / 100).toInt(); if (t != offsetTick) { offsetTick = t; ctx.performHapticSliderTick() } },
                             onValueChangeFinished = { onOffsetChange(offsetDraft) },
                             valueRange = minOffset.toFloat()..maxOffset.toFloat().coerceAtLeast((minOffset + 10).toFloat()),
                             colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
@@ -608,7 +503,6 @@ private fun BeatEditorRow(
                         }
                     }
 
-                    // Amplitude editor
                     var ampDraft by remember(beat.amplitude) { mutableIntStateOf(beat.amplitude) }
                     var ampTick by remember { mutableIntStateOf(0) }
 
@@ -624,19 +518,10 @@ private fun BeatEditorRow(
                         }
                         Slider(
                             value = ampDraft.toFloat(),
-                            onValueChange = {
-                                ampDraft = it.roundToInt().coerceIn(1, 255)
-                                val t = it.toInt() / 10
-                                if (t != ampTick) { ampTick = t; ctx.performHapticSliderTick() }
-                            },
+                            onValueChange = { ampDraft = it.roundToInt().coerceIn(1, 255); val t = it.toInt() / 10; if (t != ampTick) { ampTick = t; ctx.performHapticSliderTick() } },
                             onValueChangeFinished = { onAmplitudeChange(ampDraft) },
-                            valueRange = 1f..255f,
-                            steps = 25,
-                            colors = SliderDefaults.colors(
-                                thumbColor = amplitudeToColor(ampDraft, MaterialTheme.colorScheme),
-                                activeTrackColor = amplitudeToColor(ampDraft, MaterialTheme.colorScheme),
-                                inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            ),
+                            valueRange = 1f..255f, steps = 25,
+                            colors = SliderDefaults.colors(thumbColor = amplitudeToColor(ampDraft, MaterialTheme.colorScheme), activeTrackColor = amplitudeToColor(ampDraft, MaterialTheme.colorScheme), inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
                         )
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Soft", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -648,10 +533,6 @@ private fun BeatEditorRow(
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun amplitudeToColor(amplitude: Int, colorScheme: ColorScheme = MaterialTheme.colorScheme): Color {

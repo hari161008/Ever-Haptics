@@ -10,11 +10,16 @@ import android.media.AudioManager
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationAttributes
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import com.hapticks.app.HapticksApp
 import com.hapticks.app.data.HapticsSettings
+import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.haptics.HapticEngine
 import com.hapticks.app.service.accessibility.isAccessibilityEventFromOwnApplication
 import com.hapticks.app.service.accessibility.interacted.InteractableViewHaptics
@@ -34,11 +39,22 @@ class HapticsAccessibilityService : AccessibilityService() {
 
     private lateinit var engine: HapticEngine
     private lateinit var audioManager: AudioManager
+    private val vibrator: Vibrator by lazy {
+        (getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+    }
 
     private var chargingReceiver: BroadcastReceiver? = null
     private var brightnessObserver: ContentObserver? = null
     private var unlockReceiver: BroadcastReceiver? = null
     private var screenReceiver: BroadcastReceiver? = null
+
+    // Debounce for navbar haptics — prevents multiple fires per gesture
+    @Volatile private var lastNavBarHapticMs: Long = 0L
+    private val navBarDebounceMs = 500L
+
+    // Debounce for keyboard haptics
+    @Volatile private var lastKeyboardHapticMs: Long = 0L
+    private val keyboardDebounceMs = 30L
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -59,6 +75,26 @@ class HapticsAccessibilityService : AccessibilityService() {
             .launchIn(scope)
     }
 
+    private fun playCustomOrPattern(seq: CustomHapticSequence, playPattern: () -> Unit) {
+        if (!seq.isEmpty) scope.launch { playCustomSequence(seq) }
+        else playPattern()
+    }
+
+    private suspend fun playCustomSequence(seq: CustomHapticSequence) {
+        val sorted = seq.beats.sortedBy { it.offsetMs }
+        val touchAttrs = VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH)
+        val startMs = System.currentTimeMillis()
+        for (beat in sorted) {
+            val now = System.currentTimeMillis() - startMs
+            val waitMs = beat.offsetMs - now
+            if (waitMs > 0) delay(waitMs)
+            withContext(Dispatchers.Main) {
+                try { vibrator.vibrate(VibrationEffect.createOneShot(60L, beat.amplitude.coerceIn(1, 255)), touchAttrs) }
+                catch (_: Exception) { engine.playOneShot(60L, beat.amplitude) }
+            }
+        }
+    }
+
     private fun updateChargingReceiver(settings: HapticsSettings) {
         if (settings.globalEnabled && settings.chargingVibEnabled) {
             if (chargingReceiver == null) {
@@ -66,18 +102,15 @@ class HapticsAccessibilityService : AccessibilityService() {
                     override fun onReceive(context: Context?, intent: Intent?) {
                         val s = current
                         if (!s.globalEnabled || !s.chargingVibEnabled) return
-                        val durationMs = when (s.chargingVibDurationIndex) { 0 -> 2000L; 1 -> 2500L; else -> 3000L }
-                        val amplitude = (s.chargingVibIntensity * 255).toInt().coerceIn(1, 255)
-                        when (intent?.action) {
-                            Intent.ACTION_POWER_CONNECTED -> if (s.chargingVibOnConnect) engine.playOneShot(durationMs, amplitude)
-                            Intent.ACTION_POWER_DISCONNECTED -> if (s.chargingVibOnDisconnect) engine.playOneShot(durationMs, amplitude)
+                        val shouldPlay = when (intent?.action) {
+                            Intent.ACTION_POWER_CONNECTED -> s.chargingVibOnConnect
+                            Intent.ACTION_POWER_DISCONNECTED -> s.chargingVibOnDisconnect
+                            else -> false
                         }
+                        if (shouldPlay) playCustomOrPattern(s.chargingVibCustomSequence) { engine.play(s.chargingVibPattern, s.chargingVibIntensity) }
                     }
                 }
-                val filter = IntentFilter().apply {
-                    addAction(Intent.ACTION_POWER_CONNECTED)
-                    addAction(Intent.ACTION_POWER_DISCONNECTED)
-                }
+                val filter = IntentFilter().apply { addAction(Intent.ACTION_POWER_CONNECTED); addAction(Intent.ACTION_POWER_DISCONNECTED) }
                 registerReceiver(receiver, filter)
                 chargingReceiver = receiver
             }
@@ -92,7 +125,8 @@ class HapticsAccessibilityService : AccessibilityService() {
                 val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
                     override fun onChange(selfChange: Boolean, uri: Uri?) {
                         val s = current
-                        if (s.globalEnabled && s.brightnessHapticEnabled) engine.play(s.brightnessHapticPattern, s.brightnessHapticIntensity, 0L)
+                        if (!s.globalEnabled || !s.brightnessHapticEnabled) return
+                        playCustomOrPattern(s.brightnessHapticCustomSequence) { engine.play(s.brightnessHapticPattern, s.brightnessHapticIntensity, 0L) }
                     }
                 }
                 contentResolver.registerContentObserver(Settings.System.getUriFor(Settings.System.SCREEN_BRIGHTNESS), false, observer)
@@ -109,7 +143,8 @@ class HapticsAccessibilityService : AccessibilityService() {
                 val receiver = object : BroadcastReceiver() {
                     override fun onReceive(context: Context?, intent: Intent?) {
                         val s = current
-                        if (s.globalEnabled && s.unlockHapticEnabled && intent?.action == Intent.ACTION_USER_PRESENT) engine.play(s.unlockHapticPattern, s.unlockHapticIntensity)
+                        if (!s.globalEnabled || !s.unlockHapticEnabled || intent?.action != Intent.ACTION_USER_PRESENT) return
+                        playCustomOrPattern(s.unlockHapticCustomSequence) { engine.play(s.unlockHapticPattern, s.unlockHapticIntensity) }
                     }
                 }
                 registerReceiver(receiver, IntentFilter(Intent.ACTION_USER_PRESENT))
@@ -128,8 +163,8 @@ class HapticsAccessibilityService : AccessibilityService() {
                         val s = current
                         if (!s.globalEnabled || !s.powerHapticEnabled) return
                         when (intent?.action) {
-                            Intent.ACTION_SCREEN_OFF -> engine.play(s.powerHapticPattern, s.powerHapticIntensity)
-                            Intent.ACTION_SCREEN_ON -> engine.play(s.powerHapticPattern, s.powerHapticIntensity, 200L)
+                            Intent.ACTION_SCREEN_OFF -> playCustomOrPattern(s.powerHapticCustomSequence) { engine.play(s.powerHapticPattern, s.powerHapticIntensity) }
+                            Intent.ACTION_SCREEN_ON -> playCustomOrPattern(s.powerHapticCustomSequence) { engine.play(s.powerHapticPattern, s.powerHapticIntensity, 200L) }
                         }
                     }
                 }
@@ -149,14 +184,31 @@ class HapticsAccessibilityService : AccessibilityService() {
             KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN -> {
                 if (s.volumeHapticEnabled && event.action == KeyEvent.ACTION_DOWN) {
                     val atLimit = isVolumeAtLimit(event.keyCode)
-                    engine.play(s.volumeHapticPattern, if (atLimit) 1.0f else s.volumeHapticIntensity, 0L)
+                    val intensity = if (atLimit) 1.0f else s.volumeHapticIntensity
+                    playCustomOrPattern(s.volumeHapticCustomSequence) { engine.play(s.volumeHapticPattern, intensity, 0L) }
                 }
             }
             KeyEvent.KEYCODE_POWER -> {
-                if (s.powerHapticEnabled && event.action == KeyEvent.ACTION_DOWN) engine.play(s.powerHapticPattern, s.powerHapticIntensity, 0L)
+                if (s.powerHapticEnabled && event.action == KeyEvent.ACTION_DOWN)
+                    playCustomOrPattern(s.powerHapticCustomSequence) { engine.play(s.powerHapticPattern, s.powerHapticIntensity, 0L) }
             }
             KeyEvent.KEYCODE_HOME -> {
-                if (s.navBarHapticEnabled && event.action == KeyEvent.ACTION_DOWN) engine.play(s.navBarHapticPattern, s.navBarHapticIntensity, 100L)
+                if (s.navBarHapticEnabled && event.action == KeyEvent.ACTION_DOWN) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastNavBarHapticMs >= navBarDebounceMs) {
+                        lastNavBarHapticMs = now
+                        playCustomOrPattern(s.navBarHapticCustomSequence) { engine.play(s.navBarHapticPattern, s.navBarHapticIntensity, 0L) }
+                    }
+                }
+            }
+            KeyEvent.KEYCODE_BACK -> {
+                if (s.navBarHapticEnabled && event.action == KeyEvent.ACTION_DOWN) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastNavBarHapticMs >= navBarDebounceMs) {
+                        lastNavBarHapticMs = now
+                        playCustomOrPattern(s.navBarHapticCustomSequence) { engine.play(s.navBarHapticPattern, s.navBarHapticIntensity, 0L) }
+                    }
+                }
             }
         }
         return false
@@ -183,19 +235,63 @@ class HapticsAccessibilityService : AccessibilityService() {
 
         when (type) {
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                if (s.tapEnabled && !s.tapExcludedPackages.contains(pkg) && InteractableViewHaptics.hasToggleLikeContentChange(ev))
-                    InteractableViewHaptics.handle(engine, s, ev)
-            }
-            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
-                if (s.tapEnabled && !s.tapExcludedPackages.contains(pkg)) InteractableViewHaptics.handle(engine, s, ev)
-            }
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                if (s.navBarHapticEnabled) {
-                    val pkgName = pkg ?: ""
-                    if (pkgName.contains("launcher", ignoreCase = true) || pkgName == "com.android.launcher3")
-                        engine.play(s.navBarHapticPattern, s.navBarHapticIntensity, 300L)
+                if (s.tapEnabled && !s.tapExcludedPackages.contains(pkg) && InteractableViewHaptics.hasToggleLikeContentChange(ev)) {
+                    if (!s.tapHapticCustomSequence.isEmpty) scope.launch { playCustomSequence(s.tapHapticCustomSequence) }
+                    else InteractableViewHaptics.handle(engine, s, ev)
                 }
             }
+
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // Keyboard haptics: detect clicks on IME / keyboard views
+                if (s.keyboardHapticEnabled) {
+                    val now = System.currentTimeMillis()
+                    val sourceClass = ev.className?.toString() ?: ""
+                    val isKeyboardEvent = isKeyboardPackage(pkg) ||
+                            sourceClass.contains("Key", ignoreCase = true) ||
+                            sourceClass.contains("Button", ignoreCase = true)
+                    if (isKeyboardEvent && now - lastKeyboardHapticMs >= keyboardDebounceMs) {
+                        lastKeyboardHapticMs = now
+                        playCustomOrPattern(s.keyboardHapticCustomSequence) { engine.play(s.keyboardHapticPattern, s.keyboardHapticIntensity, 0L) }
+                        return
+                    }
+                }
+                if (s.tapEnabled && !s.tapExcludedPackages.contains(pkg)) {
+                    if (!s.tapHapticCustomSequence.isEmpty) scope.launch { playCustomSequence(s.tapHapticCustomSequence) }
+                    else InteractableViewHaptics.handle(engine, s, ev)
+                }
+            }
+
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
+                // Keyboard haptics via text change (catches software keyboard typing)
+                if (s.keyboardHapticEnabled) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastKeyboardHapticMs >= keyboardDebounceMs) {
+                        lastKeyboardHapticMs = now
+                        playCustomOrPattern(s.keyboardHapticCustomSequence) { engine.play(s.keyboardHapticPattern, s.keyboardHapticIntensity, 0L) }
+                    }
+                }
+            }
+
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // NavBar gesture navigation: fire only when a new window/activity is shown
+                // and debounce to prevent multiple fires per gesture
+                if (s.navBarHapticEnabled) {
+                    val now = System.currentTimeMillis()
+                    // Only fire for actual window transitions (non-null class name = real activity/fragment)
+                    val className = ev.className?.toString()
+                    val isRealWindow = !className.isNullOrBlank() &&
+                            !className.contains("PopupWindow", ignoreCase = true) &&
+                            !className.contains("Toast", ignoreCase = true) &&
+                            !className.contains("DropDown", ignoreCase = true) &&
+                            !className.contains("AutoComplete", ignoreCase = true) &&
+                            ev.packageName != "android"
+                    if (isRealWindow && now - lastNavBarHapticMs >= navBarDebounceMs) {
+                        lastNavBarHapticMs = now
+                        playCustomOrPattern(s.navBarHapticCustomSequence) { engine.play(s.navBarHapticPattern, s.navBarHapticIntensity, 0L) }
+                    }
+                }
+            }
+
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
                 var consumedByEdge = false
                 if (!s.scrollExcludedPackages.contains(pkg)) {
@@ -204,17 +300,29 @@ class HapticsAccessibilityService : AccessibilityService() {
                 if (s.scrollEnabled && !consumedByEdge && !s.scrollExcludedPackages.contains(pkg)) {
                     when (val scroll = ScrollContentVibration.onViewScrolled(ev, s)) {
                         is ScrollContentVibration.Decision.Play -> {
-                            if (scroll.count <= 1) {
-                                engine.play(s.scrollPattern, scroll.intensity, 0L)
-                            } else {
-                                scope.launch { repeat(scroll.count) { i -> if (i > 0) delay(42L); engine.play(s.scrollPattern, scroll.intensity, 0L) } }
-                            }
+                            if (scroll.count <= 1) engine.play(s.scrollPattern, scroll.intensity, 0L)
+                            else scope.launch { repeat(scroll.count) { i -> if (i > 0) delay(42L); engine.play(s.scrollPattern, scroll.intensity, 0L) } }
                         }
                         ScrollContentVibration.Decision.None -> Unit
                     }
                 }
             }
         }
+    }
+
+    private fun isKeyboardPackage(pkg: String?): Boolean {
+        if (pkg == null) return false
+        return pkg.contains("keyboard", ignoreCase = true) ||
+                pkg.contains("inputmethod", ignoreCase = true) ||
+                pkg.contains("gboard", ignoreCase = true) ||
+                pkg.contains("honeyboard", ignoreCase = true) ||
+                pkg.contains("swiftkey", ignoreCase = true) ||
+                pkg.contains("grammarly", ignoreCase = true) ||
+                pkg.contains("fleksy", ignoreCase = true) ||
+                pkg.contains("chrooma", ignoreCase = true) ||
+                pkg.contains("touchpal", ignoreCase = true) ||
+                pkg.contains("kika", ignoreCase = true) ||
+                pkg == "com.google.android.inputmethod.latin"
     }
 
     override fun onInterrupt() = Unit
@@ -233,6 +341,7 @@ class HapticsAccessibilityService : AccessibilityService() {
         var mask = InteractableViewHaptics.eventTypeMask(settings)
         if (settings.scrollEnabled) mask = mask or AccessibilityEvent.TYPE_VIEW_SCROLLED
         if (settings.navBarHapticEnabled) mask = mask or AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        if (settings.keyboardHapticEnabled) mask = mask or AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED
         if (mask == 0) mask = AccessibilityEvent.TYPE_VIEW_CLICKED
         if (info.eventTypes == mask) return
         info.eventTypes = mask; serviceInfo = info

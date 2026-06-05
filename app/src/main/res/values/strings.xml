@@ -193,4 +193,8 @@
     <!-- Version -->
     <string name="app_version">v3.0.0</string>
 
+    <string name="pattern_section_title">Pattern</string>
+    <string name="custom_haptic_option_title">Custom Pattern</string>
+    <string name="custom_haptic_option_subtitle">Record your own haptic rhythm</string>
+    <string name="custom_haptic_option_beats">%1$d beats recorded</string>
 </resources>
