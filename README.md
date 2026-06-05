@@ -1,17 +1,60 @@
 # Ever Haptics
-Ever Haptics is an Android app that adds haptic feedback across apps and system UI to make your phone feel more responsive and premium.
 <br>
+
+<img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Assets/Ever%20Haptics%20Banner.png" width="100%" />
+Ever Haptics is an Android app that adds haptic feedback across apps and system UI to make your phone feel more responsive and premium.
+
+<br>
+<br>
+<center>
+  <b>Think Different :)</b>
+</center>
+<br>
+
+# 📦 Latest Releases
+GitHub: [Download](https://github.com/hari161008/Ever-Haptics) ⬇️
+
+<br>
+
+# 🚀 Telegram Links
+
+🌐 Cool Apps Recommending Channel:
+<a href="https://t.me/CoolAppStore">Join Now</a>
+<br>
+📢 Everlasting Support Group:
+<a href="https://t.me/EverlastingAndroidTweak">Join Now</a>
+
+<br>
+
+# 📱 Screenshots:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/1.png" width="32%"/>
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/2.png" width="32%"/>
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/3.png" width="32%"/>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/4.png" width="32%"/>
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/5.png" width="32%"/>
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/6.png" width="32%"/>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/7.png" width="32%"/>
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/8.png" width="32%"/>
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/9.png" width="32%"/>
+</p>
+
+<br>
+
+---
+
+# Features of Ever Dialer .✦ ݁˖
+
+┈➤
 
 # Why This App ??
 Some phones especially Pixel devices have really good haptics, but they’re underutilized. A lot of apps and even parts of Android don’t give haptic feedback when you interact with them. That makes the experience feel a bit flat.
 
 So Ever Haptics is there to fix that and make interactions feel more alive and satisfying.
-<br>
-
-# What it Does ??
-* Adds haptic feedback to UI interactions <br>
-* Improves the feel of scrolling and touch actions <br>
-* Makes the overall experience more “premium” <br>
-
-# Notes
-This is still a work in progress. The goal is to make haptics feel natural, fast, and consistent across all apps without adding lag or using too much battery.
