@@ -33,6 +33,7 @@ import com.hapticks.app.ui.screens.notificationhaptics.CustomHapticEditorScreen
 import com.hapticks.app.ui.screens.notificationhaptics.NotificationHapticsScreen
 import com.hapticks.app.ui.screens.scrollhaptics.ScrollHapticsScreen
 import com.hapticks.app.ui.screens.tapHaptics.FeelEveryTapScreen
+import com.hapticks.app.ui.screens.musichaptics.MusicHapticsScreen
 import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
 import com.hapticks.app.ui.theme.HapticksTheme
 import com.hapticks.app.viewmodel.FeelEveryTapViewModel
@@ -49,6 +50,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by viewModel.settings.collectAsStateWithLifecycle()
             val isServiceEnabled by viewModel.isServiceEnabled.collectAsStateWithLifecycle()
+            val isBatterySaverActive by viewModel.isBatterySaverActive.collectAsStateWithLifecycle()
 
             HapticksTheme(
                 themeMode = settings.themeMode,
@@ -102,6 +104,8 @@ class MainActivity : ComponentActivity() {
                                             BottomTab.HOME -> HomeScreen(
                                                 globalEnabled = settings.globalEnabled,
                                                 isServiceEnabled = isServiceEnabled,
+                                                isBatterySaverActive = isBatterySaverActive,
+                                                batterySaverDetectionEnabled = settings.batterySaverDetectionEnabled,
                                                 onGlobalEnabledChange = viewModel::setGlobalEnabled,
                                                 onOpenFeelEveryTap = { route = Route.FEEL_EVERY_TAP },
                                                 onOpenTactileScrolling = { route = Route.TACTILE_SCROLLING },
@@ -111,6 +115,7 @@ class MainActivity : ComponentActivity() {
                                                 onOpenUnlockHaptics = { route = Route.UNLOCK_HAPTICS },
                                                 onOpenNotificationHaptics = { route = Route.NOTIFICATION_HAPTICS },
                                                 onOpenKeyboardHaptics = { route = Route.KEYBOARD_HAPTICS },
+                                                onOpenMusicHaptics = { route = Route.MUSIC_HAPTICS },
                                                 onOpenAccessibilitySettings = ::openAccessibilitySettings,
                                             )
                                             BottomTab.SETTINGS -> SettingsScreen(
@@ -119,6 +124,7 @@ class MainActivity : ComponentActivity() {
                                                 onThemeModeChange = viewModel::setThemeMode,
                                                 onAmoledBlackChange = viewModel::setAmoledBlack,
                                                 onSeedColorChange = viewModel::setSeedColor,
+                                                onBatterySaverDetectionChange = viewModel::setBatterySaverDetectionEnabled,
                                             )
                                         }
                                     }
@@ -304,6 +310,17 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
+                                Route.MUSIC_HAPTICS -> {
+                                    BackHandler { route = Route.HOME }
+                                    MusicHapticsScreen(
+                                        settings = settings,
+                                        onMusicHapticsEnabledChange = viewModel::setMusicHapticsEnabled,
+                                        onSensitivityCommit = viewModel::commitMusicHapticsSensitivity,
+                                        onStrengthCommit = viewModel::commitMusicHapticsStrength,
+                                        onBack = { route = Route.HOME },
+                                    )
+                                }
+
                                 Route.CUSTOM_HAPTIC_EDITOR -> {
                                     val origin = previousRoute
                                     BackHandler { route = origin }
@@ -344,6 +361,7 @@ class MainActivity : ComponentActivity() {
         TACTILE_SCROLLING, SCROLL_APP_EXCLUSIONS,
         CHARGING_HAPTICS, BUTTON_HAPTICS,
         NAVBAR_HAPTICS, UNLOCK_HAPTICS, KEYBOARD_HAPTICS,
+        MUSIC_HAPTICS,
         SETTINGS, NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR
     }
 

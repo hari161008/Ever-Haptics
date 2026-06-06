@@ -103,6 +103,10 @@ class HapticsPreferences(context: Context) {
                 keyboardHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.KEYBOARD_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.KEYBOARD_HAPTIC_PATTERN) } ?: HapticsSettings.Default.keyboardHapticPattern,
                 keyboardHapticIntensity = (prefs[Keys.KEYBOARD_HAPTIC_INTENSITY] ?: HapticsSettings.Default.keyboardHapticIntensity).coerceIn(0f, 1f),
                 keyboardHapticCustomSequence = parseCustomSequence(prefs[Keys.KEYBOARD_HAPTIC_CUSTOM_SEQUENCE]),
+                batterySaverDetectionEnabled = prefs[Keys.BATTERY_SAVER_DETECTION_ENABLED] ?: HapticsSettings.Default.batterySaverDetectionEnabled,
+                musicHapticsEnabled = prefs[Keys.MUSIC_HAPTICS_ENABLED] ?: HapticsSettings.Default.musicHapticsEnabled,
+                musicHapticsSensitivity = (prefs[Keys.MUSIC_HAPTICS_SENSITIVITY] ?: HapticsSettings.Default.musicHapticsSensitivity).coerceIn(0f, 1f),
+                musicHapticsStrength = (prefs[Keys.MUSIC_HAPTICS_STRENGTH] ?: HapticsSettings.Default.musicHapticsStrength).coerceIn(0f, 1f),
             )
         }
 
@@ -177,6 +181,11 @@ class HapticsPreferences(context: Context) {
     suspend fun setKeyboardHapticPattern(pattern: HapticPattern) = edit { it[Keys.KEYBOARD_HAPTIC_PATTERN] = pattern.name }
     suspend fun setKeyboardHapticIntensity(intensity: Float) = edit { it[Keys.KEYBOARD_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
     suspend fun setKeyboardHapticCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.KEYBOARD_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
+
+    suspend fun setBatterySaverDetectionEnabled(enabled: Boolean) = edit { it[Keys.BATTERY_SAVER_DETECTION_ENABLED] = enabled }
+    suspend fun setMusicHapticsEnabled(enabled: Boolean) = edit { it[Keys.MUSIC_HAPTICS_ENABLED] = enabled }
+    suspend fun setMusicHapticsSensitivity(value: Float) = edit { it[Keys.MUSIC_HAPTICS_SENSITIVITY] = value.coerceIn(0f, 1f) }
+    suspend fun setMusicHapticsStrength(value: Float) = edit { it[Keys.MUSIC_HAPTICS_STRENGTH] = value.coerceIn(0f, 1f) }
 
     private suspend inline fun edit(crossinline block: (MutablePreferences) -> Unit) {
         try { dataStore.edit { block(it) } } catch (e: IOException) { Log.w(TAG, "DataStore write failed", e) }
@@ -253,6 +262,10 @@ class HapticsPreferences(context: Context) {
         val KEYBOARD_HAPTIC_PATTERN = stringPreferencesKey("keyboard_haptic_pattern")
         val KEYBOARD_HAPTIC_INTENSITY = floatPreferencesKey("keyboard_haptic_intensity")
         val KEYBOARD_HAPTIC_CUSTOM_SEQUENCE = stringPreferencesKey("keyboard_haptic_custom_sequence")
+        val BATTERY_SAVER_DETECTION_ENABLED = booleanPreferencesKey("battery_saver_detection_enabled")
+        val MUSIC_HAPTICS_ENABLED = booleanPreferencesKey("music_haptics_enabled")
+        val MUSIC_HAPTICS_SENSITIVITY = floatPreferencesKey("music_haptics_sensitivity")
+        val MUSIC_HAPTICS_STRENGTH = floatPreferencesKey("music_haptics_strength")
     }
 
     private companion object {

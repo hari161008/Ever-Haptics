@@ -55,6 +55,7 @@ fun SettingsScreen(
     onThemeModeChange: (ThemeMode) -> Unit,
     onAmoledBlackChange: (Boolean) -> Unit,
     onSeedColorChange: (Int) -> Unit = {},
+    onBatterySaverDetectionChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -146,6 +147,27 @@ fun SettingsScreen(
                     )
                     RowDivider()
                     ThemeModeRow(selected = settings.themeMode, onThemeModeChange = onThemeModeChange)
+                }
+            }
+
+            // ── Battery Saver Detection ──
+            item(key = "battery_saver") {
+                SettingsSection(
+                    title = stringResource(R.string.settings_battery_saver_section),
+                    icon = Icons.Rounded.BatterySaver,
+                    iconTint = MaterialTheme.colorScheme.error,
+                ) {
+                    SettingsRow(
+                        title = stringResource(R.string.settings_battery_saver_title),
+                        subtitle = stringResource(R.string.settings_battery_saver_subtitle),
+                        position = RowPosition.Single,
+                        trailing = {
+                            Switch(
+                                checked = settings.batterySaverDetectionEnabled,
+                                onCheckedChange = onBatterySaverDetectionChange,
+                            )
+                        },
+                    )
                 }
             }
 

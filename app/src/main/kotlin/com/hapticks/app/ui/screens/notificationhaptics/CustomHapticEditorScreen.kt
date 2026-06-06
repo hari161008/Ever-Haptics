@@ -72,6 +72,9 @@ fun CustomHapticEditorScreen(
     var recordStrength by remember { mutableFloatStateOf(0.8f) }
     var lastStrengthTick by remember { mutableIntStateOf(slider01ToTickIndex(0.8f)) }
 
+    var isCountingDown by remember { mutableStateOf(false) }
+    var countdownValue by remember { mutableIntStateOf(3) }
+
     var isPlaying by remember { mutableStateOf(false) }
     var expandedIndex by remember { mutableIntStateOf(-1) }
 
@@ -172,6 +175,8 @@ fun CustomHapticEditorScreen(
             item("rec_controls") {
                 RecordingControls(
                     isRecording = isRecording,
+                    isCountingDown = isCountingDown,
+                    countdownValue = countdownValue,
                     elapsedMs = elapsedMs,
                     strength = recordStrength,
                     onStrengthChange = {
@@ -186,10 +191,25 @@ fun CustomHapticEditorScreen(
                         vibrator.vibrate(VibrationEffect.createOneShot(60, amp))
                     },
                     onStartStop = {
-                        if (!isRecording) {
-                            recordingStartMs = System.currentTimeMillis()
-                            elapsedMs = 0L
-                            isRecording = true
+                        if (!isRecording && !isCountingDown) {
+                            isCountingDown = true
+                            countdownValue = 3
+                            scope.launch {
+                                for (i in 3 downTo 1) {
+                                    countdownValue = i
+                                    vibrator.vibrate(VibrationEffect.createOneShot(80, if (i == 1) 200 else 120))
+                                    delay(1000L)
+                                    if (!isCountingDown) return@launch
+                                }
+                                isCountingDown = false
+                                recordingStartMs = System.currentTimeMillis()
+                                elapsedMs = 0L
+                                isRecording = true
+                                vibrator.vibrate(VibrationEffect.createOneShot(120, 255))
+                            }
+                        } else if (isCountingDown) {
+                            isCountingDown = false
+                            countdownValue = 3
                         } else {
                             isRecording = false
                         }
@@ -323,6 +343,8 @@ private fun TimelineVisualizer(
 @Composable
 private fun RecordingControls(
     isRecording: Boolean,
+    isCountingDown: Boolean,
+    countdownValue: Int,
     elapsedMs: Long,
     strength: Float,
     onStrengthChange: (Float) -> Unit,
@@ -332,20 +354,24 @@ private fun RecordingControls(
     vibrator: Vibrator,
     recordingStartMs: Long,
 ) {
-    val scope = rememberCoroutineScope()
-
     val infiniteTransition = rememberInfiniteTransition(label = "rec_pulse")
     val borderAlpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 0.9f, animationSpec = infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "border_alpha")
     val recDotAlpha by infiniteTransition.animateFloat(initialValue = 0.4f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(500, easing = LinearEasing), RepeatMode.Reverse), label = "rec_dot")
+    val countdownPulse by infiniteTransition.animateFloat(initialValue = 0.85f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "cd_pulse")
+
     val borderColor by animateColorAsState(
-        targetValue = if (isRecording) MaterialTheme.colorScheme.error.copy(alpha = if (isRecording) borderAlpha else 0.5f) else MaterialTheme.colorScheme.outlineVariant,
+        targetValue = when {
+            isRecording -> MaterialTheme.colorScheme.error.copy(alpha = borderAlpha)
+            isCountingDown -> MaterialTheme.colorScheme.tertiary.copy(alpha = borderAlpha)
+            else -> MaterialTheme.colorScheme.outlineVariant
+        },
         animationSpec = tween(200), label = "rec_border",
     )
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(if (isRecording) 2.dp else 1.dp, borderColor),
+        border = BorderStroke(if (isRecording || isCountingDown) 2.dp else 1.dp, borderColor),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -353,14 +379,64 @@ private fun RecordingControls(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(
                         Icons.Rounded.FiberManualRecord, null,
-                        tint = (if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant).let { if (isRecording) it.copy(alpha = recDotAlpha) else it },
+                        tint = when {
+                            isRecording -> MaterialTheme.colorScheme.error.copy(alpha = recDotAlpha)
+                            isCountingDown -> MaterialTheme.colorScheme.tertiary.copy(alpha = recDotAlpha)
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         modifier = Modifier.size(16.dp),
                     )
                     Text("Recorder", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                 }
-                AnimatedVisibility(visible = isRecording, enter = fadeIn(tween(200)) + scaleIn(tween(200, easing = FastOutSlowInEasing)), exit = fadeOut(tween(160)) + scaleOut(tween(160))) {
-                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = CircleShape) {
-                        Text("REC  ${"%.1f".format(elapsedMs / 1000f)}s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), fontWeight = FontWeight.Bold)
+                AnimatedContent(
+                    targetState = when {
+                        isCountingDown -> "countdown"
+                        isRecording -> "recording"
+                        else -> "idle"
+                    },
+                    transitionSpec = { fadeIn(tween(200)) + scaleIn(tween(200)) togetherWith fadeOut(tween(160)) + scaleOut(tween(160)) },
+                    label = "rec_badge",
+                ) { state ->
+                    when (state) {
+                        "recording" -> Surface(color = MaterialTheme.colorScheme.errorContainer, shape = CircleShape) {
+                            Text("REC  ${"%.1f".format(elapsedMs / 1000f)}s", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), fontWeight = FontWeight.Bold)
+                        }
+                        "countdown" -> Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
+                            Text("Starting in  $countdownValue", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), fontWeight = FontWeight.Bold)
+                        }
+                        else -> Spacer(Modifier.size(0.dp))
+                    }
+                }
+            }
+
+            // Countdown overlay
+            AnimatedVisibility(
+                visible = isCountingDown,
+                enter = fadeIn(tween(200)) + expandVertically(),
+                exit = fadeOut(tween(200)) + shrinkVertically(),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f))
+                        .padding(vertical = 20.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = countdownValue.toString(),
+                            style = MaterialTheme.typography.displayLarge.copy(
+                                fontSize = (72 * countdownPulse).sp,
+                            ),
+                            color = MaterialTheme.colorScheme.tertiary,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            "Get ready to tap beats…",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
                     }
                 }
             }
@@ -396,8 +472,6 @@ private fun RecordingControls(
 
                 Button(
                     onClick = {
-                        // Single tap when not held: onTapBeat is called via LaunchedEffect
-                        // This handles the case where the user just taps quickly
                         if (!isPressed) onTapBeat()
                     },
                     enabled = isRecording,
@@ -418,9 +492,31 @@ private fun RecordingControls(
 
                 IconButton(
                     onClick = onStartStop,
-                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(if (isRecording) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(
+                        when {
+                            isRecording -> MaterialTheme.colorScheme.errorContainer
+                            isCountingDown -> MaterialTheme.colorScheme.tertiaryContainer
+                            else -> MaterialTheme.colorScheme.primaryContainer
+                        }
+                    ),
                 ) {
-                    Icon(if (isRecording) Icons.Rounded.Stop else Icons.Rounded.FiberManualRecord, if (isRecording) "Stop" else "Record", tint = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                    Icon(
+                        imageVector = when {
+                            isRecording -> Icons.Rounded.Stop
+                            isCountingDown -> Icons.Rounded.Close
+                            else -> Icons.Rounded.FiberManualRecord
+                        },
+                        contentDescription = when {
+                            isRecording -> "Stop"
+                            isCountingDown -> "Cancel"
+                            else -> "Record"
+                        },
+                        tint = when {
+                            isRecording -> MaterialTheme.colorScheme.error
+                            isCountingDown -> MaterialTheme.colorScheme.tertiary
+                            else -> MaterialTheme.colorScheme.primary
+                        },
+                    )
                 }
 
                 IconButton(

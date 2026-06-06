@@ -72,6 +72,12 @@ data class HapticsSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val amoledBlack: Boolean = false,
     val seedColor: Int = 0xFF6750A4.toInt(),
+    // Battery Saver Detection
+    val batterySaverDetectionEnabled: Boolean = false,
+    // Music Haptics
+    val musicHapticsEnabled: Boolean = false,
+    val musicHapticsSensitivity: Float = 0.5f,
+    val musicHapticsStrength: Float = 0.7f,
     // Notification / call / alarm haptics
     val callHapticEnabled: Boolean = false,
     val callHapticPattern: HapticPattern = HapticPattern.HEAVY_CLICK,

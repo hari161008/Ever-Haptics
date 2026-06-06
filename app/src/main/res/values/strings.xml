@@ -197,4 +197,30 @@
     <string name="custom_haptic_option_title">Custom Pattern</string>
     <string name="custom_haptic_option_subtitle">Record your own haptic rhythm</string>
     <string name="custom_haptic_option_beats">%1$d beats recorded</string>
+
+    <!-- Keyboard &amp; Notification home card strings -->
+    <string name="home_keyboard_haptics_title">Keyboard Haptics</string>
+    <string name="home_keyboard_haptics_subtitle">Custom haptic feedback on every keystroke</string>
+    <string name="home_notification_haptics_title">Calls, Alerts &amp; Alarms</string>
+    <string name="home_notification_haptics_subtitle">Custom haptic patterns for incoming calls, notifications, and alarms</string>
+
+    <!-- Music Haptics -->
+    <string name="home_music_haptics_title">Music &amp; Sound Haptics</string>
+    <string name="home_music_haptics_subtitle">Vibrate to the beat of music and sounds</string>
+    <string name="music_haptics_screen_title">Music &amp; Sound Haptics</string>
+    <string name="music_haptics_section_main">Beat Detection</string>
+    <string name="music_haptics_toggle_title">Music &amp; Sound Haptics</string>
+    <string name="music_haptics_toggle_subtitle">Analyse audio from the microphone in real-time and vibrate in sync with detected beats</string>
+    <string name="music_haptics_sensitivity_title">Beat Sensitivity</string>
+    <string name="music_haptics_sensitivity_subtitle">How sensitive the beat detector is. Higher values trigger on quieter sounds.</string>
+    <string name="music_haptics_strength_title">Haptic Strength</string>
+    <string name="music_haptics_strength_subtitle">How strong the haptic feedback is for each detected beat.</string>
+    <string name="music_haptics_permission_title">Microphone Permission Required</string>
+    <string name="music_haptics_permission_subtitle">Music &amp; Sound Haptics needs access to the microphone to detect beats from audio playing around you.</string>
+    <string name="music_haptics_permission_button">Grant Permission</string>
+
+    <!-- Battery Saver Detection -->
+    <string name="settings_battery_saver_section">Battery Saver</string>
+    <string name="settings_battery_saver_title">Battery Saver Detection</string>
+    <string name="settings_battery_saver_subtitle">Temporarily pause all haptic features when Battery Saver mode is active on your device</string>
 </resources>

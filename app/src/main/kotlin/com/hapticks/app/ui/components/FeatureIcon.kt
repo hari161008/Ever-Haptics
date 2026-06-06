@@ -25,6 +25,7 @@ object FeatureColors {
     val Unlock            = Color(0xFF06B6D4)   // cyan
     val Keyboard          = Color(0xFF6366F1)   // indigo
     val Notifications     = Color(0xFFF97316)   // orange
+    val MusicHaptics      = Color(0xFFEC4899)   // pink
     val Settings          = Color(0xFF64748B)   // slate
     val Updates           = Color(0xFF22C55E)   // green
 }

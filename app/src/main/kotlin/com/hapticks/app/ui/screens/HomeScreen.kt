@@ -45,6 +45,8 @@ private data class FeatureEntry(
 fun HomeScreen(
     globalEnabled: Boolean,
     isServiceEnabled: Boolean,
+    isBatterySaverActive: Boolean,
+    batterySaverDetectionEnabled: Boolean,
     onGlobalEnabledChange: (Boolean) -> Unit,
     onOpenFeelEveryTap: () -> Unit,
     onOpenTactileScrolling: () -> Unit,
@@ -54,6 +56,7 @@ fun HomeScreen(
     onOpenUnlockHaptics: () -> Unit,
     onOpenNotificationHaptics: () -> Unit,
     onOpenKeyboardHaptics: () -> Unit,
+    onOpenMusicHaptics: () -> Unit,
     onOpenAccessibilitySettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -68,8 +71,9 @@ fun HomeScreen(
         FeatureEntry(R.string.home_button_haptics_title, R.string.home_button_haptics_subtitle, Icons.Rounded.RadioButtonChecked, FeatureColors.ButtonHaptics, onOpenButtonHaptics),
         FeatureEntry(R.string.home_navbar_haptics_title, R.string.home_navbar_haptics_subtitle, Icons.Rounded.Home, FeatureColors.NavBar, onOpenNavBarHaptics),
         FeatureEntry(R.string.home_unlock_haptics_title, R.string.home_unlock_haptics_subtitle, Icons.Rounded.LockOpen, FeatureColors.Unlock, onOpenUnlockHaptics),
-        FeatureEntry(-1, -1, Icons.Rounded.Keyboard, FeatureColors.Keyboard, onOpenKeyboardHaptics),
-        FeatureEntry(-1, -1, Icons.Rounded.NotificationsActive, FeatureColors.Notifications, onOpenNotificationHaptics),
+        FeatureEntry(R.string.home_keyboard_haptics_title, R.string.home_keyboard_haptics_subtitle, Icons.Rounded.Keyboard, FeatureColors.Keyboard, onOpenKeyboardHaptics),
+        FeatureEntry(R.string.home_notification_haptics_title, R.string.home_notification_haptics_subtitle, Icons.Rounded.NotificationsActive, FeatureColors.Notifications, onOpenNotificationHaptics),
+        FeatureEntry(R.string.home_music_haptics_title, R.string.home_music_haptics_subtitle, Icons.Rounded.MusicNote, FeatureColors.MusicHaptics, onOpenMusicHaptics),
     )
 
     Scaffold(modifier = modifier.fillMaxSize(), containerColor = MaterialTheme.colorScheme.background) { padding ->
@@ -92,30 +96,69 @@ fun HomeScreen(
                 }
             }
 
+            AnimatedVisibility(
+                visible = batterySaverDetectionEnabled && isBatterySaverActive,
+                enter = fadeIn(tween(300)) + expandVertically(tween(300, easing = FastOutSlowInEasing)),
+                exit = fadeOut(tween(250)) + shrinkVertically(tween(250)),
+            ) {
+                Column {
+                    BatterySaverWarningCard()
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
+
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 features.forEachIndexed { index, feature ->
-                    val title = if (feature.titleRes == -1) when (feature.icon) {
-                        Icons.Rounded.Keyboard -> "Keyboard Haptics"
-                        else -> "Calls, Alerts & Alarms"
-                    } else stringResource(feature.titleRes)
-                    val subtitle = if (feature.subtitleRes == -1) when (feature.icon) {
-                        Icons.Rounded.Keyboard -> "Custom haptic feedback on every keystroke"
-                        else -> "Custom haptic patterns for incoming calls, notifications, and alarms"
-                    } else stringResource(feature.subtitleRes)
-
                     FeatureCard(
-                        title = title,
-                        subtitle = subtitle,
+                        title = stringResource(feature.titleRes),
+                        subtitle = stringResource(feature.subtitleRes),
                         icon = feature.icon,
                         featureColor = feature.color,
                         onClick = feature.onClick,
-                        enabled = globalEnabled,
+                        enabled = globalEnabled && !(batterySaverDetectionEnabled && isBatterySaverActive),
                         entered = entered,
                         staggerIndex = index,
                     )
                 }
             }
             Spacer(Modifier.height(120.dp))
+        }
+    }
+}
+
+@Composable
+private fun BatterySaverWarningCard() {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.error.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Rounded.BatterySaver, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(24.dp))
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    "Functionality Paused",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Text(
+                    "Paused the functionality due to Battery Saver being turned on",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
+                )
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ import android.media.AudioManager
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -102,6 +103,7 @@ class HapticsAccessibilityService : AccessibilityService() {
                     override fun onReceive(context: Context?, intent: Intent?) {
                         val s = current
                         if (!s.globalEnabled || !s.chargingVibEnabled) return
+                        if (s.batterySaverDetectionEnabled && isBatterySaverActive()) return
                         val shouldPlay = when (intent?.action) {
                             Intent.ACTION_POWER_CONNECTED -> s.chargingVibOnConnect
                             Intent.ACTION_POWER_DISCONNECTED -> s.chargingVibOnDisconnect
@@ -126,6 +128,7 @@ class HapticsAccessibilityService : AccessibilityService() {
                     override fun onChange(selfChange: Boolean, uri: Uri?) {
                         val s = current
                         if (!s.globalEnabled || !s.brightnessHapticEnabled) return
+                        if (s.batterySaverDetectionEnabled && isBatterySaverActive()) return
                         playCustomOrPattern(s.brightnessHapticCustomSequence) { engine.play(s.brightnessHapticPattern, s.brightnessHapticIntensity, 0L) }
                     }
                 }
@@ -144,6 +147,7 @@ class HapticsAccessibilityService : AccessibilityService() {
                     override fun onReceive(context: Context?, intent: Intent?) {
                         val s = current
                         if (!s.globalEnabled || !s.unlockHapticEnabled || intent?.action != Intent.ACTION_USER_PRESENT) return
+                        if (s.batterySaverDetectionEnabled && isBatterySaverActive()) return
                         playCustomOrPattern(s.unlockHapticCustomSequence) { engine.play(s.unlockHapticPattern, s.unlockHapticIntensity) }
                     }
                 }
@@ -162,6 +166,7 @@ class HapticsAccessibilityService : AccessibilityService() {
                     override fun onReceive(context: Context?, intent: Intent?) {
                         val s = current
                         if (!s.globalEnabled || !s.powerHapticEnabled) return
+                        if (s.batterySaverDetectionEnabled && isBatterySaverActive()) return
                         when (intent?.action) {
                             Intent.ACTION_SCREEN_OFF -> playCustomOrPattern(s.powerHapticCustomSequence) { engine.play(s.powerHapticPattern, s.powerHapticIntensity) }
                             Intent.ACTION_SCREEN_ON -> playCustomOrPattern(s.powerHapticCustomSequence) { engine.play(s.powerHapticPattern, s.powerHapticIntensity, 200L) }
@@ -180,6 +185,7 @@ class HapticsAccessibilityService : AccessibilityService() {
     override fun onKeyEvent(event: KeyEvent): Boolean {
         val s = current
         if (!s.globalEnabled) return false
+        if (s.batterySaverDetectionEnabled && isBatterySaverActive()) return false
         when (event.keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN -> {
                 if (s.volumeHapticEnabled && event.action == KeyEvent.ACTION_DOWN) {
@@ -228,6 +234,7 @@ class HapticsAccessibilityService : AccessibilityService() {
         val ev = event ?: return
         val s = current
         if (!s.globalEnabled) return
+        if (s.batterySaverDetectionEnabled && isBatterySaverActive()) return
         val type = ev.eventType
         val pkg = ev.packageName?.toString()
         val fromOwnApp = isAccessibilityEventFromOwnApplication(ev)
@@ -326,6 +333,9 @@ class HapticsAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() = Unit
+
+    private fun isBatterySaverActive(): Boolean =
+        (getSystemService(POWER_SERVICE) as? PowerManager)?.isPowerSaveMode == true
 
     override fun onDestroy() {
         settingsJob?.cancel(); scope.cancel()

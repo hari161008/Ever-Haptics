@@ -1,8 +1,12 @@
 package com.hapticks.app.viewmodel
 
 import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import androidx.lifecycle.AndroidViewModel
@@ -39,7 +43,30 @@ class FeelEveryTapViewModel(
     private val _isServiceEnabled = MutableStateFlow(false)
     val isServiceEnabled: StateFlow<Boolean> = _isServiceEnabled.asStateFlow()
 
-    init { refreshServiceState() }
+    private val _isBatterySaverActive = MutableStateFlow(false)
+    val isBatterySaverActive: StateFlow<Boolean> = _isBatterySaverActive.asStateFlow()
+
+    private val batterySaverReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == PowerManager.ACTION_POWER_SAVE_MODE_CHANGED) {
+                val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+                _isBatterySaverActive.value = pm.isPowerSaveMode
+            }
+        }
+    }
+
+    init {
+        refreshServiceState()
+        val pm = getApplication<Application>().getSystemService(Context.POWER_SERVICE) as PowerManager
+        _isBatterySaverActive.value = pm.isPowerSaveMode
+        val filter = IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+        getApplication<Application>().registerReceiver(batterySaverReceiver, filter)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try { getApplication<Application>().unregisterReceiver(batterySaverReceiver) } catch (_: Exception) {}
+    }
 
     fun refreshServiceState() { _isServiceEnabled.value = isAccessibilityServiceEnabled(getApplication()) }
 
@@ -144,14 +171,22 @@ class FeelEveryTapViewModel(
     fun commitUnlockHapticIntensity(intensity: Float) { viewModelScope.launch { preferences.setUnlockHapticIntensity(intensity) } }
     fun setUnlockHapticCustomSequence(seq: CustomHapticSequence) { viewModelScope.launch { preferences.setUnlockHapticCustomSequence(seq) } }
 
+    fun setBatterySaverDetectionEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setBatterySaverDetectionEnabled(enabled) } }
+    fun setMusicHapticsEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setMusicHapticsEnabled(enabled) } }
+    fun commitMusicHapticsSensitivity(value: Float) { viewModelScope.launch { preferences.setMusicHapticsSensitivity(value) } }
+    fun commitMusicHapticsStrength(value: Float) { viewModelScope.launch { preferences.setMusicHapticsStrength(value) } }
+
     fun resetButtonHapticsDefaults() {
         viewModelScope.launch {
+            preferences.setVolumeHapticEnabled(HapticsSettings.Default.volumeHapticEnabled)
             preferences.setVolumeHapticPattern(HapticsSettings.Default.volumeHapticPattern)
             preferences.setVolumeHapticIntensity(HapticsSettings.Default.volumeHapticIntensity)
             preferences.setVolumeHapticCustomSequence(HapticsSettings.Default.volumeHapticCustomSequence)
+            preferences.setPowerHapticEnabled(HapticsSettings.Default.powerHapticEnabled)
             preferences.setPowerHapticPattern(HapticsSettings.Default.powerHapticPattern)
             preferences.setPowerHapticIntensity(HapticsSettings.Default.powerHapticIntensity)
             preferences.setPowerHapticCustomSequence(HapticsSettings.Default.powerHapticCustomSequence)
+            preferences.setBrightnessHapticEnabled(HapticsSettings.Default.brightnessHapticEnabled)
             preferences.setBrightnessHapticPattern(HapticsSettings.Default.brightnessHapticPattern)
             preferences.setBrightnessHapticIntensity(HapticsSettings.Default.brightnessHapticIntensity)
             preferences.setBrightnessHapticCustomSequence(HapticsSettings.Default.brightnessHapticCustomSequence)

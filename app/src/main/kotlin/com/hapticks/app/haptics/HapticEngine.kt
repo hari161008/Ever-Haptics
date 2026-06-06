@@ -6,6 +6,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 class HapticEngine(context: Context) {
 
@@ -27,10 +28,19 @@ class HapticEngine(context: Context) {
 
     private val effectCache: ConcurrentHashMap<Int, VibrationEffect> =
         ConcurrentHashMap(HapticPattern.entries.size * INTENSITY_BUCKETS)
+    private val lastPlayMs: ConcurrentHashMap<HapticPattern, AtomicLong> =
+        ConcurrentHashMap(HapticPattern.entries.size)
 
     fun play(pattern: HapticPattern, intensity: Float, throttleMs: Long = 0L): Boolean {
         if (!hasVibrator) return false
         if (intensity <= MIN_AUDIBLE_INTENSITY) return false
+        if (throttleMs > 0L) {
+            val now = System.currentTimeMillis()
+            val lastMs = lastPlayMs.getOrPut(pattern) { AtomicLong(0L) }
+            val prev = lastMs.get()
+            if (now - prev < throttleMs) return false
+            lastMs.compareAndSet(prev, now)
+        }
         val clamped = intensity.coerceIn(0f, 1f)
         val effect = effectFor(pattern, clamped)
         vibrator.vibrate(effect, touchAttrs)
