@@ -23,6 +23,8 @@ GitHub: [Download](https://github.com/hari161008/Ever-Haptics) ⬇️
 <br>
 📢 Everlasting Support Group:
 <a href="https://t.me/EverlastingAndroidTweak">Join Now</a>
+<br>
+🔭 To contact me through Telegram: <a href="https://t.me/hariprabhu1008">@hariprabhu1008</a>
 
 <br>
 
