@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hapticks.app.R
 import com.hapticks.app.ui.components.EnableServiceCard
+import com.hapticks.app.ui.components.FeatureColors
 import com.hapticks.app.ui.components.FeatureIcon
 import com.hapticks.app.ui.haptics.hapticClickable
 import kotlinx.coroutines.delay
@@ -36,6 +37,7 @@ private data class FeatureEntry(
     val titleRes: Int,
     val subtitleRes: Int,
     val icon: ImageVector,
+    val color: Color,
     val onClick: () -> Unit,
 )
 
@@ -63,15 +65,15 @@ fun HomeScreen(
     LaunchedEffect(Unit) { delay(60); entered = true }
 
     val features = listOf(
-        FeatureEntry(R.string.home_feel_every_tap_title, R.string.home_feel_every_tap_subtitle, Icons.Rounded.TouchApp, onOpenFeelEveryTap),
-        FeatureEntry(R.string.home_tactile_scrolling_title, R.string.home_tactile_scrolling_subtitle, Icons.Rounded.SwipeUp, onOpenTactileScrolling),
-        FeatureEntry(R.string.home_charging_haptics_title, R.string.home_charging_haptics_subtitle, Icons.Rounded.BatteryChargingFull, onOpenChargingHaptics),
-        FeatureEntry(R.string.home_button_haptics_title, R.string.home_button_haptics_subtitle, Icons.Rounded.RadioButtonChecked, onOpenButtonHaptics),
-        FeatureEntry(R.string.home_navbar_haptics_title, R.string.home_navbar_haptics_subtitle, Icons.Rounded.Home, onOpenNavBarHaptics),
-        FeatureEntry(R.string.home_unlock_haptics_title, R.string.home_unlock_haptics_subtitle, Icons.Rounded.LockOpen, onOpenUnlockHaptics),
-        FeatureEntry(R.string.home_keyboard_haptics_title, R.string.home_keyboard_haptics_subtitle, Icons.Rounded.Keyboard, onOpenKeyboardHaptics),
-        FeatureEntry(R.string.home_notification_haptics_title, R.string.home_notification_haptics_subtitle, Icons.Rounded.NotificationsActive, onOpenNotificationHaptics),
-        FeatureEntry(R.string.home_music_haptics_title, R.string.home_music_haptics_subtitle, Icons.Rounded.MusicNote, onOpenMusicHaptics),
+        FeatureEntry(R.string.home_feel_every_tap_title, R.string.home_feel_every_tap_subtitle, Icons.Rounded.TouchApp, FeatureColors.FeelEveryTap, onOpenFeelEveryTap),
+        FeatureEntry(R.string.home_tactile_scrolling_title, R.string.home_tactile_scrolling_subtitle, Icons.Rounded.SwipeUp, FeatureColors.TactileScrolling, onOpenTactileScrolling),
+        FeatureEntry(R.string.home_charging_haptics_title, R.string.home_charging_haptics_subtitle, Icons.Rounded.BatteryChargingFull, FeatureColors.Charging, onOpenChargingHaptics),
+        FeatureEntry(R.string.home_button_haptics_title, R.string.home_button_haptics_subtitle, Icons.Rounded.RadioButtonChecked, FeatureColors.ButtonHaptics, onOpenButtonHaptics),
+        FeatureEntry(R.string.home_navbar_haptics_title, R.string.home_navbar_haptics_subtitle, Icons.Rounded.Home, FeatureColors.NavBar, onOpenNavBarHaptics),
+        FeatureEntry(R.string.home_unlock_haptics_title, R.string.home_unlock_haptics_subtitle, Icons.Rounded.LockOpen, FeatureColors.Unlock, onOpenUnlockHaptics),
+        FeatureEntry(R.string.home_keyboard_haptics_title, R.string.home_keyboard_haptics_subtitle, Icons.Rounded.Keyboard, FeatureColors.Keyboard, onOpenKeyboardHaptics),
+        FeatureEntry(R.string.home_notification_haptics_title, R.string.home_notification_haptics_subtitle, Icons.Rounded.NotificationsActive, FeatureColors.Notifications, onOpenNotificationHaptics),
+        FeatureEntry(R.string.home_music_haptics_title, R.string.home_music_haptics_subtitle, Icons.Rounded.MusicNote, FeatureColors.MusicHaptics, onOpenMusicHaptics),
     )
 
     Scaffold(modifier = modifier.fillMaxSize(), containerColor = MaterialTheme.colorScheme.background) { padding ->
@@ -111,6 +113,7 @@ fun HomeScreen(
                         title = stringResource(feature.titleRes),
                         subtitle = stringResource(feature.subtitleRes),
                         icon = feature.icon,
+                        featureColor = feature.color,
                         onClick = feature.onClick,
                         enabled = globalEnabled && !(batterySaverDetectionEnabled && isBatterySaverActive),
                         entered = entered,
@@ -195,6 +198,7 @@ private fun FeatureCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
+    featureColor: Color,
     onClick: () -> Unit,
     enabled: Boolean,
     entered: Boolean,
@@ -205,10 +209,8 @@ private fun FeatureCard(
     val offsetY by animateDpAsState(if (entered) 0.dp else 30.dp, tween(380, delayMillis = delay, easing = FastOutSlowInEasing), label = "c_y$staggerIndex")
     val dimAlpha = if (enabled) 1f else 0.4f
 
-    val accentColor = MaterialTheme.colorScheme.primary
     val accentContainer = MaterialTheme.colorScheme.primaryContainer
     val onAccentContainer = MaterialTheme.colorScheme.onPrimaryContainer
-    val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh
 
     Box(
         modifier = Modifier
@@ -216,21 +218,18 @@ private fun FeatureCard(
             .offset(y = offsetY)
             .alpha(alpha)
             .clip(RoundedCornerShape(24.dp))
-            .background(surfaceColor)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (enabled) 0.6f else 0.3f), RoundedCornerShape(24.dp))
             .then(if (enabled) Modifier.hapticClickable(onClick = onClick) else Modifier),
     ) {
-        // Material You subtle wash — top-right glow using primaryContainer
+        // Subtle Material You wash top-right
         Box(
             modifier = Modifier
                 .size(160.dp)
                 .align(Alignment.TopEnd)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(
-                            accentContainer.copy(alpha = if (enabled) 0.45f else 0.12f),
-                            Color.Transparent,
-                        ),
+                        colors = listOf(accentContainer.copy(alpha = if (enabled) 0.5f else 0.12f), Color.Transparent),
                     ),
                 ),
         )
@@ -239,19 +238,15 @@ private fun FeatureCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Icon in primaryContainer pill
+            // Colorful icon box
             Box(
                 modifier = Modifier
                     .size(58.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(accentContainer.copy(alpha = if (enabled) 0.6f else 0.2f)),
+                    .background(featureColor.copy(alpha = if (enabled) 0.15f else 0.06f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    icon, null,
-                    tint = accentColor.copy(alpha = dimAlpha),
-                    modifier = Modifier.size(30.dp),
-                )
+                Icon(icon, null, tint = featureColor.copy(alpha = dimAlpha), modifier = Modifier.size(30.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = dimAlpha))
@@ -259,10 +254,7 @@ private fun FeatureCard(
             }
             if (enabled) {
                 Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(accentContainer),
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(accentContainer),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = onAccentContainer, modifier = Modifier.size(18.dp))
