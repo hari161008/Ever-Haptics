@@ -208,16 +208,15 @@
     <string name="home_music_haptics_title">Music &amp; Sound Haptics</string>
     <string name="home_music_haptics_subtitle">Vibrate to the beat of music and sounds</string>
     <string name="music_haptics_screen_title">Music &amp; Sound Haptics</string>
-    <string name="music_haptics_section_main">Beat Detection</string>
     <string name="music_haptics_toggle_title">Music &amp; Sound Haptics</string>
-    <string name="music_haptics_toggle_subtitle">Analyse audio from the microphone in real-time and vibrate in sync with detected beats</string>
+    <string name="music_haptics_toggle_subtitle">Analyse audio in real-time and vibrate in sync with detected beats</string>
     <string name="music_haptics_sensitivity_title">Beat Sensitivity</string>
-    <string name="music_haptics_sensitivity_subtitle">How sensitive the beat detector is. Higher values trigger on quieter sounds.</string>
+    <string name="music_haptics_sensitivity_subtitle">Higher values trigger haptics on quieter or more subtle beats.</string>
     <string name="music_haptics_strength_title">Haptic Strength</string>
-    <string name="music_haptics_strength_subtitle">How strong the haptic feedback is for each detected beat.</string>
+    <string name="music_haptics_strength_subtitle">How strong the vibration is for each detected beat.</string>
     <string name="music_haptics_permission_title">Microphone Permission Required</string>
-    <string name="music_haptics_permission_subtitle">Music &amp; Sound Haptics needs access to the microphone to detect beats from audio playing around you.</string>
-    <string name="music_haptics_permission_button">Grant Permission</string>
+    <string name="music_haptics_permission_subtitle">The selected source needs microphone access to capture surrounding sounds.</string>
+    <string name="music_haptics_permission_button">Grant Microphone Access</string>
 
     <!-- Battery Saver Detection -->
     <string name="settings_battery_saver_section">Battery Saver</string>

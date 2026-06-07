@@ -315,6 +315,7 @@ class MainActivity : ComponentActivity() {
                                     MusicHapticsScreen(
                                         settings = settings,
                                         onMusicHapticsEnabledChange = viewModel::setMusicHapticsEnabled,
+                                        onMusicHapticsSourceChange = viewModel::setMusicHapticsSource,
                                         onSensitivityCommit = viewModel::commitMusicHapticsSensitivity,
                                         onStrengthCommit = viewModel::commitMusicHapticsStrength,
                                         onBack = { route = Route.HOME },

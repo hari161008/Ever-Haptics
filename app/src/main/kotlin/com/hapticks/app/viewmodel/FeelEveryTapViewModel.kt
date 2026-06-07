@@ -173,6 +173,7 @@ class FeelEveryTapViewModel(
 
     fun setBatterySaverDetectionEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setBatterySaverDetectionEnabled(enabled) } }
     fun setMusicHapticsEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setMusicHapticsEnabled(enabled) } }
+    fun setMusicHapticsSource(source: com.hapticks.app.data.MusicHapticsSource) { viewModelScope.launch { preferences.setMusicHapticsSource(source) } }
     fun commitMusicHapticsSensitivity(value: Float) { viewModelScope.launch { preferences.setMusicHapticsSensitivity(value) } }
     fun commitMusicHapticsStrength(value: Float) { viewModelScope.launch { preferences.setMusicHapticsStrength(value) } }
 

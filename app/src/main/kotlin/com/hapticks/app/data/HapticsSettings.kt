@@ -76,6 +76,7 @@ data class HapticsSettings(
     val batterySaverDetectionEnabled: Boolean = false,
     // Music Haptics
     val musicHapticsEnabled: Boolean = false,
+    val musicHapticsSource: MusicHapticsSource = MusicHapticsSource.Default,
     val musicHapticsSensitivity: Float = 0.5f,
     val musicHapticsStrength: Float = 0.7f,
     // Notification / call / alarm haptics
