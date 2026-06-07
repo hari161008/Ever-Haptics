@@ -1,6 +1,7 @@
 package com.hapticks.app.ui.screens
 
 import android.content.Intent
+import com.hapticks.app.util.AppVersion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,9 +57,11 @@ fun SettingsScreen(
     onAmoledBlackChange: (Boolean) -> Unit,
     onSeedColorChange: (Int) -> Unit = {},
     onBatterySaverDetectionChange: (Boolean) -> Unit = {},
+    onAutoCheckUpdatesChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val appVersion = remember { AppVersion.get(context) }
     val appInDarkTheme = when (settings.themeMode) {
         ThemeMode.LIGHT -> false; ThemeMode.DARK -> true; ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
@@ -90,43 +93,112 @@ fun SettingsScreen(
 
             // ── Updates section FIRST ──
             item(key = "updates") {
-                SettingsSection(title = "Updates", icon = Icons.Rounded.SystemUpdate, iconTint = FeatureColors.Updates) {
-                    SettingsRow(
-                        title = "Check for updates",
-                        subtitle = when (val s = updateCheckState) {
-                            is UpdateCheckState.Idle -> "Tap to check for a newer version of Ever Haptics"
-                            is UpdateCheckState.Checking -> "Checking…"
-                            is UpdateCheckState.UpToDate -> "You are on the latest version"
-                            is UpdateCheckState.UpdateAvailable -> "Version ${s.version} is available!"
-                            is UpdateCheckState.Error -> "Failed to check: ${s.message}"
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Section header
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        FeatureIcon(icon = Icons.Rounded.SystemUpdate, tint = FeatureColors.Updates, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
+                        Text("Updates", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                    }
+
+                    // Big check for updates card
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().then(
+                            if (updateCheckState !is UpdateCheckState.Checking)
+                                Modifier.hapticClickable {
+                                    updateCheckState = UpdateCheckState.Checking
+                                    scope.launch {
+                                        UpdateChecker.checkForUpdate(appVersion).fold(
+                                            onSuccess = { info ->
+                                                if (info.isUpdateAvailable) {
+                                                    updateCheckState = UpdateCheckState.UpdateAvailable(info.latestVersion)
+                                                    updateInfo = info; showUpdateDialog = true
+                                                } else { updateCheckState = UpdateCheckState.UpToDate }
+                                            },
+                                            onFailure = { e -> updateCheckState = UpdateCheckState.Error(e.message ?: "Unknown error") },
+                                        )
+                                    }
+                                }
+                            else Modifier
+                        ),
+                        color = when (updateCheckState) {
+                            is UpdateCheckState.UpdateAvailable -> MaterialTheme.colorScheme.primaryContainer
+                            is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondaryContainer
+                            is UpdateCheckState.Error -> MaterialTheme.colorScheme.errorContainer
+                            else -> MaterialTheme.colorScheme.surfaceContainerHigh
                         },
-                        position = RowPosition.Single,
-                        onClick = {
-                            if (updateCheckState !is UpdateCheckState.Checking) {
-                                updateCheckState = UpdateCheckState.Checking
-                                scope.launch {
-                                    UpdateChecker.checkForUpdate().fold(
-                                        onSuccess = { info ->
-                                            if (info.isUpdateAvailable) {
-                                                updateCheckState = UpdateCheckState.UpdateAvailable(info.latestVersion)
-                                                updateInfo = info; showUpdateDialog = true
-                                            } else { updateCheckState = UpdateCheckState.UpToDate }
-                                        },
-                                        onFailure = { e -> updateCheckState = UpdateCheckState.Error(e.message ?: "Unknown error") },
-                                    )
+                        shape = RoundedCornerShape(20.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                when (updateCheckState) {
+                                    is UpdateCheckState.Checking -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.5.dp)
+                                    is UpdateCheckState.UpdateAvailable -> Icon(Icons.Rounded.NewReleases, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
+                                    is UpdateCheckState.UpToDate -> Icon(Icons.Rounded.CheckCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
+                                    is UpdateCheckState.Error -> Icon(Icons.Rounded.ErrorOutline, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(26.dp))
+                                    else -> Icon(Icons.Rounded.SystemUpdate, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(26.dp))
                                 }
                             }
-                        },
-                        trailing = {
-                            when (updateCheckState) {
-                                is UpdateCheckState.Checking -> CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                                is UpdateCheckState.UpdateAvailable -> Icon(Icons.Rounded.NewReleases, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                                is UpdateCheckState.UpToDate -> Icon(Icons.Rounded.CheckCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                                is UpdateCheckState.Error -> Icon(Icons.Rounded.ErrorOutline, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
-                                else -> Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text(
+                                    "Check for updates",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = when (updateCheckState) {
+                                        is UpdateCheckState.UpdateAvailable -> MaterialTheme.colorScheme.onPrimaryContainer
+                                        is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.onSecondaryContainer
+                                        is UpdateCheckState.Error -> MaterialTheme.colorScheme.onErrorContainer
+                                        else -> MaterialTheme.colorScheme.onSurface
+                                    },
+                                )
+                                Text(
+                                    when (val s = updateCheckState) {
+                                        is UpdateCheckState.Idle -> "Current version: v${appVersion}  ·  Tap to check"
+                                        is UpdateCheckState.Checking -> "Checking for updates…"
+                                        is UpdateCheckState.UpToDate -> "v${appVersion} — You're on the latest version"
+                                        is UpdateCheckState.UpdateAvailable -> "v${s.version} is available! (current: v${appVersion})"
+                                        is UpdateCheckState.Error -> "Failed to check: ${s.message}"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = when (updateCheckState) {
+                                        is UpdateCheckState.UpdateAvailable -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                        is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                                        is UpdateCheckState.Error -> MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                )
                             }
-                        },
-                    )
+                            if (updateCheckState !is UpdateCheckState.Checking) {
+                                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    }
+
+                    // Auto-check toggle — separate container, no subtitle
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text("Check for updates automatically", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+                            Switch(checked = settings.autoCheckUpdatesEnabled, onCheckedChange = onAutoCheckUpdatesChange)
+                        }
+                    }
                 }
             }
 
@@ -175,9 +247,19 @@ fun SettingsScreen(
             item(key = "about") {
                 SettingsSection(title = stringResource(R.string.settings_section_about), icon = Icons.Rounded.Settings) {
                     SettingsRow(
+                        title = "App Version",
+                        subtitle = "Ever Haptics v${appVersion}",
+                        position = RowPosition.Top,
+                        trailing = {
+                            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = androidx.compose.foundation.shape.CircleShape) {
+                                Text("v${appVersion}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
+                            }
+                        },
+                    )
+                    SettingsRow(
                         title = stringResource(R.string.settings_github_title),
                         subtitle = stringResource(R.string.settings_github_subtitle),
-                        position = RowPosition.Single,
+                        position = RowPosition.Bottom,
                         onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, "https://github.com/hari161008/Ever-Haptics".toUri())) },
                         trailing = { Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
                     )

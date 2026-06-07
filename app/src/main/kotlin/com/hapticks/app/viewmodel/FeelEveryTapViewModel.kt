@@ -16,6 +16,7 @@ import androidx.lifecycle.viewModelScope
 import com.hapticks.app.HapticksApp
 import com.hapticks.app.data.HapticsPreferences
 import com.hapticks.app.data.HapticsSettings
+import com.hapticks.app.data.MusicHapticsSource
 import com.hapticks.app.data.ThemeMode
 import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.haptics.HapticEngine
@@ -172,8 +173,9 @@ class FeelEveryTapViewModel(
     fun setUnlockHapticCustomSequence(seq: CustomHapticSequence) { viewModelScope.launch { preferences.setUnlockHapticCustomSequence(seq) } }
 
     fun setBatterySaverDetectionEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setBatterySaverDetectionEnabled(enabled) } }
+    fun setAutoCheckUpdatesEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setAutoCheckUpdatesEnabled(enabled) } }
     fun setMusicHapticsEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setMusicHapticsEnabled(enabled) } }
-    fun setMusicHapticsSource(source: com.hapticks.app.data.MusicHapticsSource) { viewModelScope.launch { preferences.setMusicHapticsSource(source) } }
+    fun setMusicHapticsSource(source: MusicHapticsSource) { viewModelScope.launch { preferences.setMusicHapticsSource(source) } }
     fun commitMusicHapticsSensitivity(value: Float) { viewModelScope.launch { preferences.setMusicHapticsSensitivity(value) } }
     fun commitMusicHapticsStrength(value: Float) { viewModelScope.launch { preferences.setMusicHapticsStrength(value) } }
 

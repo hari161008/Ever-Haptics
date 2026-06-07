@@ -12,6 +12,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -35,6 +36,8 @@ import com.hapticks.app.ui.screens.scrollhaptics.ScrollHapticsScreen
 import com.hapticks.app.ui.screens.tapHaptics.FeelEveryTapScreen
 import com.hapticks.app.ui.screens.musichaptics.MusicHapticsScreen
 import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
+import com.hapticks.app.util.AppVersion
+import com.hapticks.app.util.UpdateChecker
 import com.hapticks.app.ui.theme.HapticksTheme
 import com.hapticks.app.viewmodel.FeelEveryTapViewModel
 
@@ -61,6 +64,29 @@ class MainActivity : ComponentActivity() {
                 ProvideHapticksEdgeOverscrollHaptics {
                     var route by rememberSaveable { mutableStateOf(Route.HOME) }
                     var previousRoute by rememberSaveable { mutableStateOf(Route.HOME) }
+
+                    // Hoisted scroll state — persists when navigating into and back from features
+                    val homeScrollState = rememberScrollState()
+
+                    // Auto-check for updates on launch
+                    var hasAutoChecked by rememberSaveable { mutableStateOf(false) }
+                    LaunchedEffect(settings.autoCheckUpdatesEnabled) {
+                        if (settings.autoCheckUpdatesEnabled && !hasAutoChecked) {
+                            hasAutoChecked = true
+                            UpdateChecker.checkForUpdate(AppVersion.get(this@MainActivity)).onSuccess { info ->
+                                if (info.isUpdateAvailable) {
+                                    android.widget.Toast.makeText(
+                                        this@MainActivity,
+                                        "Ever Haptics v${info.latestVersion} is available! Check Settings → Updates.",
+                                        android.widget.Toast.LENGTH_LONG,
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
+
+                    // Back press in Settings tab → go to Home instead of closing app
+                    BackHandler(enabled = route == Route.SETTINGS) { route = Route.HOME }
 
                     var customEditorLabel by remember { mutableStateOf("") }
                     var customEditorSequence by remember { mutableStateOf(CustomHapticSequence()) }
@@ -106,6 +132,7 @@ class MainActivity : ComponentActivity() {
                                                 isServiceEnabled = isServiceEnabled,
                                                 isBatterySaverActive = isBatterySaverActive,
                                                 batterySaverDetectionEnabled = settings.batterySaverDetectionEnabled,
+                                                scrollState = homeScrollState,
                                                 onGlobalEnabledChange = viewModel::setGlobalEnabled,
                                                 onOpenFeelEveryTap = { route = Route.FEEL_EVERY_TAP },
                                                 onOpenTactileScrolling = { route = Route.TACTILE_SCROLLING },
@@ -125,6 +152,7 @@ class MainActivity : ComponentActivity() {
                                                 onAmoledBlackChange = viewModel::setAmoledBlack,
                                                 onSeedColorChange = viewModel::setSeedColor,
                                                 onBatterySaverDetectionChange = viewModel::setBatterySaverDetectionEnabled,
+                                                onAutoCheckUpdatesChange = viewModel::setAutoCheckUpdatesEnabled,
                                             )
                                         }
                                     }

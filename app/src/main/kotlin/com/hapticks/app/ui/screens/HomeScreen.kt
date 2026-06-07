@@ -3,9 +3,9 @@ package com.hapticks.app.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -18,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -47,6 +46,7 @@ fun HomeScreen(
     isServiceEnabled: Boolean,
     isBatterySaverActive: Boolean,
     batterySaverDetectionEnabled: Boolean,
+    scrollState: ScrollState,
     onGlobalEnabledChange: (Boolean) -> Unit,
     onOpenFeelEveryTap: () -> Unit,
     onOpenTactileScrolling: () -> Unit,
@@ -60,7 +60,6 @@ fun HomeScreen(
     onOpenAccessibilitySettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrollState = rememberScrollState()
     var entered by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { delay(60); entered = true }
 
@@ -182,7 +181,7 @@ private fun AnimatedGlobalToggleCard(entered: Boolean, enabled: Boolean, onEnabl
     Surface(color = containerColor, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth().alpha(alpha)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                FeatureIcon(icon = Icons.Rounded.Vibration, tint = MaterialTheme.colorScheme.primary, size = 44.dp, iconSize = 22.dp, cornerRadius = 14.dp, backgroundAlpha = if (enabled) 0.25f else 0.12f)
+                FeatureIcon(icon = Icons.Rounded.Vibration, tint = MaterialTheme.colorScheme.primary, size = 44.dp, iconSize = 22.dp, cornerRadius = 14.dp, backgroundAlpha = 0f)
                 Column {
                     Text(stringResource(R.string.home_global_toggle_title), style = MaterialTheme.typography.titleLarge, color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
                     Text(if (enabled) stringResource(R.string.home_global_toggle_on) else stringResource(R.string.home_global_toggle_off), style = MaterialTheme.typography.bodySmall, color = (if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.7f))
@@ -209,36 +208,20 @@ private fun FeatureCard(
     val offsetY by animateDpAsState(if (entered) 0.dp else 30.dp, tween(380, delayMillis = delay, easing = FastOutSlowInEasing), label = "c_y$staggerIndex")
     val dimAlpha = if (enabled) 1f else 0.4f
 
-    val accentContainer = MaterialTheme.colorScheme.primaryContainer
-    val onAccentContainer = MaterialTheme.colorScheme.onPrimaryContainer
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .offset(y = offsetY)
             .alpha(alpha)
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (enabled) 0.6f else 0.3f), RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .then(if (enabled) Modifier.hapticClickable(onClick = onClick) else Modifier),
     ) {
-        // Subtle Material You wash top-right
-        Box(
-            modifier = Modifier
-                .size(160.dp)
-                .align(Alignment.TopEnd)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(accentContainer.copy(alpha = if (enabled) 0.5f else 0.12f), Color.Transparent),
-                    ),
-                ),
-        )
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Colorful icon box
             Box(
                 modifier = Modifier
                     .size(58.dp)
@@ -254,10 +237,13 @@ private fun FeatureCard(
             }
             if (enabled) {
                 Box(
-                    modifier = Modifier.size(36.dp).clip(CircleShape).background(accentContainer),
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = onAccentContainer, modifier = Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
                 }
             }
         }

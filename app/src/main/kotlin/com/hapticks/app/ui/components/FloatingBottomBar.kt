@@ -90,12 +90,12 @@ fun FloatingBottomBar(
             .padding(bottom = 25.dp)
             .height(60.dp),
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.outlineVariant,
         ),
-        tonalElevation = 2.dp,
+        tonalElevation = 4.dp,
         shadowElevation = 14.dp,
     ) {
         Row(

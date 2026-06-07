@@ -1,24 +1,20 @@
 package com.hapticks.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
-/**
- * Colourful icon + title row shown at the top of feature screens,
- * sits just below the LargeTopAppBar title area.
- */
 @Composable
 fun ScreenIconHeader(
     icon: ImageVector,
@@ -26,33 +22,30 @@ fun ScreenIconHeader(
     subtitle: String,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(featureColor.copy(alpha = 0.08f))
-            .border(1.dp, featureColor.copy(alpha = 0.20f), RoundedCornerShape(20.dp))
-            .padding(16.dp),
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(28.dp),
+        modifier = modifier.fillMaxWidth(),
     ) {
-        // radial glow behind icon
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .align(Alignment.CenterEnd)
-                .background(Brush.radialGradient(listOf(featureColor.copy(alpha = 0.14f), Color.Transparent))),
-        )
         Row(
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            FeatureIcon(
-                icon = icon,
-                tint = featureColor,
-                size = 52.dp,
-                iconSize = 26.dp,
-                cornerRadius = 17.dp,
-                backgroundAlpha = 0.18f,
-            )
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(17.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = featureColor,
+                    modifier = Modifier.size(26.dp),
+                )
+            }
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,

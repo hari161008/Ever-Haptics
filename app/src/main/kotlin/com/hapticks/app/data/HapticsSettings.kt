@@ -74,6 +74,8 @@ data class HapticsSettings(
     val seedColor: Int = 0xFF6750A4.toInt(),
     // Battery Saver Detection
     val batterySaverDetectionEnabled: Boolean = false,
+    // Auto Check Updates
+    val autoCheckUpdatesEnabled: Boolean = true,
     // Music Haptics
     val musicHapticsEnabled: Boolean = false,
     val musicHapticsSource: MusicHapticsSource = MusicHapticsSource.Default,

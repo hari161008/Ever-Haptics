@@ -151,14 +151,14 @@ private fun PatternCard(
                     modifier = Modifier
                         .size(40.dp)
                         .background(
-                            color = if (isSelected) accentColor else MaterialTheme.colorScheme.surfaceContainerHighest,
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
                             shape = RoundedCornerShape(14.dp),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         pattern.icon, null,
-                        tint = if (isSelected) MaterialTheme.colorScheme.surface else accentColor,
+                        tint = if (isSelected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(22.dp),
                     )
                 }
@@ -214,14 +214,14 @@ private fun CustomPatternCard(
                 modifier = Modifier
                     .size(40.dp)
                     .background(
-                        color = if (isSelected) accentColor else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
                         shape = RoundedCornerShape(14.dp),
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     Icons.Rounded.Draw, null,
-                    tint = if (isSelected) MaterialTheme.colorScheme.surface else accentColor,
+                    tint = if (isSelected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp),
                 )
             }

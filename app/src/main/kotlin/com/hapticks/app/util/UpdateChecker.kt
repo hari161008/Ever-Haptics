@@ -18,7 +18,6 @@ import java.net.URL
 object UpdateChecker {
 
     private const val GITHUB_API_URL = "https://api.github.com/repos/hari161008/Ever-Haptics/releases/latest"
-    private const val CURRENT_VERSION = "1.0.0"
 
     data class UpdateInfo(
         val latestVersion: String,
@@ -27,7 +26,7 @@ object UpdateChecker {
         val isUpdateAvailable: Boolean,
     )
 
-    suspend fun checkForUpdate(): Result<UpdateInfo> = withContext(Dispatchers.IO) {
+    suspend fun checkForUpdate(currentVersion: String): Result<UpdateInfo> = withContext(Dispatchers.IO) {
         try {
             val connection = URL(GITHUB_API_URL).openConnection()
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
@@ -47,7 +46,7 @@ object UpdateChecker {
                     break
                 }
             }
-            val isUpdateAvailable = isNewerVersion(latestVersion, CURRENT_VERSION)
+            val isUpdateAvailable = isNewerVersion(latestVersion, currentVersion)
             Result.success(UpdateInfo(latestVersion, downloadUrl, releaseNotes, isUpdateAvailable))
         } catch (e: Exception) {
             Result.failure(e)

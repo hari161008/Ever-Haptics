@@ -375,8 +375,8 @@ private fun PatternCard(pattern: HapticPattern, isSelected: Boolean, onClick: ()
     ) {
         Column(Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Top)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Box(modifier = Modifier.size(40.dp).background(color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
-                    Icon(pattern.icon, null, tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                Box(modifier = Modifier.size(40.dp).background(color = MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                    Icon(pattern.icon, null, tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
                 }
                 SelectionDot(isSelected)
             }
@@ -395,8 +395,8 @@ private fun CustomPatternCard(isSelected: Boolean, beatCount: Int, durationMs: L
     val interactionSource = remember { MutableInteractionSource() }
     Surface(modifier = modifier.selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)), color = containerColor, shape = RoundedCornerShape(24.dp), border = BorderStroke(borderWidth, borderColor)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(modifier = Modifier.size(40.dp).background(color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.Draw, null, tint = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.secondary, modifier = Modifier.size(22.dp))
+            Box(modifier = Modifier.size(40.dp).background(color = MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Draw, null, tint = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("Custom", style = MaterialTheme.typography.titleMedium, color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface)
