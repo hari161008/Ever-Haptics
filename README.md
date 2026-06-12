@@ -2,7 +2,7 @@
 <br>
 
 <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Assets/Ever%20Haptics%20Banner.png" width="100%" />
-Ever Haptics is an Android app that adds haptic feedback across apps and system UI to make your phone feel more responsive and premium.
+Ever Haptics is an Android app that adds haptic feedback across apps and system UI to make your phone feel more responsive and premium while tapping the screen, scrolling through the apps, clicking buttons, connecting charger, receiving calls, notifications, ringing alarm, playing musics and more.
 
 <br>
 <br>
