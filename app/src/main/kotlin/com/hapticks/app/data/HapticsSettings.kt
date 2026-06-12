@@ -23,13 +23,8 @@ data class HapticsSettings(
     val scrollTailCutoffMs: Int = 0,
     val scrollTailCutoffEnabled: Boolean = false,
     val scrollHorizontalEnabled: Boolean = false,
-    val edgePattern: HapticPattern = HapticPattern.SOFT_BUMP,
-    val edgeIntensity: Float = 1.0f,
-    val a11yScrollBoundEdge: Boolean = false,
-    val edgeLsposedLibxposedPath: Boolean = false,
     val tapExcludedPackages: Set<String> = emptySet(),
     val scrollExcludedPackages: Set<String> = emptySet(),
-    val edgeExcludedPackages: Set<String> = emptySet(),
     // Charging
     val chargingVibEnabled: Boolean = false,
     val chargingVibOnConnect: Boolean = true,

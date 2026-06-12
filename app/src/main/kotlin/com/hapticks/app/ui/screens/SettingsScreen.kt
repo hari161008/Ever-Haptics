@@ -82,6 +82,24 @@ fun SettingsScreen(
         )
     }
 
+    if (updateCheckState is UpdateCheckState.Checking) {
+        AlertDialog(
+            onDismissRequest = {},
+            confirmButton = {},
+            title = { Text("Checking for updates", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.5.dp)
+                    Text("Please wait…", style = MaterialTheme.typography.bodyMedium)
+                }
+            },
+            shape = RoundedCornerShape(20.dp),
+        )
+    }
+
     Scaffold(modifier = Modifier.fillMaxSize(), containerColor = MaterialTheme.colorScheme.background) { padding ->
         LazyColumn(
             state = rememberLazyListState(),

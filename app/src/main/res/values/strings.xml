@@ -52,28 +52,6 @@
     <string name="home_button_haptics_subtitle">Custom vibration feedback for volume, power, and brightness controls.</string>
 
     <!-- Edge Haptics screen (accessibility scroll bounds) -->
-    <string name="edge_screen_title">Edge Haptics</string>
-    <string name="edge_info_title">Accessibility</string>
-    <string name="edge_info_body">Turn on the Hapticks accessibility service under Settings → Accessibility. Edge pulses use the pattern and intensity you choose below.</string>
-    <string name="edge_a11y_scroll_bound_title">Edge Haptics (Accessibility)</string>
-    <string name="edge_a11y_scroll_bound_subtitle">Uses the accessibility scroll-edge path to fire a pulse when you hit the top or bottom of a scrollable surface.</string>
-    <string name="edge_a11y_guide_title">How it works and limits</string>
-    <string name="edge_a11y_guide_body">Ever Haptics listens for accessibility scroll events and compares scroll position to the reported range. When you move onto the top or bottom edge from inside the content, it plays your chosen edge pattern once.\n\nLimits: Only vertical lists and pages that expose scrollY and maxScrollY through TYPE_VIEW_SCROLLED are supported. Horizontal carousels, many games, some WebViews, and heavily custom drawn surfaces often send no usable data, so you may feel nothing there. Pulses follow how often the app posts scroll updates, so timing can feel less tight than the LSPosed EdgeEffect path. The main Hapticks accessibility service must stay on.</string>
-    <string name="edge_lsposed_title">Advanced Edge Haptics (LSPosed)</string>
-    <string name="edge_lsposed_subtitle">Uses a more precise method to detect when you hit the edge of a scroll. Enabling this provides a cleaner feel and prevents double vibrations.</string>
-    <string name="edge_lsposed_what_title">What this does</string>
-    <string name="edge_lsposed_what_body">This switches the app to hook scroll edge effects via LSPosed (libxposed path), which tracks overscroll at the system level for a cleaner pulse and helps avoid duplicate vibrations with the accessibility scroll path. Use the steps below only when you intend to run the module in LSPosed.</string>
-    <string name="edge_lsposed_setup_title">How to set up</string>
-    <string name="edge_lsposed_setup_body">For the best results, enable this app in LSPosed Manager: \n\n1. Open LSPosed.\n\n2. Locate this app and enable its module.\n\n3. Select all the apps you want to apply the module to in the module scope.\n\n4. Restart the affected apps or your phone to apply changes.</string>
-    <string name="edge_lsposed_status_overline">LSPosed</string>
-    <string name="edge_lsposed_status_active">Active</string>
-    <string name="edge_lsposed_status_inactive">Not active</string>
-    <string name="edge_lsposed_status_active_body">Great! The module is running smoothly. Edge haptics will work in the apps you have selected.</string>
-    <string name="edge_lsposed_status_inactive_body">To get started, turn on the Hapticks module in LSPosed Manager, set your app scope, and reboot or force-stop the selected apps. When you are done, come back to this screen.</string>
-    <string name="edge_lsposed_status_icon_active_cd">LSPosed connected, happy status icon</string>
-    <string name="edge_lsposed_status_icon_inactive_cd">LSPosed not connected, sad status icon</string>
-    <string name="edge_test_button">Test edge haptic</string>
-    <string name="edge_test_no_vibrator">Device has no vibrator</string>
 
     <!-- Scroll haptic screen -->
     <string name="scroll_toggle_title">Enable Tactile Scrolling</string>
@@ -99,13 +77,6 @@
     <string name="scroll_tail_cutoff_value_ms">%1$d ms</string>
 
     <!-- App Exclusions -->
-    <string name="app_exclusions_title">App Exclusions</string>
-    <string name="app_exclusions_row_title">App Exclusions</string>
-    <string name="app_exclusions_row_subtitle_none">No apps excluded</string>
-    <string name="app_exclusions_row_subtitle_some">%1$d app(s) excluded</string>
-    <string name="app_exclusions_select_all">Select All</string>
-    <string name="app_exclusions_deselect_all">Deselect All</string>
-    <string name="app_exclusions_no_apps">No apps found</string>
 
     <!-- Reset -->
     <string name="reset_to_defaults">Reset to defaults</string>
@@ -222,4 +193,11 @@
     <string name="settings_battery_saver_section">Battery Saver</string>
     <string name="settings_battery_saver_title">Battery Saver Detection</string>
     <string name="settings_battery_saver_subtitle">Temporarily pause all haptic features when Battery Saver mode is active on your device</string>
+    <string name="app_exclusions_title">App Exclusions</string>
+    <string name="app_exclusions_select_all">Select all</string>
+    <string name="app_exclusions_deselect_all">Deselect all</string>
+    <string name="app_exclusions_no_apps">No apps found</string>
+    <string name="app_exclusions_row_title">Excluded Apps</string>
+    <string name="app_exclusions_row_subtitle_none">No apps excluded</string>
+    <string name="app_exclusions_row_subtitle_some">%d apps excluded</string>
 </resources>

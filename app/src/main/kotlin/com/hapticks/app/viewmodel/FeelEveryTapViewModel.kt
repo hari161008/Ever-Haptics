@@ -88,13 +88,8 @@ class FeelEveryTapViewModel(
     fun commitScrollTailCutoffMs(value: Int) { viewModelScope.launch { preferences.setScrollTailCutoffMs(value) } }
     fun setScrollTailCutoffEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setScrollTailCutoffEnabled(enabled) } }
     fun setScrollHorizontalEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setScrollHorizontalEnabled(enabled) } }
-    fun setEdgePattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setEdgePattern(pattern) } }
-    fun commitEdgeIntensity(intensity: Float) { viewModelScope.launch { preferences.setEdgeIntensity(intensity) } }
-    fun setA11yScrollBoundEdge(enabled: Boolean) { viewModelScope.launch { preferences.setA11yScrollBoundEdge(enabled) } }
-    fun setEdgeLsposedLibxposedPath(enabled: Boolean) { viewModelScope.launch { preferences.setEdgeLsposedLibxposedPath(enabled) } }
     fun setTapExcludedPackages(packages: Set<String>) { viewModelScope.launch { preferences.setTapExcludedPackages(packages) } }
     fun setScrollExcludedPackages(packages: Set<String>) { viewModelScope.launch { preferences.setScrollExcludedPackages(packages) } }
-    fun setEdgeExcludedPackages(packages: Set<String>) { viewModelScope.launch { preferences.setEdgeExcludedPackages(packages) } }
     fun setUseDynamicColors(enabled: Boolean) { viewModelScope.launch { preferences.setUseDynamicColors(enabled) } }
     fun setThemeMode(mode: ThemeMode) { viewModelScope.launch { preferences.setThemeMode(mode) } }
     fun setAmoledBlack(enabled: Boolean) { viewModelScope.launch { preferences.setAmoledBlack(enabled) } }
@@ -122,13 +117,6 @@ class FeelEveryTapViewModel(
             preferences.setScrollHorizontalEnabled(HapticsSettings.Default.scrollHorizontalEnabled)
         }
     }
-    fun resetEdgeDefaults() {
-        viewModelScope.launch {
-            preferences.setEdgePattern(HapticsSettings.Default.edgePattern)
-            preferences.setEdgeIntensity(HapticsSettings.Default.edgeIntensity)
-        }
-    }
-
     // Charging
     fun setChargingVibEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setChargingVibEnabled(enabled) } }
     fun setChargingVibOnConnect(enabled: Boolean) { viewModelScope.launch { preferences.setChargingVibOnConnect(enabled) } }
@@ -277,7 +265,6 @@ class FeelEveryTapViewModel(
             viewModelScope.launch { playCustomSequenceOnEngine(s.chargingVibCustomSequence) }
         } else { engine.play(s.chargingVibPattern, s.chargingVibIntensity) }
     }
-    fun testEdgeHaptic() { val s = settings.value; engine.play(s.edgePattern, s.edgeIntensity) }
     fun testVolumeHaptic() {
         val s = settings.value
         if (!s.volumeHapticCustomSequence.isEmpty) { viewModelScope.launch { playCustomSequenceOnEngine(s.volumeHapticCustomSequence) } }

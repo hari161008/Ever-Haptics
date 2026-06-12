@@ -112,26 +112,70 @@ class MusicHapticsService : Service() {
         visualizer = null
     }
 
-    // ── Device audio via Visualizer (no MediaProjection needed) ──────────────
+    // ── Device audio via Visualizer (FFT bass-energy beat detection) ─────────
 
     private fun startVisualizer(fallbackToMic: Boolean = false) {
         try {
+            // Use max capture size for best frequency resolution
+            val captureSize = Visualizer.getCaptureSizeRange()[1].coerceAtLeast(1024)
             val vis = Visualizer(0)
-            vis.captureSize = Visualizer.getCaptureSizeRange()[1].coerceAtLeast(1024)
-            val dynThreshold = floatArrayOf(0.02f)
-            val smoothAlpha = 0.06f
+            vis.captureSize = captureSize
+
+            // Rolling bass energy average and peak trackers
+            val dynamicAvg  = floatArrayOf(0.04f)
+            val dynamicPeak = floatArrayOf(0.0f)
+            val smoothAvg   = 0.10f
+            val peakDecay   = 0.90f
             val minHapticMs = 80L
+
             vis.setDataCaptureListener(object : Visualizer.OnDataCaptureListener {
-                override fun onWaveFormDataCapture(v: Visualizer, waveform: ByteArray, samplingRate: Int) {
+                override fun onWaveFormDataCapture(v: Visualizer, waveform: ByteArray, samplingRate: Int) {}
+
+                override fun onFftDataCapture(v: Visualizer, fft: ByteArray, samplingRate: Int) {
                     if (!currentEnabled) return
+                    // samplingRate is in mHz — divide by 1000 for Hz
+                    val rateHz = (samplingRate / 1000).coerceAtLeast(8000)
+                    // Frequency resolution per FFT bin
+                    val freqPerBin = rateHz.toFloat() / captureSize
+                    // Bass range: 40–300 Hz (kick drum + bass guitar)
+                    val bassStart = (40f  / freqPerBin).toInt().coerceIn(1, fft.size / 2 - 4)
+                    val bassEnd   = (300f / freqPerBin).toInt().coerceIn(bassStart + 2, fft.size / 2 - 2)
+
+                    // Compute RMS energy across the bass band
+                    // FFT layout: [DC, Nyquist, re1, im1, re2, im2, ...]
                     var sumSq = 0.0
-                    for (b in waveform) { val s = ((b.toInt() and 0xFF) - 128) / 128f; sumSq += s * s }
-                    val rms = sqrt(sumSq / waveform.size).toFloat()
-                    dynThreshold[0] = dynThreshold[0] * (1f - smoothAlpha) + rms * smoothAlpha
-                    fireBeatIfDetected(rms, dynThreshold[0], minHapticMs)
+                    var count = 0
+                    for (k in bassStart..bassEnd) {
+                        val re = fft[k * 2].toFloat()
+                        val im = fft[k * 2 + 1].toFloat()
+                        sumSq += re * re + im * im
+                        count++
+                    }
+                    if (count == 0) return
+                    // Normalise to roughly 0..1 range (128 = max byte amplitude)
+                    val bassEnergy = sqrt(sumSq / count).toFloat() / 128f
+
+                    // Update rolling average (slow) and peak (fast rise / slow decay)
+                    dynamicAvg[0] = dynamicAvg[0] * (1f - smoothAvg) + bassEnergy * smoothAvg
+                    if (bassEnergy > dynamicPeak[0]) dynamicPeak[0] = bassEnergy
+                    else dynamicPeak[0] *= peakDecay
+
+                    // Beat fires when energy significantly exceeds the rolling average
+                    // (sensitivity 0→high threshold, 1→low threshold)
+                    val threshold = dynamicAvg[0] * (2.2f - currentSensitivity * 1.0f)
+                    val now  = System.currentTimeMillis()
+                    val last = sharedLastHapticMs.get()
+                    if (bassEnergy > threshold && bassEnergy > 0.008f && (now - last) >= minHapticMs) {
+                        if (sharedLastHapticMs.compareAndSet(last, now)) {
+                            val beatStrength = ((bassEnergy - threshold) / threshold).coerceIn(0f, 1f)
+                            val amplitude = (currentStrength * (0.35f + 0.65f * beatStrength) * 255f)
+                                .toInt().coerceIn(30, 255)
+                            val durationMs = (35L + (beatStrength * 55f).toLong()).coerceIn(30L, 90L)
+                            vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude))
+                        }
+                    }
                 }
-                override fun onFftDataCapture(v: Visualizer, fft: ByteArray, samplingRate: Int) {}
-            }, Visualizer.getMaxCaptureRate() / 2, true, false)
+            }, Visualizer.getMaxCaptureRate() / 2, false, true)  // FFT only
             vis.enabled = true
             visualizer = vis
         } catch (_: Exception) {

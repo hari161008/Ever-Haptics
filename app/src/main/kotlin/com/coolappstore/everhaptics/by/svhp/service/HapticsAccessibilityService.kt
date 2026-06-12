@@ -21,7 +21,6 @@ import com.coolappstore.everhaptics.by.svhp.data.HapticsSettings
 import com.coolappstore.everhaptics.by.svhp.haptics.HapticEngine
 import com.coolappstore.everhaptics.by.svhp.service.accessibility.isAccessibilityEventFromOwnApplication
 import com.coolappstore.everhaptics.by.svhp.service.accessibility.interacted.InteractableViewHaptics
-import com.coolappstore.everhaptics.by.svhp.service.accessibility.scrolled.ScrollAbsoluteEdgeVibration
 import com.coolappstore.everhaptics.by.svhp.service.accessibility.scrolled.ScrollContentVibration
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -265,17 +264,7 @@ class HapticsAccessibilityService : AccessibilityService() {
             }
 
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
-                var consumedByEdge = false
-
-                if (!s.scrollExcludedPackages.contains(pkg)) {
-                    if (ScrollAbsoluteEdgeVibration.onViewScrolled(ev) ==
-                        ScrollAbsoluteEdgeVibration.Result.PlayEdgeHaptic
-                    ) {
-                        consumedByEdge = true
-                    }
-                }
-
-                if (s.scrollEnabled && !consumedByEdge && !s.scrollExcludedPackages.contains(pkg)) {
+                if (s.scrollEnabled && !s.scrollExcludedPackages.contains(pkg)) {
                     when (val scroll = ScrollContentVibration.onViewScrolled(ev, s)) {
                         is ScrollContentVibration.Decision.Play -> {
                             val count = scroll.count

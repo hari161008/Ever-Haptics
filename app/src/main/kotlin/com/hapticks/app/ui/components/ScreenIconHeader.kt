@@ -36,7 +36,7 @@ fun ScreenIconHeader(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(RoundedCornerShape(17.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                    .background(featureColor.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

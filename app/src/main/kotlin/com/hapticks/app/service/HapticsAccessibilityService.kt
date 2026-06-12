@@ -24,7 +24,6 @@ import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.haptics.HapticEngine
 import com.hapticks.app.service.accessibility.isAccessibilityEventFromOwnApplication
 import com.hapticks.app.service.accessibility.interacted.InteractableViewHaptics
-import com.hapticks.app.service.accessibility.scrolled.ScrollAbsoluteEdgeVibration
 import com.hapticks.app.service.accessibility.scrolled.ScrollContentVibration
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -300,11 +299,7 @@ class HapticsAccessibilityService : AccessibilityService() {
             }
 
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
-                var consumedByEdge = false
-                if (!s.scrollExcludedPackages.contains(pkg)) {
-                    if (ScrollAbsoluteEdgeVibration.onViewScrolled(ev) == ScrollAbsoluteEdgeVibration.Result.PlayEdgeHaptic) consumedByEdge = true
-                }
-                if (s.scrollEnabled && !consumedByEdge && !s.scrollExcludedPackages.contains(pkg)) {
+                if (s.scrollEnabled && !s.scrollExcludedPackages.contains(pkg)) {
                     when (val scroll = ScrollContentVibration.onViewScrolled(ev, s)) {
                         is ScrollContentVibration.Decision.Play -> {
                             if (scroll.count <= 1) engine.play(s.scrollPattern, scroll.intensity, 0L)

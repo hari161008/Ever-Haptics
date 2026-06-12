@@ -8,7 +8,6 @@ composeBom = "2025.06.00"
 datastore = "1.1.1"
 coroutines = "1.8.1"
 junit = "4.13.2"
-libxposed = "101.0.0"
 material = "1.13.0"
 
 [libraries]
@@ -28,8 +27,6 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "libxposed" }
-libxposed-service = { group = "io.github.libxposed", name = "service", version.ref = "libxposed" }
 google-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]

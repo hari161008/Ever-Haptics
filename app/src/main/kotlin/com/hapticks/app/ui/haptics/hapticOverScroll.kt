@@ -16,15 +16,10 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Velocity
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hapticks.app.HapticksApp
-import com.hapticks.app.data.HapticsSettings
 import com.hapticks.app.haptics.HapticEngine
 import com.hapticks.app.haptics.HapticPattern
 import kotlin.math.abs
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
 
 private const val EdgePullSlopPx = 0.5f
 private class HapticInstrumentedOverscrollEffect(
@@ -146,13 +141,9 @@ fun ProvideHapticksEdgeOverscrollHaptics(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val app = context.applicationContext as? HapticksApp
     val engine = remember(app) { app?.hapticEngine }
-    val settingsFlow = remember(app) {
-        app?.preferences?.settings ?: flowOf(HapticsSettings.Default)
-    }
-    val settings by settingsFlow.collectAsStateWithLifecycle(HapticsSettings.Default)
     val baseFactory = rememberPlatformOverscrollFactory()
-    val factory = remember(baseFactory, engine, settings.edgeIntensity) {
-        HapticInstrumentedOverscrollFactory(baseFactory, engine, settings.edgeIntensity)
+    val factory = remember(baseFactory, engine) {
+        HapticInstrumentedOverscrollFactory(baseFactory, engine, 0.8f)
     }
     CompositionLocalProvider(LocalOverscrollFactory provides factory) {
         content()
@@ -161,14 +152,9 @@ fun ProvideHapticksEdgeOverscrollHaptics(content: @Composable () -> Unit) {
 
 fun Context.performAppEdgeOverscrollHaptic() {
     val app = applicationContext as? HapticksApp ?: return
-    val snapshot = try {
-        runBlocking { app.preferences.settings.first() }
-    } catch (_: Throwable) {
-        HapticsSettings.Default
-    }
     app.hapticEngine.play(
         pattern = HapticPattern.SOFT_BUMP,
-        intensity = snapshot.edgeIntensity,
+        intensity = 0.8f,
         throttleMs = 0L,
     )
 }
