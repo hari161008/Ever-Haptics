@@ -12,7 +12,7 @@ Ever Haptics is an Android app that adds haptic feedback across apps and system 
 <br>
 
 # 📦 Latest Releases
-GitHub: [Download](https://github.com/hari161008/Ever-Haptics) ⬇️
+GitHub: [Download](https://github.com/hari161008/Ever-Haptics/releases) ⬇️
 
 <br>
 
