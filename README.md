@@ -141,12 +141,12 @@ GitHub: [Download](https://github.com/hari161008/Ever-Haptics/releases) ⬇️
 ┈➤ Global Controls<br><br>
 
 • 🌐 Global Master Toggle – Enable or disable all haptic features with a single switch<br>
-• ♿ Accessibility Service – Powers the haptic engine system-wide without root access<br>
+• ♿ Accessibility Service – Powers the haptic engine system-wide without root access<br><br>
 
 # Why This App ??
 Some phones especially Pixel devices have really good haptics, but they’re underutilized. A lot of apps and even parts of Android don’t give haptic feedback when you interact with them. That makes the experience feel a bit flat.
 
-So Ever Haptics is there to fix that and make interactions feel more alive and satisfying.
+So Ever Haptics is there to fix that and make interactions feel more alive and satisfying. <br><br>
 
 # For those who are wondering how Rate and Review work
 
