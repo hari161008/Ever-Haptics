@@ -13,8 +13,8 @@ Ever Haptics is an Android app that adds haptic feedback across apps and system 
 
 <br>
 
-# ⭐ Rate and Review (Will Implement Soon it :) )
-Everyone's Ratings: [Click Here](https://hari161008.github.io/Website-For-Everlasting-Android-Tweak/Ratings%20Reviews/Ever%20Dialer/Ever%20Dialer.html)
+# ⭐ Rate and Review
+Everyone's Ratings: [Click Here](https://hari161008.github.io/Website-For-Everlasting-Android-Tweak/Ratings%20Reviews/Ever%20Haptics/Ever_Haptics.html)
 
 If you would like to write a Review, you must install the app, then go to App's settings > Rate and Review
 
