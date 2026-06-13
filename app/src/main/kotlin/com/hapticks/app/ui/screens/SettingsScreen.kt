@@ -66,6 +66,7 @@ fun SettingsScreen(
     onSeedColorChange: (Int) -> Unit = {},
     onBatterySaverDetectionChange: (Boolean) -> Unit = {},
     onAutoCheckUpdatesChange: (Boolean) -> Unit = {},
+    onOpenReviews: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -128,6 +129,10 @@ fun SettingsScreen(
                         }
                     },
                 )
+            }
+
+            item(key = "rate_review") {
+                RateAndReviewSection(context = context, onOpenReviews = onOpenReviews)
             }
 
                         // ── Appearance section ──
@@ -206,6 +211,76 @@ private sealed interface UpdateCheckState {
     data class Downloading(val progress: Int) : UpdateCheckState
     data object Downloaded : UpdateCheckState
     data class Error(val message: String) : UpdateCheckState
+}
+
+@Composable
+private fun RateAndReviewSection(context: android.content.Context, onOpenReviews: () -> Unit) {
+    val rateColor = FeatureColors.MusicHaptics
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Section header
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            FeatureIcon(icon = Icons.Rounded.Star, tint = rateColor, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
+            Text("Rate & Review", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        }
+
+        // Rate & Review card → opens Google Form in browser
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth().hapticClickable {
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    "https://docs.google.com/forms/d/e/1FAIpQLSci14N7YdirM32f2I7bT6GBv_sQ3KJ4hjM6qDKTVZfsCuIPtw/viewform?usp=header".toUri())
+                context.startActivity(intent)
+            },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Box(
+                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(18.dp)).background(rateColor.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.RateReview, null, tint = rateColor, modifier = Modifier.size(26.dp))
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("Rate & Review", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Share your experience with Ever Haptics", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+            }
+        }
+
+        // Check Ratings & Reviews card → opens WebView in-app
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth().hapticClickable { onOpenReviews() },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Box(
+                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(18.dp)).background(rateColor.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.Reviews, null, tint = rateColor, modifier = Modifier.size(26.dp))
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("Check Ratings & Reviews", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("See what others are saying about the app", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+            }
+        }
+    }
 }
 
 @Composable

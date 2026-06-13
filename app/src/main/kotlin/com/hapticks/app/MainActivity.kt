@@ -27,6 +27,7 @@ import com.hapticks.app.ui.components.SlidingBottomTabHost
 import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.screens.AppExclusionsScreen
 import com.hapticks.app.ui.screens.HomeScreen
+import com.hapticks.app.ui.screens.ReviewsWebViewScreen
 import com.hapticks.app.ui.screens.SettingsScreen
 import com.hapticks.app.ui.screens.autohaptics.AutoHapticsSettingsScreen
 import com.hapticks.app.ui.screens.autohaptics.AutoHapticsType
@@ -157,6 +158,7 @@ class MainActivity : ComponentActivity() {
                                                 onSeedColorChange = viewModel::setSeedColor,
                                                 onBatterySaverDetectionChange = viewModel::setBatterySaverDetectionEnabled,
                                                 onAutoCheckUpdatesChange = viewModel::setAutoCheckUpdatesEnabled,
+                                                onOpenReviews = { route = Route.REVIEWS_WEBVIEW },
                                             )
                                         }
                                     }
@@ -394,6 +396,13 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
+                                Route.REVIEWS_WEBVIEW -> {
+                                    BackHandler { route = Route.SETTINGS }
+                                    ReviewsWebViewScreen(
+                                        onBack = { route = Route.SETTINGS },
+                                    )
+                                }
+
                                 Route.CUSTOM_HAPTIC_EDITOR -> {
                                     val origin = previousRoute
                                     BackHandler { route = origin }
@@ -436,7 +445,8 @@ class MainActivity : ComponentActivity() {
         NAVBAR_HAPTICS, UNLOCK_HAPTICS, KEYBOARD_HAPTICS,
         MUSIC_HAPTICS,
         SETTINGS, NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR,
-        CALL_AUTO_HAPTICS, ALARM_AUTO_HAPTICS
+        CALL_AUTO_HAPTICS, ALARM_AUTO_HAPTICS,
+        REVIEWS_WEBVIEW
     }
 
     private fun openAccessibilitySettings() {
