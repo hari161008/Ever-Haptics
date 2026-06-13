@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -53,10 +54,9 @@ fun SlidingBottomTabHost(
     modifier: Modifier = Modifier,
     content: @Composable (BottomTab) -> Unit,
 ) {
-    val tabBg = MaterialTheme.colorScheme.background
     AnimatedContent(
         targetState = selectedTab,
-        modifier = modifier.background(tabBg),
+        modifier = modifier,
         transitionSpec = {
             if (targetState.ordinal > initialState.ordinal) {
                 (slideInHorizontally(bottomNavSlideSpec) { fullWidth -> fullWidth } + fadeIn(bottomNavFadeSpec)) togetherWith
@@ -68,6 +68,7 @@ fun SlidingBottomTabHost(
         },
         label = "slidingBottomTabHost",
     ) { tab ->
+        val tabBg = MaterialTheme.colorScheme.background
         Box(
             Modifier
                 .fillMaxSize()
@@ -86,7 +87,8 @@ fun FloatingBottomBar(
 ) {
     Surface(
         modifier = modifier
-            .padding(bottom = 25.dp)
+            .navigationBarsPadding()
+            .padding(bottom = 10.dp)
             .height(60.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceContainer,

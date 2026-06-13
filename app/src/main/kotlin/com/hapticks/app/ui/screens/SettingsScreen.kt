@@ -2,6 +2,13 @@ package com.hapticks.app.ui.screens
 
 import android.content.Intent
 import com.hapticks.app.util.AppVersion
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -67,160 +75,62 @@ fun SettingsScreen(
     }
 
     var updateCheckState by remember { mutableStateOf<UpdateCheckState>(UpdateCheckState.Idle) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
 
-    if (showUpdateDialog && updateInfo != null) {
-        UpdateAvailableDialog(
-            info = updateInfo!!,
-            onDismiss = { showUpdateDialog = false },
-            onDownload = {
-                showUpdateDialog = false
-                val info = updateInfo!!
-                if (info.downloadUrl.isNotBlank()) UpdateChecker.downloadAndInstall(context, info.downloadUrl, info.latestVersion)
-            },
-        )
-    }
-
-    if (updateCheckState is UpdateCheckState.Checking) {
-        AlertDialog(
-            onDismissRequest = {},
-            confirmButton = {},
-            title = { Text("Checking for updates", style = MaterialTheme.typography.titleMedium) },
-            text = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.5.dp)
-                    Text("Please wait…", style = MaterialTheme.typography.bodyMedium)
-                }
-            },
-            shape = RoundedCornerShape(20.dp),
-        )
-    }
-
     Scaffold(modifier = Modifier.fillMaxSize(), containerColor = MaterialTheme.colorScheme.background) { padding ->
+        val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         LazyColumn(
             state = rememberLazyListState(),
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 90.dp + navBarBottom),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item(key = "header") { SettingsHeader() }
 
             // ── Updates section FIRST ──
             item(key = "updates") {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Section header
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        FeatureIcon(icon = Icons.Rounded.SystemUpdate, tint = FeatureColors.Updates, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
-                        Text("Updates", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                    }
-
-                    // Big check for updates card
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().then(
-                            if (updateCheckState !is UpdateCheckState.Checking)
-                                Modifier.hapticClickable {
-                                    updateCheckState = UpdateCheckState.Checking
-                                    scope.launch {
-                                        UpdateChecker.checkForUpdate(appVersion).fold(
-                                            onSuccess = { info ->
-                                                if (info.isUpdateAvailable) {
-                                                    updateCheckState = UpdateCheckState.UpdateAvailable(info.latestVersion)
-                                                    updateInfo = info; showUpdateDialog = true
-                                                } else { updateCheckState = UpdateCheckState.UpToDate }
-                                            },
-                                            onFailure = { e -> updateCheckState = UpdateCheckState.Error(e.message ?: "Unknown error") },
-                                        )
-                                    }
-                                }
-                            else Modifier
-                        ),
-                        color = when (updateCheckState) {
-                            is UpdateCheckState.UpdateAvailable -> MaterialTheme.colorScheme.primaryContainer
-                            is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondaryContainer
-                            is UpdateCheckState.Error -> MaterialTheme.colorScheme.errorContainer
-                            else -> MaterialTheme.colorScheme.surfaceContainerHigh
-                        },
-                        shape = RoundedCornerShape(20.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                when (updateCheckState) {
-                                    is UpdateCheckState.Checking -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.5.dp)
-                                    is UpdateCheckState.UpdateAvailable -> Icon(Icons.Rounded.NewReleases, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
-                                    is UpdateCheckState.UpToDate -> Icon(Icons.Rounded.CheckCircle, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
-                                    is UpdateCheckState.Error -> Icon(Icons.Rounded.ErrorOutline, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(26.dp))
-                                    else -> Icon(Icons.Rounded.SystemUpdate, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(26.dp))
-                                }
-                            }
-                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Text(
-                                    "Check for updates",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = when (updateCheckState) {
-                                        is UpdateCheckState.UpdateAvailable -> MaterialTheme.colorScheme.onPrimaryContainer
-                                        is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.onSecondaryContainer
-                                        is UpdateCheckState.Error -> MaterialTheme.colorScheme.onErrorContainer
-                                        else -> MaterialTheme.colorScheme.onSurface
+                UpdateCard(
+                    appVersion = appVersion,
+                    updateCheckState = updateCheckState,
+                    updateInfo = updateInfo,
+                    autoCheckEnabled = settings.autoCheckUpdatesEnabled,
+                    onAutoCheckChange = onAutoCheckUpdatesChange,
+                    onCheckClick = {
+                        if (updateCheckState is UpdateCheckState.Idle ||
+                            updateCheckState is UpdateCheckState.UpToDate ||
+                            updateCheckState is UpdateCheckState.Error) {
+                            updateCheckState = UpdateCheckState.Checking
+                            scope.launch {
+                                UpdateChecker.checkForUpdate(appVersion).fold(
+                                    onSuccess = { info ->
+                                        updateInfo = info
+                                        updateCheckState = if (info.isUpdateAvailable)
+                                            UpdateCheckState.UpdateAvailable(info.latestVersion)
+                                        else UpdateCheckState.UpToDate
                                     },
-                                )
-                                Text(
-                                    when (val s = updateCheckState) {
-                                        is UpdateCheckState.Idle -> "Current version: v${appVersion}  ·  Tap to check"
-                                        is UpdateCheckState.Checking -> "Checking for updates…"
-                                        is UpdateCheckState.UpToDate -> "v${appVersion} — You're on the latest version"
-                                        is UpdateCheckState.UpdateAvailable -> "v${s.version} is available! (current: v${appVersion})"
-                                        is UpdateCheckState.Error -> "Failed to check: ${s.message}"
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = when (updateCheckState) {
-                                        is UpdateCheckState.UpdateAvailable -> MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                        is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                                        is UpdateCheckState.Error -> MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
-                                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
+                                    onFailure = { e -> updateCheckState = UpdateCheckState.Error(e.message ?: "Unknown error") },
                                 )
                             }
-                            if (updateCheckState !is UpdateCheckState.Checking) {
-                                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        }
+                    },
+                    onDownloadClick = {
+                        val info = updateInfo ?: return@UpdateCard
+                        if (info.downloadUrl.isBlank()) return@UpdateCard
+                        updateCheckState = UpdateCheckState.Downloading(0)
+                        scope.launch {
+                            UpdateChecker.downloadWithProgress(context, info.downloadUrl, info.latestVersion) { state ->
+                                when (state) {
+                                    is UpdateChecker.DownloadState.Progress -> updateCheckState = UpdateCheckState.Downloading(state.percent)
+                                    is UpdateChecker.DownloadState.Done -> updateCheckState = UpdateCheckState.Downloaded
+                                    is UpdateChecker.DownloadState.Error -> updateCheckState = UpdateCheckState.Error(state.message)
+                                }
                             }
                         }
-                    }
-
-                    // Auto-check toggle — separate container, no subtitle
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text("Check for updates automatically", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-                            Switch(checked = settings.autoCheckUpdatesEnabled, onCheckedChange = onAutoCheckUpdatesChange)
-                        }
-                    }
-                }
+                    },
+                )
             }
 
-            // ── Appearance section ──
+                        // ── Appearance section ──
             item(key = "appearance") {
                 SettingsSection(title = stringResource(R.string.settings_section_appearance), icon = Icons.Rounded.Palette, iconTint = FeatureColors.Keyboard) {
                     SettingsRow(title = stringResource(R.string.settings_dynamic_color_title), subtitle = null, position = RowPosition.Top, trailing = { Switch(checked = settings.useDynamicColors, onCheckedChange = onUseDynamicColorsChange) })
@@ -293,28 +203,207 @@ private sealed interface UpdateCheckState {
     data object Checking : UpdateCheckState
     data object UpToDate : UpdateCheckState
     data class UpdateAvailable(val version: String) : UpdateCheckState
+    data class Downloading(val progress: Int) : UpdateCheckState
+    data object Downloaded : UpdateCheckState
     data class Error(val message: String) : UpdateCheckState
 }
 
 @Composable
-private fun UpdateAvailableDialog(info: UpdateChecker.UpdateInfo, onDismiss: () -> Unit, onDownload: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Rounded.NewReleases, null, tint = MaterialTheme.colorScheme.primary) },
-        title = { Text("Update Available") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Version ${info.latestVersion} is available. Download and install it now?", style = MaterialTheme.typography.bodyMedium)
-                if (info.releaseNotes.isNotBlank()) {
-                    HorizontalDivider()
-                    Text("What's new:", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                    Text(info.releaseNotes.take(400).let { if (info.releaseNotes.length > 400) "$it…" else it }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun UpdateCard(
+    appVersion: String,
+    updateCheckState: UpdateCheckState,
+    updateInfo: UpdateChecker.UpdateInfo?,
+    autoCheckEnabled: Boolean,
+    onAutoCheckChange: (Boolean) -> Unit,
+    onCheckClick: () -> Unit,
+    onDownloadClick: () -> Unit,
+) {
+    val isUpdateAvailable = updateCheckState is UpdateCheckState.UpdateAvailable
+    val isDownloading = updateCheckState is UpdateCheckState.Downloading
+    val isDownloaded = updateCheckState is UpdateCheckState.Downloaded
+    val isChecking = updateCheckState is UpdateCheckState.Checking
+
+    val accentColor = when {
+        isUpdateAvailable || isDownloading || isDownloaded -> MaterialTheme.colorScheme.primary
+        updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondary
+        updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val containerColor by animateColorAsState(
+        targetValue = when {
+            isUpdateAvailable || isDownloading || isDownloaded -> MaterialTheme.colorScheme.primaryContainer
+            updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondaryContainer
+            updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.errorContainer
+            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        animationSpec = tween(400), label = "uc_bg",
+    )
+    val onContainerColor by animateColorAsState(
+        targetValue = when {
+            isUpdateAvailable || isDownloading || isDownloaded -> MaterialTheme.colorScheme.onPrimaryContainer
+            updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.onSecondaryContainer
+            updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.onErrorContainer
+            else -> MaterialTheme.colorScheme.onSurface
+        },
+        animationSpec = tween(400), label = "uc_fg",
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Header row
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            FeatureIcon(icon = Icons.Rounded.SystemUpdate, tint = FeatureColors.Updates, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
+            Text("Updates", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        }
+
+        // Main update card
+        Surface(
+            color = containerColor,
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Top row: icon + text + badge
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Box(
+                        modifier = Modifier.size(56.dp).clip(RoundedCornerShape(18.dp)).background(accentColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Crossfade(targetState = updateCheckState, label = "uc_icon") { state ->
+                            when (state) {
+                                is UpdateCheckState.Checking -> CircularProgressIndicator(modifier = Modifier.size(26.dp), strokeWidth = 2.5.dp, color = accentColor)
+                                is UpdateCheckState.UpdateAvailable -> Icon(Icons.Rounded.NewReleases, null, tint = accentColor, modifier = Modifier.size(28.dp))
+                                is UpdateCheckState.UpToDate -> Icon(Icons.Rounded.CheckCircle, null, tint = accentColor, modifier = Modifier.size(28.dp))
+                                is UpdateCheckState.Downloading -> CircularProgressIndicator(modifier = Modifier.size(26.dp), strokeWidth = 2.5.dp, color = accentColor)
+                                is UpdateCheckState.Downloaded -> Icon(Icons.Rounded.CheckCircle, null, tint = accentColor, modifier = Modifier.size(28.dp))
+                                is UpdateCheckState.Error -> Icon(Icons.Rounded.ErrorOutline, null, tint = accentColor, modifier = Modifier.size(28.dp))
+                                else -> Icon(Icons.Rounded.SystemUpdate, null, tint = accentColor, modifier = Modifier.size(28.dp))
+                            }
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = when {
+                                isUpdateAvailable -> "Update Available"
+                                isDownloading -> "Downloading…"
+                                isDownloaded -> "Ready to Install"
+                                updateCheckState is UpdateCheckState.UpToDate -> "Up to Date"
+                                updateCheckState is UpdateCheckState.Error -> "Check Failed"
+                                else -> "Ever Haptics"
+                            },
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            color = onContainerColor,
+                        )
+                        Crossfade(targetState = updateCheckState, label = "uc_sub") { state ->
+                            Text(
+                                text = when (state) {
+                                    is UpdateCheckState.Idle -> "v$appVersion  ·  Tap to check for updates"
+                                    is UpdateCheckState.Checking -> "Fetching latest release info…"
+                                    is UpdateCheckState.UpToDate -> "v$appVersion is the latest release"
+                                    is UpdateCheckState.UpdateAvailable -> "v${state.version} is ready  ·  current: v$appVersion"
+                                    is UpdateCheckState.Downloading -> "${state.progress}%  ·  Saving to Downloads folder"
+                                    is UpdateCheckState.Downloaded -> "APK saved to Downloads — tap Install"
+                                    is UpdateCheckState.Error -> state.message
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = onContainerColor.copy(alpha = 0.72f),
+                            )
+                        }
+                    }
+                    // Version chip
+                    Surface(color = accentColor.copy(alpha = 0.18f), shape = RoundedCornerShape(20.dp)) {
+                        Text("v$appVersion", style = MaterialTheme.typography.labelSmall, color = accentColor, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
+                    }
+                }
+
+                // Download progress bar
+                AnimatedVisibility(visible = isDownloading) {
+                    val progress = (updateCheckState as? UpdateCheckState.Downloading)?.progress ?: 0
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        LinearProgressIndicator(
+                            progress = { progress / 100f },
+                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
+                            color = accentColor,
+                            trackColor = accentColor.copy(alpha = 0.2f),
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Downloading APK", style = MaterialTheme.typography.labelSmall, color = onContainerColor.copy(alpha = 0.6f))
+                            Text("$progress%", style = MaterialTheme.typography.labelSmall, color = onContainerColor.copy(alpha = 0.6f))
+                        }
+                    }
+                }
+
+                // Release notes
+                if (isUpdateAvailable && !updateInfo?.releaseNotes.isNullOrBlank()) {
+                    HorizontalDivider(color = onContainerColor.copy(alpha = 0.12f))
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("What's new", style = MaterialTheme.typography.labelLarge, color = accentColor, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                        val notes = updateInfo!!.releaseNotes
+                        Text(notes.take(300).let { if (notes.length > 300) "$it…" else it }, style = MaterialTheme.typography.bodySmall, color = onContainerColor.copy(alpha = 0.75f))
+                    }
+                }
+
+                // Action buttons
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    when {
+                        isUpdateAvailable -> {
+                            Button(
+                                onClick = onDownloadClick,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                            ) {
+                                Icon(Icons.Rounded.Download, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Download & Install")
+                            }
+                        }
+                        isDownloaded -> {
+                            Button(
+                                onClick = onDownloadClick,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                            ) {
+                                Icon(Icons.Rounded.InstallMobile, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Install Now")
+                            }
+                        }
+                        !isChecking && !isDownloading -> {
+                            OutlinedButton(
+                                onClick = onCheckClick,
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.5f)),
+                            ) {
+                                Icon(Icons.Rounded.Refresh, null, modifier = Modifier.size(16.dp), tint = accentColor)
+                                Spacer(Modifier.width(6.dp))
+                                Text(if (updateCheckState is UpdateCheckState.UpToDate || updateCheckState is UpdateCheckState.Error) "Check Again" else "Check for Updates", color = accentColor)
+                            }
+                        }
+                    }
                 }
             }
-        },
-        confirmButton = { Button(onClick = onDownload) { Text("Download & Install") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Later") } },
-    )
+        }
+
+        // Auto-check toggle
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Auto-check on launch", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Get notified when a new version is available", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = autoCheckEnabled, onCheckedChange = onAutoCheckChange)
+            }
+        }
+    }
 }
 
 @Composable

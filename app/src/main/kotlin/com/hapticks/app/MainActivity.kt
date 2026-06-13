@@ -10,8 +10,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -102,7 +104,7 @@ class MainActivity : ComponentActivity() {
                         route = Route.CUSTOM_HAPTIC_EDITOR
                     }
 
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                         AnimatedContent(
                             targetState = route,
                             transitionSpec = {
@@ -121,7 +123,7 @@ class MainActivity : ComponentActivity() {
                                             .togetherWith(slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 3 } + fadeOut(tween(200)))
                                 }
                             },
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
                             label = "route_anim",
                         ) { currentRoute ->
                             when (currentRoute) {

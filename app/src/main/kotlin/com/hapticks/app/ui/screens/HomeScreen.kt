@@ -120,7 +120,8 @@ fun HomeScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(120.dp))
+            val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+            Spacer(Modifier.height(90.dp + navBarBottom))
         }
     }
 }

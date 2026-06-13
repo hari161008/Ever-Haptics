@@ -1,15 +1,14 @@
 package com.hapticks.app.util
 
 import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import androidx.core.content.FileProvider
+import android.content.Intent
+import android.os.Build
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
@@ -26,6 +25,12 @@ object UpdateChecker {
         val isUpdateAvailable: Boolean,
     )
 
+    sealed class DownloadState {
+        data class Progress(val percent: Int) : DownloadState()
+        object Done : DownloadState()
+        data class Error(val message: String) : DownloadState()
+    }
+
     suspend fun checkForUpdate(currentVersion: String): Result<UpdateInfo> = withContext(Dispatchers.IO) {
         try {
             val connection = URL(GITHUB_API_URL).openConnection()
@@ -40,72 +45,93 @@ object UpdateChecker {
             var downloadUrl = ""
             for (i in 0 until assets.length()) {
                 val asset = assets.getJSONObject(i)
-                val name = asset.getString("name")
-                if (name.endsWith(".apk")) {
+                if (asset.getString("name").endsWith(".apk")) {
                     downloadUrl = asset.getString("browser_download_url")
                     break
                 }
             }
-            val isUpdateAvailable = isNewerVersion(latestVersion, currentVersion)
-            Result.success(UpdateInfo(latestVersion, downloadUrl, releaseNotes, isUpdateAvailable))
+            Result.success(UpdateInfo(latestVersion, downloadUrl, releaseNotes, isNewerVersion(latestVersion, currentVersion)))
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    fun downloadAndInstall(context: Context, downloadUrl: String, version: String) {
+    suspend fun downloadWithProgress(
+        context: Context,
+        downloadUrl: String,
+        version: String,
+        onState: (DownloadState) -> Unit,
+    ) = withContext(Dispatchers.IO) {
         val fileName = "EverHaptics-$version.apk"
+        val apkFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
+
+        // If already downloaded, install directly without re-downloading
+        if (apkFile.exists() && apkFile.length() > 0) {
+            withContext(Dispatchers.Main) {
+                onState(DownloadState.Progress(100))
+                installApk(context, apkFile)
+                onState(DownloadState.Done)
+            }
+            return@withContext
+        }
+        val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val request = DownloadManager.Request(Uri.parse(downloadUrl)).apply {
             setTitle("Ever Haptics $version")
-            setDescription("Downloading update...")
+            setDescription("Downloading update…")
             setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
             setMimeType("application/vnd.android.package-archive")
         }
-        val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val downloadId = dm.enqueue(request)
 
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context, intent: Intent) {
-                val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                if (id == downloadId) {
-                    try { ctx.unregisterReceiver(this) } catch (_: Exception) {}
-                    val apkFile = File(
-                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                        fileName
-                    )
-                    if (apkFile.exists()) installApk(ctx, apkFile)
+        // Poll progress
+        var running = true
+        while (running) {
+            delay(300)
+            val cursor = dm.query(DownloadManager.Query().setFilterById(downloadId))
+            if (cursor == null || !cursor.moveToFirst()) { cursor?.close(); break }
+            val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+            when (status) {
+                DownloadManager.STATUS_RUNNING, DownloadManager.STATUS_PAUSED -> {
+                    val total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    val downloaded = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val pct = if (total > 0) ((downloaded * 100L) / total).toInt().coerceIn(0, 99) else 0
+                    withContext(Dispatchers.Main) { onState(DownloadState.Progress(pct)) }
                 }
+                DownloadManager.STATUS_SUCCESSFUL -> {
+                    withContext(Dispatchers.Main) { onState(DownloadState.Progress(100)) }
+                    delay(200)
+                    val apk = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
+                    if (apk.exists()) withContext(Dispatchers.Main) { installApk(context, apk) }
+                    withContext(Dispatchers.Main) { onState(DownloadState.Done) }
+                    running = false
+                }
+                DownloadManager.STATUS_FAILED -> {
+                    val reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                    withContext(Dispatchers.Main) { onState(DownloadState.Error("Download failed (code $reason)")) }
+                    running = false
+                }
+                else -> {}
             }
-        }
-        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
-        } else {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            context.registerReceiver(receiver, filter)
+            cursor.close()
         }
     }
 
     private fun installApk(context: Context, apkFile: File) {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", apkFile)
-        val intent = Intent(Intent.ACTION_VIEW).apply {
+        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-        }
-        context.startActivity(intent)
+        })
     }
 
     private fun isNewerVersion(remote: String, current: String): Boolean {
         return try {
             val r = remote.split(".").map { it.toInt() }
             val c = current.split(".").map { it.toInt() }
-            val maxLen = maxOf(r.size, c.size)
-            for (i in 0 until maxLen) {
-                val rv = r.getOrElse(i) { 0 }
-                val cv = c.getOrElse(i) { 0 }
-                if (rv > cv) return true
-                if (rv < cv) return false
+            for (i in 0 until maxOf(r.size, c.size)) {
+                val diff = r.getOrElse(i) { 0 } - c.getOrElse(i) { 0 }
+                if (diff != 0) return diff > 0
             }
             false
         } catch (_: Exception) { false }
