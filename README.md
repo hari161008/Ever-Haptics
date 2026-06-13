@@ -57,6 +57,10 @@ GitHub: [Download](https://github.com/hari161008/Ever-Haptics/releases) ⬇️
   <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/9.png" width="32%"/>
 </p>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/10.png" width="32%"/>
+</p>
+
 <br>
 
 ---
