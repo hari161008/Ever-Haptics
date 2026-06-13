@@ -39,6 +39,7 @@ import com.hapticks.app.service.MusicHapticsTileService
 import com.hapticks.app.ui.components.HapticToggleRow
 import com.hapticks.app.ui.components.SectionCard
 import com.hapticks.app.ui.components.ScreenIconHeader
+import com.hapticks.app.ui.components.FeatureColors
 import com.hapticks.app.ui.haptics.SliderTickStepsDefault
 import com.hapticks.app.ui.haptics.performHapticSliderTick
 import com.hapticks.app.ui.haptics.slider01ToTickIndex
@@ -119,7 +120,7 @@ fun MusicHapticsScreen(
             item("icon_header") {
                 ScreenIconHeader(
                     icon = Icons.Rounded.MusicNote,
-                    featureColor = MaterialTheme.colorScheme.primary,
+                    featureColor = FeatureColors.MusicHaptics,
                     subtitle = "Vibrate in sync with music beats and sounds. Choose where Ever Haptics listens.",
                 )
             }

@@ -203,6 +203,9 @@ class FeelEveryTapViewModel(
     fun setCallHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setCallHapticPattern(pattern) } }
     fun commitCallHapticIntensity(intensity: Float) { viewModelScope.launch { preferences.setCallHapticIntensity(intensity) } }
     fun setCallHapticCustomSequence(seq: CustomHapticSequence) { viewModelScope.launch { preferences.setCallHapticCustomSequence(seq) } }
+    fun setCallHapticAuto(enabled: Boolean) { viewModelScope.launch { preferences.setCallHapticAuto(enabled) } }
+    fun commitCallAutoSensitivity(v: Float) { viewModelScope.launch { preferences.setCallAutoSensitivity(v) } }
+    fun commitCallAutoStrength(v: Float) { viewModelScope.launch { preferences.setCallAutoStrength(v) } }
     // Notification haptics
     fun setNotifHapticEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setNotifHapticEnabled(enabled) } }
     fun setNotifHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setNotifHapticPattern(pattern) } }
@@ -213,6 +216,9 @@ class FeelEveryTapViewModel(
     fun setAlarmHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setAlarmHapticPattern(pattern) } }
     fun commitAlarmHapticIntensity(intensity: Float) { viewModelScope.launch { preferences.setAlarmHapticIntensity(intensity) } }
     fun setAlarmHapticCustomSequence(seq: CustomHapticSequence) { viewModelScope.launch { preferences.setAlarmHapticCustomSequence(seq) } }
+    fun setAlarmHapticAuto(enabled: Boolean) { viewModelScope.launch { preferences.setAlarmHapticAuto(enabled) } }
+    fun commitAlarmAutoSensitivity(v: Float) { viewModelScope.launch { preferences.setAlarmAutoSensitivity(v) } }
+    fun commitAlarmAutoStrength(v: Float) { viewModelScope.launch { preferences.setAlarmAutoStrength(v) } }
 
     // Keyboard
     fun setKeyboardHapticEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setKeyboardHapticEnabled(enabled) } }

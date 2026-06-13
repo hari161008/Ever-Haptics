@@ -104,6 +104,7 @@ fun ChargingHapticsScreen(
                         onPatternSelected = onPatternSelected,
                         onIntensityCommit = onIntensityCommit,
                         onOpenCustomEditor = onOpenCustomEditor,
+                        onClearCustomSequence = { onCustomSequenceSaved(CustomHapticSequence()) },
                     )
                 }
             }

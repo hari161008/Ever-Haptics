@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material3.*
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
@@ -71,6 +72,9 @@ fun NotificationHapticsScreen(
     onCallIntensityCommit: (Float) -> Unit,
     onCallCustomSequenceSave: (CustomHapticSequence) -> Unit,
     onTestCallHaptic: () -> Unit,
+    callHapticAuto: Boolean,
+    onOpenCallAutoSettings: () -> Unit,
+    onCallAutoChange: (Boolean) -> Unit,
     notifHapticEnabled: Boolean,
     notifPattern: HapticPattern,
     notifIntensity: Float,
@@ -89,6 +93,9 @@ fun NotificationHapticsScreen(
     onAlarmIntensityCommit: (Float) -> Unit,
     onAlarmCustomSequenceSave: (CustomHapticSequence) -> Unit,
     onTestAlarmHaptic: () -> Unit,
+    alarmHapticAuto: Boolean,
+    onOpenAlarmAutoSettings: () -> Unit,
+    onAlarmAutoChange: (Boolean) -> Unit,
     onResetToDefaults: () -> Unit,
     onOpenCustomEditor: (label: String, sequence: CustomHapticSequence, onSave: (CustomHapticSequence) -> Unit) -> Unit,
     onBack: () -> Unit,
@@ -139,8 +146,13 @@ fun NotificationHapticsScreen(
                         SectionCard {
                             PatternSelectorWithCustom(
                                 pattern = callPattern, intensity = callIntensity, customSequence = callCustomSequence,
+                                isAutoActive = callHapticAuto,
                                 onPatternSelected = onCallPatternSelected, onIntensityCommit = onCallIntensityCommit,
-                                onOpenCustomEditor = { onOpenCustomEditor("call", callCustomSequence, onCallCustomSequenceSave) }, label = "call",
+                                onOpenCustomEditor = { onOpenCustomEditor("call", callCustomSequence) { seq -> onCallCustomSequenceSave(seq); if (!seq.isEmpty) onCallAutoChange(false) } },
+                                onOpenAutoSettings = onOpenCallAutoSettings,
+                                onClearCustom = { onCallCustomSequenceSave(CustomHapticSequence()) },
+                                onDisableAuto = { onCallAutoChange(false) },
+                                label = "call",
                             )
                         }
                         HapticTestButton("Test Call Haptic", onTestCallHaptic, enabled = callHapticEnabled)
@@ -177,8 +189,13 @@ fun NotificationHapticsScreen(
                         SectionCard {
                             PatternSelectorWithCustom(
                                 pattern = alarmPattern, intensity = alarmIntensity, customSequence = alarmCustomSequence,
+                                isAutoActive = alarmHapticAuto,
                                 onPatternSelected = onAlarmPatternSelected, onIntensityCommit = onAlarmIntensityCommit,
-                                onOpenCustomEditor = { onOpenCustomEditor("alarm", alarmCustomSequence, onAlarmCustomSequenceSave) }, label = "alarm",
+                                onOpenCustomEditor = { onOpenCustomEditor("alarm", alarmCustomSequence) { seq -> onAlarmCustomSequenceSave(seq); if (!seq.isEmpty) onAlarmAutoChange(false) } },
+                                onOpenAutoSettings = onOpenAlarmAutoSettings,
+                                onClearCustom = { onAlarmCustomSequenceSave(CustomHapticSequence()) },
+                                onDisableAuto = { onAlarmAutoChange(false) },
+                                label = "alarm",
                             )
                         }
                         HapticTestButton("Test Alarm Haptic", onTestAlarmHaptic, enabled = alarmHapticEnabled)
@@ -340,8 +357,13 @@ private fun SectionHeader(icon: ImageVector, title: String) {
 @Composable
 private fun PatternSelectorWithCustom(
     pattern: HapticPattern, intensity: Float, customSequence: CustomHapticSequence,
+    isAutoActive: Boolean = false,
     onPatternSelected: (HapticPattern) -> Unit, onIntensityCommit: (Float) -> Unit,
-    onOpenCustomEditor: () -> Unit, label: String,
+    onOpenCustomEditor: () -> Unit,
+    onOpenAutoSettings: () -> Unit = {},
+    onClearCustom: () -> Unit = {},
+    onDisableAuto: () -> Unit = {},
+    label: String,
 ) {
     val isCustomActive = !customSequence.isEmpty
     val patterns = remember { HapticPattern.entries }
@@ -349,11 +371,29 @@ private fun PatternSelectorWithCustom(
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             patterns.chunked(2).forEach { rowItems ->
                 Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    rowItems.forEach { p -> PatternCard(pattern = p, isSelected = !isCustomActive && p == pattern, onClick = { onPatternSelected(p) }, modifier = Modifier.weight(1f).fillMaxHeight()) }
+                    rowItems.forEach { p ->
+                        PatternCard(
+                            pattern = p,
+                            isSelected = !isCustomActive && !isAutoActive && p == pattern,
+                            onClick = { onPatternSelected(p); onClearCustom(); onDisableAuto() },
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                        )
+                    }
                     if (rowItems.size == 1) Box(Modifier.weight(1f).fillMaxHeight())
                 }
             }
-            CustomPatternCard(isSelected = isCustomActive, beatCount = customSequence.beats.size, durationMs = customSequence.durationMs, onClick = onOpenCustomEditor, modifier = Modifier.fillMaxWidth())
+            AutoPatternCard(
+                isSelected = isAutoActive,
+                onClick = { onOpenAutoSettings(); onClearCustom() },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            CustomPatternCard(
+                isSelected = isCustomActive && !isAutoActive,
+                beatCount = customSequence.beats.size,
+                durationMs = customSequence.durationMs,
+                onClick = { onOpenCustomEditor(); onDisableAuto() },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
         IntensitySlider(intensity = intensity, onIntensityCommit = onIntensityCommit)
@@ -383,6 +423,26 @@ private fun PatternCard(pattern: HapticPattern, isSelected: Boolean, onClick: ()
             Spacer(Modifier.height(2.dp))
             Text(stringResource(pattern.labelRes), style = MaterialTheme.typography.titleMedium, color = titleColor)
             Text(stringResource(pattern.descriptionRes), style = MaterialTheme.typography.bodySmall, color = descColor)
+        }
+    }
+}
+
+@Composable
+private fun AutoPatternCard(isSelected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val containerColor by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh, spring(stiffness = 300f), label = "ac")
+    val borderColor by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outlineVariant, spring(stiffness = 300f), label = "ab")
+    val borderWidth by animateDpAsState(if (isSelected) 1.5.dp else 1.dp, label = "abw")
+    val interactionSource = remember { MutableInteractionSource() }
+    Surface(modifier = modifier.selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)), color = containerColor, shape = RoundedCornerShape(24.dp), border = BorderStroke(borderWidth, borderColor)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(modifier = Modifier.size(40.dp).background(color = MaterialTheme.colorScheme.surfaceContainerHighest, shape = RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.GraphicEq, null, tint = if (isSelected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Auto", style = MaterialTheme.typography.titleMedium, color = if (isSelected) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+                Text("Vibrate in sync with audio beats in real time", style = MaterialTheme.typography.bodySmall, color = if (isSelected) MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Rounded.ChevronRight, null, tint = if (isSelected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
     }
 }

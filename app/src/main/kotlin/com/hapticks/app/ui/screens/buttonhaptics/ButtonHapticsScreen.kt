@@ -28,14 +28,17 @@ fun ButtonHapticsScreen(
     onVolumePatternSelected: (HapticPattern) -> Unit,
     onVolumeIntensityCommit: (Float) -> Unit,
     onVolumeOpenCustomEditor: () -> Unit,
+    onVolumeClearCustomSequence: () -> Unit = {},
     onPowerHapticEnabledChange: (Boolean) -> Unit,
     onPowerPatternSelected: (HapticPattern) -> Unit,
     onPowerIntensityCommit: (Float) -> Unit,
     onPowerOpenCustomEditor: () -> Unit,
+    onPowerClearCustomSequence: () -> Unit = {},
     onBrightnessHapticEnabledChange: (Boolean) -> Unit,
     onBrightnessPatternSelected: (HapticPattern) -> Unit,
     onBrightnessIntensityCommit: (Float) -> Unit,
     onBrightnessOpenCustomEditor: () -> Unit,
+    onBrightnessClearCustomSequence: () -> Unit = {},
     onTestVolumeHaptic: () -> Unit,
     onTestPowerHaptic: () -> Unit,
     onTestBrightnessHaptic: () -> Unit,
@@ -92,6 +95,7 @@ fun ButtonHapticsScreen(
                         onPatternSelected = onVolumePatternSelected,
                         onIntensityCommit = onVolumeIntensityCommit,
                         onOpenCustomEditor = onVolumeOpenCustomEditor,
+                        onClearCustomSequence = onVolumeClearCustomSequence,
                     )
                 }
             }
@@ -116,6 +120,7 @@ fun ButtonHapticsScreen(
                         onPatternSelected = onPowerPatternSelected,
                         onIntensityCommit = onPowerIntensityCommit,
                         onOpenCustomEditor = onPowerOpenCustomEditor,
+                        onClearCustomSequence = onPowerClearCustomSequence,
                     )
                 }
             }
@@ -140,6 +145,7 @@ fun ButtonHapticsScreen(
                         onPatternSelected = onBrightnessPatternSelected,
                         onIntensityCommit = onBrightnessIntensityCommit,
                         onOpenCustomEditor = onBrightnessOpenCustomEditor,
+                        onClearCustomSequence = onBrightnessClearCustomSequence,
                     )
                 }
             }

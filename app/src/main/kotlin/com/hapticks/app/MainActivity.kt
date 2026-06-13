@@ -26,6 +26,8 @@ import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.screens.AppExclusionsScreen
 import com.hapticks.app.ui.screens.HomeScreen
 import com.hapticks.app.ui.screens.SettingsScreen
+import com.hapticks.app.ui.screens.autohaptics.AutoHapticsSettingsScreen
+import com.hapticks.app.ui.screens.autohaptics.AutoHapticsType
 import com.hapticks.app.ui.screens.buttonhaptics.ButtonHapticsScreen
 import com.hapticks.app.ui.screens.charginghaptics.ChargingHapticsScreen
 import com.hapticks.app.ui.screens.keyboardhaptics.KeyboardHapticsScreen
@@ -244,14 +246,17 @@ class MainActivity : ComponentActivity() {
                                         onVolumePatternSelected = viewModel::setVolumeHapticPattern,
                                         onVolumeIntensityCommit = viewModel::commitVolumeHapticIntensity,
                                         onVolumeOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "volume", settings.volumeHapticCustomSequence, viewModel::setVolumeHapticCustomSequence) },
+                                        onVolumeClearCustomSequence = { viewModel.setVolumeHapticCustomSequence(CustomHapticSequence()) },
                                         onPowerHapticEnabledChange = viewModel::setPowerHapticEnabled,
                                         onPowerPatternSelected = viewModel::setPowerHapticPattern,
                                         onPowerIntensityCommit = viewModel::commitPowerHapticIntensity,
                                         onPowerOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "power", settings.powerHapticCustomSequence, viewModel::setPowerHapticCustomSequence) },
+                                        onPowerClearCustomSequence = { viewModel.setPowerHapticCustomSequence(CustomHapticSequence()) },
                                         onBrightnessHapticEnabledChange = viewModel::setBrightnessHapticEnabled,
                                         onBrightnessPatternSelected = viewModel::setBrightnessHapticPattern,
                                         onBrightnessIntensityCommit = viewModel::commitBrightnessHapticIntensity,
                                         onBrightnessOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "brightness", settings.brightnessHapticCustomSequence, viewModel::setBrightnessHapticCustomSequence) },
+                                        onBrightnessClearCustomSequence = { viewModel.setBrightnessHapticCustomSequence(CustomHapticSequence()) },
                                         onTestVolumeHaptic = viewModel::testVolumeHaptic,
                                         onTestPowerHaptic = viewModel::testPowerHaptic,
                                         onTestBrightnessHaptic = viewModel::testBrightnessHaptic,
@@ -270,6 +275,7 @@ class MainActivity : ComponentActivity() {
                                         onTestHaptic = viewModel::testNavBarHaptic,
                                         onResetToDefaults = viewModel::resetNavBarDefaults,
                                         onOpenCustomEditor = { openCustomEditor(Route.NAVBAR_HAPTICS, "navbar", settings.navBarHapticCustomSequence, viewModel::setNavBarHapticCustomSequence) },
+                                        onClearCustomSequence = { viewModel.setNavBarHapticCustomSequence(CustomHapticSequence()) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
@@ -284,6 +290,7 @@ class MainActivity : ComponentActivity() {
                                         onTestHaptic = viewModel::testUnlockHaptic,
                                         onResetToDefaults = viewModel::resetUnlockDefaults,
                                         onOpenCustomEditor = { openCustomEditor(Route.UNLOCK_HAPTICS, "unlock", settings.unlockHapticCustomSequence, viewModel::setUnlockHapticCustomSequence) },
+                                        onClearCustomSequence = { viewModel.setUnlockHapticCustomSequence(CustomHapticSequence()) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
@@ -298,6 +305,7 @@ class MainActivity : ComponentActivity() {
                                         onTestHaptic = viewModel::testKeyboardHaptic,
                                         onResetToDefaults = viewModel::resetKeyboardDefaults,
                                         onOpenCustomEditor = { openCustomEditor(Route.KEYBOARD_HAPTICS, "keyboard", settings.keyboardHapticCustomSequence, viewModel::setKeyboardHapticCustomSequence) },
+                                        onClearCustomSequence = { viewModel.setKeyboardHapticCustomSequence(CustomHapticSequence()) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
@@ -314,6 +322,9 @@ class MainActivity : ComponentActivity() {
                                         onCallIntensityCommit = viewModel::commitCallHapticIntensity,
                                         onCallCustomSequenceSave = viewModel::setCallHapticCustomSequence,
                                         onTestCallHaptic = viewModel::testCallHaptic,
+                                        callHapticAuto = settings.callHapticAuto,
+                                        onOpenCallAutoSettings = { viewModel.setCallHapticAuto(true); viewModel.setCallHapticCustomSequence(CustomHapticSequence()); route = Route.CALL_AUTO_HAPTICS },
+                                        onCallAutoChange = viewModel::setCallHapticAuto,
                                         notifHapticEnabled = settings.notifHapticEnabled,
                                         notifPattern = settings.notifHapticPattern,
                                         notifIntensity = settings.notifHapticIntensity,
@@ -332,6 +343,9 @@ class MainActivity : ComponentActivity() {
                                         onAlarmIntensityCommit = viewModel::commitAlarmHapticIntensity,
                                         onAlarmCustomSequenceSave = viewModel::setAlarmHapticCustomSequence,
                                         onTestAlarmHaptic = viewModel::testAlarmHaptic,
+                                        alarmHapticAuto = settings.alarmHapticAuto,
+                                        onOpenAlarmAutoSettings = { viewModel.setAlarmHapticAuto(true); viewModel.setAlarmHapticCustomSequence(CustomHapticSequence()); route = Route.ALARM_AUTO_HAPTICS },
+                                        onAlarmAutoChange = viewModel::setAlarmHapticAuto,
                                         onResetToDefaults = viewModel::resetNotificationHapticsDefaults,
                                         onOpenCustomEditor = { label, sequence, onSave -> openCustomEditor(Route.NOTIFICATION_HAPTICS, label, sequence, onSave) },
                                         onBack = { route = Route.HOME },
@@ -347,6 +361,34 @@ class MainActivity : ComponentActivity() {
                                         onSensitivityCommit = viewModel::commitMusicHapticsSensitivity,
                                         onStrengthCommit = viewModel::commitMusicHapticsStrength,
                                         onBack = { route = Route.HOME },
+                                    )
+                                }
+
+                                Route.CALL_AUTO_HAPTICS -> {
+                                    BackHandler { route = Route.NOTIFICATION_HAPTICS }
+                                    AutoHapticsSettingsScreen(
+                                        type = AutoHapticsType.CALL,
+                                        isEnabled = settings.callHapticAuto,
+                                        sensitivity = settings.callAutoSensitivity,
+                                        strength = settings.callAutoStrength,
+                                        onEnabledChange = viewModel::setCallHapticAuto,
+                                        onSensitivityCommit = viewModel::commitCallAutoSensitivity,
+                                        onStrengthCommit = viewModel::commitCallAutoStrength,
+                                        onBack = { route = Route.NOTIFICATION_HAPTICS },
+                                    )
+                                }
+
+                                Route.ALARM_AUTO_HAPTICS -> {
+                                    BackHandler { route = Route.NOTIFICATION_HAPTICS }
+                                    AutoHapticsSettingsScreen(
+                                        type = AutoHapticsType.ALARM,
+                                        isEnabled = settings.alarmHapticAuto,
+                                        sensitivity = settings.alarmAutoSensitivity,
+                                        strength = settings.alarmAutoStrength,
+                                        onEnabledChange = viewModel::setAlarmHapticAuto,
+                                        onSensitivityCommit = viewModel::commitAlarmAutoSensitivity,
+                                        onStrengthCommit = viewModel::commitAlarmAutoStrength,
+                                        onBack = { route = Route.NOTIFICATION_HAPTICS },
                                     )
                                 }
 
@@ -391,7 +433,8 @@ class MainActivity : ComponentActivity() {
         CHARGING_HAPTICS, BUTTON_HAPTICS,
         NAVBAR_HAPTICS, UNLOCK_HAPTICS, KEYBOARD_HAPTICS,
         MUSIC_HAPTICS,
-        SETTINGS, NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR
+        SETTINGS, NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR,
+        CALL_AUTO_HAPTICS, ALARM_AUTO_HAPTICS
     }
 
     private fun openAccessibilitySettings() {

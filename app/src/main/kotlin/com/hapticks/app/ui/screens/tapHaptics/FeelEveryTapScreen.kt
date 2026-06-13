@@ -70,7 +70,7 @@ fun FeelEveryTapScreen(
                 }
             }
             item("pattern") {
-                FeelEveryTapPatternSection(settings = settings, onPatternSelected = onPatternSelected, onOpenCustomEditor = { onOpenCustomEditor("tap", settings.tapHapticCustomSequence, onTapCustomSequenceSave) })
+                FeelEveryTapPatternSection(settings = settings, onPatternSelected = onPatternSelected, onOpenCustomEditor = { onOpenCustomEditor("tap", settings.tapHapticCustomSequence, onTapCustomSequenceSave) }, onClearCustomSequence = { onTapCustomSequenceSave(CustomHapticSequence()) })
             }
             item("test") { HapticTestButton(stringResource(R.string.test_haptic), onTestHaptic) }
         }

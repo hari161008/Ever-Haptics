@@ -41,6 +41,7 @@ fun PatternSelectorWithCustom(
     onPatternSelected: (HapticPattern) -> Unit,
     onIntensityCommit: (Float) -> Unit,
     onOpenCustomEditor: () -> Unit,
+    onClearCustomSequence: () -> Unit = {},
     modifier: Modifier = Modifier,
     accentColor: Color = MaterialTheme.colorScheme.primary,
     accentContainer: Color = MaterialTheme.colorScheme.primaryContainer,
@@ -48,11 +49,8 @@ fun PatternSelectorWithCustom(
 ) {
     val isCustomActive = !customSequence.isEmpty
     Column(modifier = modifier.fillMaxWidth()) {
-        // Pattern grid — big square cards matching NotificationHapticsScreen style
         Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             HapticPattern.entries.chunked(2).forEach { rowItems ->
@@ -64,7 +62,7 @@ fun PatternSelectorWithCustom(
                         PatternCard(
                             pattern = p,
                             isSelected = !isCustomActive && p == selectedPattern,
-                            onClick = { onPatternSelected(p) },
+                            onClick = { onPatternSelected(p); onClearCustomSequence() },
                             accentColor = accentColor,
                             accentContainer = accentContainer,
                             accentOnContainer = accentOnContainer,
@@ -74,8 +72,6 @@ fun PatternSelectorWithCustom(
                     if (rowItems.size == 1) Box(Modifier.weight(1f).fillMaxHeight())
                 }
             }
-
-            // Custom pattern card
             CustomPatternCard(
                 isSelected = isCustomActive,
                 beatCount = customSequence.beats.size,
@@ -87,13 +83,7 @@ fun PatternSelectorWithCustom(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant,
-            thickness = 0.5.dp,
-            modifier = Modifier.padding(horizontal = 20.dp),
-        )
-
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
         IntensityRow(intensity, onIntensityCommit, accentColor, accentContainer, accentOnContainer)
     }
 }

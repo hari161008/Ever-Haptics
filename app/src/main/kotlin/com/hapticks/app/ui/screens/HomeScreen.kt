@@ -181,7 +181,7 @@ private fun AnimatedGlobalToggleCard(entered: Boolean, enabled: Boolean, onEnabl
     Surface(color = containerColor, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth().alpha(alpha)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                FeatureIcon(icon = Icons.Rounded.Vibration, tint = MaterialTheme.colorScheme.primary, size = 44.dp, iconSize = 22.dp, cornerRadius = 14.dp, backgroundAlpha = 0f)
+                FeatureIcon(icon = Icons.Rounded.Vibration, tint = MaterialTheme.colorScheme.primary, size = 44.dp, iconSize = 22.dp, cornerRadius = 14.dp, backgroundAlpha = 0.15f)
                 Column {
                     Text(stringResource(R.string.home_global_toggle_title), style = MaterialTheme.typography.titleLarge, color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
                     Text(if (enabled) stringResource(R.string.home_global_toggle_on) else stringResource(R.string.home_global_toggle_off), style = MaterialTheme.typography.bodySmall, color = (if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.7f))

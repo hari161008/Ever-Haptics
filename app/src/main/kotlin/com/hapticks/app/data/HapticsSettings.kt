@@ -74,13 +74,16 @@ data class HapticsSettings(
     // Music Haptics
     val musicHapticsEnabled: Boolean = false,
     val musicHapticsSource: MusicHapticsSource = MusicHapticsSource.Default,
-    val musicHapticsSensitivity: Float = 0.5f,
+    val musicHapticsSensitivity: Float = 0.65f,
     val musicHapticsStrength: Float = 0.7f,
     // Notification / call / alarm haptics
     val callHapticEnabled: Boolean = false,
     val callHapticPattern: HapticPattern = HapticPattern.HEAVY_CLICK,
     val callHapticIntensity: Float = 1.0f,
     val callHapticCustomSequence: CustomHapticSequence = CustomHapticSequence(),
+    val callHapticAuto: Boolean = false,
+    val callAutoSensitivity: Float = 0.65f,
+    val callAutoStrength: Float = 0.8f,
     val notifHapticEnabled: Boolean = false,
     val notifHapticPattern: HapticPattern = HapticPattern.CLICK,
     val notifHapticIntensity: Float = 0.7f,
@@ -89,6 +92,9 @@ data class HapticsSettings(
     val alarmHapticPattern: HapticPattern = HapticPattern.DOUBLE_CLICK,
     val alarmHapticIntensity: Float = 1.0f,
     val alarmHapticCustomSequence: CustomHapticSequence = CustomHapticSequence(),
+    val alarmHapticAuto: Boolean = false,
+    val alarmAutoSensitivity: Float = 0.65f,
+    val alarmAutoStrength: Float = 0.8f,
 ) {
     companion object {
         const val MIN_SCROLL_EVENTS_PER_CM = 0.1f   // 1 haptic every 10 cm

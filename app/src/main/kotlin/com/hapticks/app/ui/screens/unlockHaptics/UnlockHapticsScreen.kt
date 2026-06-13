@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.hapticks.app.R
 import com.hapticks.app.data.HapticsSettings
 import com.hapticks.app.haptics.HapticPattern
+import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.ui.components.*
 import com.hapticks.app.ui.components.FeatureColors
 import com.hapticks.app.ui.components.ScreenIconHeader
@@ -30,6 +31,7 @@ fun UnlockHapticsScreen(
     onTestHaptic: () -> Unit,
     onResetToDefaults: () -> Unit,
     onOpenCustomEditor: () -> Unit,
+    onClearCustomSequence: () -> Unit = {},
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -81,6 +83,7 @@ fun UnlockHapticsScreen(
                         onPatternSelected = onPatternSelected,
                         onIntensityCommit = onIntensityCommit,
                         onOpenCustomEditor = onOpenCustomEditor,
+                        onClearCustomSequence = onClearCustomSequence,
                     )
                 }
             }

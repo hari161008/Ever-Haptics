@@ -30,6 +30,7 @@ fun KeyboardHapticsScreen(
     onTestHaptic: () -> Unit,
     onResetToDefaults: () -> Unit,
     onOpenCustomEditor: () -> Unit,
+    onClearCustomSequence: () -> Unit = {},
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -93,6 +94,7 @@ fun KeyboardHapticsScreen(
                         onPatternSelected = onPatternSelected,
                         onIntensityCommit = onIntensityCommit,
                         onOpenCustomEditor = onOpenCustomEditor,
+                        onClearCustomSequence = onClearCustomSequence,
                         accentColor = MaterialTheme.colorScheme.primary,
                         accentContainer = MaterialTheme.colorScheme.primaryContainer,
                         accentOnContainer = MaterialTheme.colorScheme.onPrimaryContainer,

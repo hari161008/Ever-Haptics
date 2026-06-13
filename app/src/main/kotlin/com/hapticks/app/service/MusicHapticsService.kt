@@ -162,7 +162,7 @@ class MusicHapticsService : Service() {
 
                     // Beat fires when energy significantly exceeds the rolling average
                     // (sensitivity 0→high threshold, 1→low threshold)
-                    val threshold = dynamicAvg[0] * (2.2f - currentSensitivity * 1.0f)
+                    val threshold = dynamicAvg[0] * (1.8f - currentSensitivity * 1.0f)
                     val now  = System.currentTimeMillis()
                     val last = sharedLastHapticMs.get()
                     if (bassEnergy > threshold && bassEnergy > 0.008f && (now - last) >= minHapticMs) {
@@ -226,7 +226,7 @@ class MusicHapticsService : Service() {
     // ── Shared beat-fire logic ────────────────────────────────────────────────
 
     private fun fireBeatIfDetected(rms: Float, dynThreshold: Float, minHapticMs: Long) {
-        val detectionMultiplier = 3.0f - (currentSensitivity * 1.7f)
+        val detectionMultiplier = 2.4f - (currentSensitivity * 1.4f)
         val beatThreshold = dynThreshold * detectionMultiplier
         val now = System.currentTimeMillis()
         val last = sharedLastHapticMs.get()

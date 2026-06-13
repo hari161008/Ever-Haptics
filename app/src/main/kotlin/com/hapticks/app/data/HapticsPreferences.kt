@@ -86,6 +86,9 @@ class HapticsPreferences(context: Context) {
                 callHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.CALL_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.CALL_HAPTIC_PATTERN) } ?: HapticsSettings.Default.callHapticPattern,
                 callHapticIntensity = (prefs[Keys.CALL_HAPTIC_INTENSITY] ?: HapticsSettings.Default.callHapticIntensity).coerceIn(0f, 1f),
                 callHapticCustomSequence = parseCustomSequence(prefs[Keys.CALL_HAPTIC_CUSTOM_SEQUENCE]),
+                callHapticAuto = prefs[Keys.CALL_HAPTIC_AUTO] ?: HapticsSettings.Default.callHapticAuto,
+                callAutoSensitivity = (prefs[Keys.CALL_AUTO_SENSITIVITY] ?: HapticsSettings.Default.callAutoSensitivity).coerceIn(0f, 1f),
+                callAutoStrength = (prefs[Keys.CALL_AUTO_STRENGTH] ?: HapticsSettings.Default.callAutoStrength).coerceIn(0f, 1f),
                 notifHapticEnabled = prefs[Keys.NOTIF_HAPTIC_ENABLED] ?: HapticsSettings.Default.notifHapticEnabled,
                 notifHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.NOTIF_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.NOTIF_HAPTIC_PATTERN) } ?: HapticsSettings.Default.notifHapticPattern,
                 notifHapticIntensity = (prefs[Keys.NOTIF_HAPTIC_INTENSITY] ?: HapticsSettings.Default.notifHapticIntensity).coerceIn(0f, 1f),
@@ -94,6 +97,9 @@ class HapticsPreferences(context: Context) {
                 alarmHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.ALARM_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.ALARM_HAPTIC_PATTERN) } ?: HapticsSettings.Default.alarmHapticPattern,
                 alarmHapticIntensity = (prefs[Keys.ALARM_HAPTIC_INTENSITY] ?: HapticsSettings.Default.alarmHapticIntensity).coerceIn(0f, 1f),
                 alarmHapticCustomSequence = parseCustomSequence(prefs[Keys.ALARM_HAPTIC_CUSTOM_SEQUENCE]),
+                alarmHapticAuto = prefs[Keys.ALARM_HAPTIC_AUTO] ?: HapticsSettings.Default.alarmHapticAuto,
+                alarmAutoSensitivity = (prefs[Keys.ALARM_AUTO_SENSITIVITY] ?: HapticsSettings.Default.alarmAutoSensitivity).coerceIn(0f, 1f),
+                alarmAutoStrength = (prefs[Keys.ALARM_AUTO_STRENGTH] ?: HapticsSettings.Default.alarmAutoStrength).coerceIn(0f, 1f),
                 keyboardHapticEnabled = prefs[Keys.KEYBOARD_HAPTIC_ENABLED] ?: HapticsSettings.Default.keyboardHapticEnabled,
                 keyboardHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.KEYBOARD_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.KEYBOARD_HAPTIC_PATTERN) } ?: HapticsSettings.Default.keyboardHapticPattern,
                 keyboardHapticIntensity = (prefs[Keys.KEYBOARD_HAPTIC_INTENSITY] ?: HapticsSettings.Default.keyboardHapticIntensity).coerceIn(0f, 1f),
@@ -160,6 +166,9 @@ class HapticsPreferences(context: Context) {
     suspend fun setCallHapticPattern(pattern: HapticPattern) = edit { it[Keys.CALL_HAPTIC_PATTERN] = pattern.name }
     suspend fun setCallHapticIntensity(intensity: Float) = edit { it[Keys.CALL_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
     suspend fun setCallHapticCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.CALL_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
+    suspend fun setCallHapticAuto(enabled: Boolean) = edit { it[Keys.CALL_HAPTIC_AUTO] = enabled }
+    suspend fun setCallAutoSensitivity(v: Float) = edit { it[Keys.CALL_AUTO_SENSITIVITY] = v.coerceIn(0f, 1f) }
+    suspend fun setCallAutoStrength(v: Float) = edit { it[Keys.CALL_AUTO_STRENGTH] = v.coerceIn(0f, 1f) }
     suspend fun setNotifHapticEnabled(enabled: Boolean) = edit { it[Keys.NOTIF_HAPTIC_ENABLED] = enabled }
     suspend fun setNotifHapticPattern(pattern: HapticPattern) = edit { it[Keys.NOTIF_HAPTIC_PATTERN] = pattern.name }
     suspend fun setNotifHapticIntensity(intensity: Float) = edit { it[Keys.NOTIF_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
@@ -168,6 +177,9 @@ class HapticsPreferences(context: Context) {
     suspend fun setAlarmHapticPattern(pattern: HapticPattern) = edit { it[Keys.ALARM_HAPTIC_PATTERN] = pattern.name }
     suspend fun setAlarmHapticIntensity(intensity: Float) = edit { it[Keys.ALARM_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
     suspend fun setAlarmHapticCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.ALARM_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
+    suspend fun setAlarmHapticAuto(enabled: Boolean) = edit { it[Keys.ALARM_HAPTIC_AUTO] = enabled }
+    suspend fun setAlarmAutoSensitivity(v: Float) = edit { it[Keys.ALARM_AUTO_SENSITIVITY] = v.coerceIn(0f, 1f) }
+    suspend fun setAlarmAutoStrength(v: Float) = edit { it[Keys.ALARM_AUTO_STRENGTH] = v.coerceIn(0f, 1f) }
 
     suspend fun setKeyboardHapticEnabled(enabled: Boolean) = edit { it[Keys.KEYBOARD_HAPTIC_ENABLED] = enabled }
     suspend fun setKeyboardHapticPattern(pattern: HapticPattern) = edit { it[Keys.KEYBOARD_HAPTIC_PATTERN] = pattern.name }
@@ -239,6 +251,9 @@ class HapticsPreferences(context: Context) {
         val CALL_HAPTIC_PATTERN = stringPreferencesKey("call_haptic_pattern")
         val CALL_HAPTIC_INTENSITY = floatPreferencesKey("call_haptic_intensity")
         val CALL_HAPTIC_CUSTOM_SEQUENCE = stringPreferencesKey("call_haptic_custom_sequence")
+        val CALL_HAPTIC_AUTO = booleanPreferencesKey("call_haptic_auto")
+        val CALL_AUTO_SENSITIVITY = floatPreferencesKey("call_auto_sensitivity")
+        val CALL_AUTO_STRENGTH = floatPreferencesKey("call_auto_strength")
         val NOTIF_HAPTIC_ENABLED = booleanPreferencesKey("notif_haptic_enabled")
         val NOTIF_HAPTIC_PATTERN = stringPreferencesKey("notif_haptic_pattern")
         val NOTIF_HAPTIC_INTENSITY = floatPreferencesKey("notif_haptic_intensity")
@@ -247,6 +262,9 @@ class HapticsPreferences(context: Context) {
         val ALARM_HAPTIC_PATTERN = stringPreferencesKey("alarm_haptic_pattern")
         val ALARM_HAPTIC_INTENSITY = floatPreferencesKey("alarm_haptic_intensity")
         val ALARM_HAPTIC_CUSTOM_SEQUENCE = stringPreferencesKey("alarm_haptic_custom_sequence")
+        val ALARM_HAPTIC_AUTO = booleanPreferencesKey("alarm_haptic_auto")
+        val ALARM_AUTO_SENSITIVITY = floatPreferencesKey("alarm_auto_sensitivity")
+        val ALARM_AUTO_STRENGTH = floatPreferencesKey("alarm_auto_strength")
         val KEYBOARD_HAPTIC_ENABLED = booleanPreferencesKey("keyboard_haptic_enabled")
         val KEYBOARD_HAPTIC_PATTERN = stringPreferencesKey("keyboard_haptic_pattern")
         val KEYBOARD_HAPTIC_INTENSITY = floatPreferencesKey("keyboard_haptic_intensity")

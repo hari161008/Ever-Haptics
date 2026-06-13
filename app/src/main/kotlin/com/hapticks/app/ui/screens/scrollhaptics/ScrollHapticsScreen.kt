@@ -29,24 +29,19 @@ import com.hapticks.app.ui.haptics.performHapticSliderTick
 import com.hapticks.app.ui.haptics.slider01ToTickIndex
 import kotlin.math.roundToInt
 
-// Maps eventsPerCm to a 0..1 slider value using log scale so 0.1–10cm feels natural
-private fun eventsPerCmToSlider(v: Float): Float {
-    // slider = (log(v) - log(MIN)) / (log(MAX) - log(MIN))
-    val min = HapticsSettings.MIN_SCROLL_EVENTS_PER_CM  // 0.1
-    val max = HapticsSettings.MAX_SCROLL_EVENTS_PER_CM  // 5.0
-    return ((Math.log(v.toDouble()) - Math.log(min.toDouble())) /
-            (Math.log(max.toDouble()) - Math.log(min.toDouble()))).toFloat().coerceIn(0f, 1f)
-}
+// Linear scale: left = 1cm (frequent), right = 15cm (sparse) — 15 uniform positions
+private const val SLIDER_MIN_CM = 1f
+private const val SLIDER_MAX_CM = 15f
+private const val SLIDER_STEPS = 13   // 13 intermediate ticks → 15 total positions
 
-private fun sliderToEventsPerCm(s: Float): Float {
-    val min = HapticsSettings.MIN_SCROLL_EVENTS_PER_CM
-    val max = HapticsSettings.MAX_SCROLL_EVENTS_PER_CM
-    return Math.exp(
-        Math.log(min.toDouble()) + s * (Math.log(max.toDouble()) - Math.log(min.toDouble()))
-    ).toFloat().coerceIn(min, max)
-}
+private fun distanceCmToSlider(distanceCm: Float): Float =
+    ((distanceCm - SLIDER_MIN_CM) / (SLIDER_MAX_CM - SLIDER_MIN_CM)).coerceIn(0f, 1f)
 
-private fun eventsPerCmToDistanceCm(v: Float): Float = (1f / v).coerceIn(0.2f, 10f)
+private fun sliderToDistanceCm(s: Float): Float =
+    (SLIDER_MIN_CM + s * (SLIDER_MAX_CM - SLIDER_MIN_CM)).coerceIn(SLIDER_MIN_CM, SLIDER_MAX_CM)
+
+private fun eventsPerCmToDistanceCm(v: Float): Float = (1f / v).coerceIn(SLIDER_MIN_CM, SLIDER_MAX_CM)
+private fun distanceCmToEventsPerCm(d: Float): Float = (1f / d).coerceIn(0.01f, 10f)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,10 +129,11 @@ fun ScrollHapticsScreen(
 @Composable
 private fun ScrollDistanceControl(eventsPerCm: Float, onCommit: (Float) -> Unit) {
     val ctx = LocalContext.current
-    var sliderVal by remember(eventsPerCm) { mutableFloatStateOf(eventsPerCmToSlider(eventsPerCm)) }
-    var lastTick by remember(eventsPerCm) { mutableIntStateOf(0) }
-    val distanceCm = eventsPerCmToDistanceCm(sliderToEventsPerCm(sliderVal))
-    val label = "%.1f cm".format(distanceCm)
+    val distanceCm = eventsPerCmToDistanceCm(eventsPerCm)
+    var sliderVal by remember(distanceCm) { mutableFloatStateOf(distanceCmToSlider(distanceCm)) }
+    var lastTick by remember { mutableIntStateOf(0) }
+    val displayCm = sliderToDistanceCm(sliderVal).roundToInt()
+    val label = "$displayCm cm"
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Column(Modifier.weight(1f)) {
@@ -150,15 +146,19 @@ private fun ScrollDistanceControl(eventsPerCm: Float, onCommit: (Float) -> Unit)
         }
         Slider(
             value = sliderVal,
-            onValueChange = { sliderVal = it; val t = (it * 20).toInt(); if (t != lastTick) { lastTick = t; ctx.performHapticSliderTick() } },
-            onValueChangeFinished = { onCommit(sliderToEventsPerCm(sliderVal)) },
+            onValueChange = { v ->
+                sliderVal = v
+                val t = (v * SLIDER_STEPS).toInt()
+                if (t != lastTick) { lastTick = t; ctx.performHapticSliderTick() }
+            },
+            onValueChangeFinished = { onCommit(distanceCmToEventsPerCm(sliderToDistanceCm(sliderVal))) },
             valueRange = 0f..1f,
-            steps = 19,
+            steps = SLIDER_STEPS,
             colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("0.2 cm  (frequent)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("10 cm  (sparse)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("1 cm  (frequent)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("15 cm  (sparse)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

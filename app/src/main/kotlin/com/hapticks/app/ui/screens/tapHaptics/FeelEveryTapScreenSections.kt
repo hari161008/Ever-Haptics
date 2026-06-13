@@ -109,6 +109,7 @@ internal fun FeelEveryTapPatternSection(
     settings: HapticsSettings,
     onPatternSelected: (HapticPattern) -> Unit,
     onOpenCustomEditor: () -> Unit,
+    onClearCustomSequence: () -> Unit = {},
 ) {
     SectionCard {
         PatternSelectorWithCustom(
@@ -118,6 +119,7 @@ internal fun FeelEveryTapPatternSection(
             onPatternSelected = onPatternSelected,
             onIntensityCommit = {},
             onOpenCustomEditor = onOpenCustomEditor,
+            onClearCustomSequence = onClearCustomSequence,
         )
     }
 }
