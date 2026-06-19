@@ -28,6 +28,7 @@ object FeatureColors {
     val MusicHaptics      = Color(0xFFEC4899)   // pink
     val Settings          = Color(0xFF64748B)   // slate
     val Updates           = Color(0xFF22C55E)   // green
+    val StatusBar         = Color(0xFF0EA5E9)   // sky blue
 }
 
 /**

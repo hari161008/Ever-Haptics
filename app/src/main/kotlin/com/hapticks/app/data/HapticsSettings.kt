@@ -52,6 +52,16 @@ data class HapticsSettings(
     val navBarHapticPattern: HapticPattern = HapticPattern.CLICK,
     val navBarHapticIntensity: Float = 0.8f,
     val navBarHapticCustomSequence: CustomHapticSequence = CustomHapticSequence(),
+    // Status Bar
+    val statusBarHapticEnabled: Boolean = true,
+    val statusBarExpandEnabled: Boolean = true,
+    val statusBarExpandPattern: HapticPattern = HapticPattern.TICK,
+    val statusBarExpandIntensity: Float = 0.7f,
+    val statusBarExpandCustomSequence: CustomHapticSequence = CustomHapticSequence(),
+    val statusBarCollapseEnabled: Boolean = true,
+    val statusBarCollapsePattern: HapticPattern = HapticPattern.TICK,
+    val statusBarCollapseIntensity: Float = 0.7f,
+    val statusBarCollapseCustomSequence: CustomHapticSequence = CustomHapticSequence(),
     // Unlock
     val unlockHapticEnabled: Boolean = false,
     val unlockHapticPattern: HapticPattern = HapticPattern.DOUBLE_CLICK,
@@ -95,6 +105,8 @@ data class HapticsSettings(
     val alarmHapticAuto: Boolean = false,
     val alarmAutoSensitivity: Float = 0.65f,
     val alarmAutoStrength: Float = 0.8f,
+    // Welcome screen
+    val hasSeenWelcome: Boolean = false,
 ) {
     companion object {
         const val MIN_SCROLL_EVENTS_PER_CM = 0.1f   // 1 haptic every 10 cm

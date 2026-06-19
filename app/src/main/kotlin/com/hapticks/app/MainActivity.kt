@@ -29,12 +29,14 @@ import com.hapticks.app.ui.screens.AppExclusionsScreen
 import com.hapticks.app.ui.screens.HomeScreen
 import com.hapticks.app.ui.screens.ReviewsWebViewScreen
 import com.hapticks.app.ui.screens.SettingsScreen
+import com.hapticks.app.ui.screens.WelcomeDialog
 import com.hapticks.app.ui.screens.autohaptics.AutoHapticsSettingsScreen
 import com.hapticks.app.ui.screens.autohaptics.AutoHapticsType
 import com.hapticks.app.ui.screens.buttonhaptics.ButtonHapticsScreen
 import com.hapticks.app.ui.screens.charginghaptics.ChargingHapticsScreen
 import com.hapticks.app.ui.screens.keyboardhaptics.KeyboardHapticsScreen
 import com.hapticks.app.ui.screens.navhaptics.NavBarHapticsScreen
+import com.hapticks.app.ui.screens.statusbarhaptics.StatusBarHapticsScreen
 import com.hapticks.app.ui.screens.notificationhaptics.CustomHapticEditorScreen
 import com.hapticks.app.ui.screens.notificationhaptics.NotificationHapticsScreen
 import com.hapticks.app.ui.screens.scrollhaptics.ScrollHapticsScreen
@@ -59,6 +61,7 @@ class MainActivity : ComponentActivity() {
             val settings by viewModel.settings.collectAsStateWithLifecycle()
             val isServiceEnabled by viewModel.isServiceEnabled.collectAsStateWithLifecycle()
             val isBatterySaverActive by viewModel.isBatterySaverActive.collectAsStateWithLifecycle()
+            val isSettingsLoaded by viewModel.isSettingsLoaded.collectAsStateWithLifecycle()
 
             HapticksTheme(
                 themeMode = settings.themeMode,
@@ -92,6 +95,11 @@ class MainActivity : ComponentActivity() {
 
                     // Back press in Settings tab → go to Home instead of closing app
                     BackHandler(enabled = route == Route.SETTINGS) { route = Route.HOME }
+
+                    // Welcome dialog — only after DataStore has emitted once (prevents false show from default value)
+                    if (isSettingsLoaded && !settings.hasSeenWelcome) {
+                        WelcomeDialog(onDismiss = { viewModel.setHasSeenWelcome(true) })
+                    }
 
                     var customEditorLabel by remember { mutableStateOf("") }
                     var customEditorSequence by remember { mutableStateOf(CustomHapticSequence()) }
@@ -144,6 +152,7 @@ class MainActivity : ComponentActivity() {
                                                 onOpenChargingHaptics = { route = Route.CHARGING_HAPTICS },
                                                 onOpenButtonHaptics = { route = Route.BUTTON_HAPTICS },
                                                 onOpenNavBarHaptics = { route = Route.NAVBAR_HAPTICS },
+                                                onOpenStatusBarHaptics = { route = Route.STATUSBAR_HAPTICS },
                                                 onOpenUnlockHaptics = { route = Route.UNLOCK_HAPTICS },
                                                 onOpenNotificationHaptics = { route = Route.NOTIFICATION_HAPTICS },
                                                 onOpenKeyboardHaptics = { route = Route.KEYBOARD_HAPTICS },
@@ -280,6 +289,30 @@ class MainActivity : ComponentActivity() {
                                         onResetToDefaults = viewModel::resetNavBarDefaults,
                                         onOpenCustomEditor = { openCustomEditor(Route.NAVBAR_HAPTICS, "navbar", settings.navBarHapticCustomSequence, viewModel::setNavBarHapticCustomSequence) },
                                         onClearCustomSequence = { viewModel.setNavBarHapticCustomSequence(CustomHapticSequence()) },
+                                        onBack = { route = Route.HOME },
+                                    )
+                                }
+
+                                Route.STATUSBAR_HAPTICS -> {
+                                    BackHandler { route = Route.HOME }
+                                    StatusBarHapticsScreen(
+                                        settings = settings,
+                                        onStatusBarHapticEnabledChange = viewModel::setStatusBarHapticEnabled,
+                                        onExpandEnabledChange = viewModel::setStatusBarExpandEnabled,
+                                        onExpandPatternSelected = viewModel::setStatusBarExpandPattern,
+                                        onExpandIntensityCommit = viewModel::commitStatusBarExpandIntensity,
+                                        onExpandCustomSequenceSave = viewModel::setStatusBarExpandCustomSequence,
+                                        onTestExpandHaptic = viewModel::testStatusBarExpandHaptic,
+                                        onCollapseEnabledChange = viewModel::setStatusBarCollapseEnabled,
+                                        onCollapsePatternSelected = viewModel::setStatusBarCollapsePattern,
+                                        onCollapseIntensityCommit = viewModel::commitStatusBarCollapseIntensity,
+                                        onCollapseCustomSequenceSave = viewModel::setStatusBarCollapseCustomSequence,
+                                        onTestCollapseHaptic = viewModel::testStatusBarCollapseHaptic,
+                                        onResetToDefaults = viewModel::resetStatusBarDefaults,
+                                        onOpenExpandCustomEditor = { openCustomEditor(Route.STATUSBAR_HAPTICS, "statusbar_expand", settings.statusBarExpandCustomSequence, viewModel::setStatusBarExpandCustomSequence) },
+                                        onClearExpandCustomSequence = { viewModel.setStatusBarExpandCustomSequence(CustomHapticSequence()) },
+                                        onOpenCollapseCustomEditor = { openCustomEditor(Route.STATUSBAR_HAPTICS, "statusbar_collapse", settings.statusBarCollapseCustomSequence, viewModel::setStatusBarCollapseCustomSequence) },
+                                        onClearCollapseCustomSequence = { viewModel.setStatusBarCollapseCustomSequence(CustomHapticSequence()) },
                                         onBack = { route = Route.HOME },
                                     )
                                 }
@@ -442,7 +475,7 @@ class MainActivity : ComponentActivity() {
         HOME, FEEL_EVERY_TAP, TAP_APP_EXCLUSIONS,
         TACTILE_SCROLLING, SCROLL_APP_EXCLUSIONS,
         CHARGING_HAPTICS, BUTTON_HAPTICS,
-        NAVBAR_HAPTICS, UNLOCK_HAPTICS, KEYBOARD_HAPTICS,
+        NAVBAR_HAPTICS, STATUSBAR_HAPTICS, UNLOCK_HAPTICS, KEYBOARD_HAPTICS,
         MUSIC_HAPTICS,
         SETTINGS, NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR,
         CALL_AUTO_HAPTICS, ALARM_AUTO_HAPTICS,

@@ -74,6 +74,15 @@ class HapticsPreferences(context: Context) {
                 navBarHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.NAVBAR_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.NAVBAR_HAPTIC_PATTERN) } ?: HapticsSettings.Default.navBarHapticPattern,
                 navBarHapticIntensity = (prefs[Keys.NAVBAR_HAPTIC_INTENSITY] ?: HapticsSettings.Default.navBarHapticIntensity).coerceIn(0f, 1f),
                 navBarHapticCustomSequence = parseCustomSequence(prefs[Keys.NAVBAR_HAPTIC_CUSTOM_SEQUENCE]),
+                statusBarHapticEnabled = prefs[Keys.STATUSBAR_HAPTIC_ENABLED] ?: HapticsSettings.Default.statusBarHapticEnabled,
+                statusBarExpandEnabled = prefs[Keys.STATUSBAR_EXPAND_ENABLED] ?: HapticsSettings.Default.statusBarExpandEnabled,
+                statusBarExpandPattern = HapticPattern.fromStorageKey(prefs[Keys.STATUSBAR_EXPAND_PATTERN]).takeIf { prefs.contains(Keys.STATUSBAR_EXPAND_PATTERN) } ?: HapticsSettings.Default.statusBarExpandPattern,
+                statusBarExpandIntensity = (prefs[Keys.STATUSBAR_EXPAND_INTENSITY] ?: HapticsSettings.Default.statusBarExpandIntensity).coerceIn(0f, 1f),
+                statusBarExpandCustomSequence = parseCustomSequence(prefs[Keys.STATUSBAR_EXPAND_CUSTOM_SEQUENCE]),
+                statusBarCollapseEnabled = prefs[Keys.STATUSBAR_COLLAPSE_ENABLED] ?: HapticsSettings.Default.statusBarCollapseEnabled,
+                statusBarCollapsePattern = HapticPattern.fromStorageKey(prefs[Keys.STATUSBAR_COLLAPSE_PATTERN]).takeIf { prefs.contains(Keys.STATUSBAR_COLLAPSE_PATTERN) } ?: HapticsSettings.Default.statusBarCollapsePattern,
+                statusBarCollapseIntensity = (prefs[Keys.STATUSBAR_COLLAPSE_INTENSITY] ?: HapticsSettings.Default.statusBarCollapseIntensity).coerceIn(0f, 1f),
+                statusBarCollapseCustomSequence = parseCustomSequence(prefs[Keys.STATUSBAR_COLLAPSE_CUSTOM_SEQUENCE]),
                 unlockHapticEnabled = prefs[Keys.UNLOCK_HAPTIC_ENABLED] ?: HapticsSettings.Default.unlockHapticEnabled,
                 unlockHapticPattern = HapticPattern.fromStorageKey(prefs[Keys.UNLOCK_HAPTIC_PATTERN]).takeIf { prefs.contains(Keys.UNLOCK_HAPTIC_PATTERN) } ?: HapticsSettings.Default.unlockHapticPattern,
                 unlockHapticIntensity = (prefs[Keys.UNLOCK_HAPTIC_INTENSITY] ?: HapticsSettings.Default.unlockHapticIntensity).coerceIn(0f, 1f),
@@ -110,6 +119,7 @@ class HapticsPreferences(context: Context) {
                 musicHapticsSource = prefs[Keys.MUSIC_HAPTICS_SOURCE]?.let { runCatching { MusicHapticsSource.valueOf(it) }.getOrNull() } ?: HapticsSettings.Default.musicHapticsSource,
                 musicHapticsSensitivity = (prefs[Keys.MUSIC_HAPTICS_SENSITIVITY] ?: HapticsSettings.Default.musicHapticsSensitivity).coerceIn(0f, 1f),
                 musicHapticsStrength = (prefs[Keys.MUSIC_HAPTICS_STRENGTH] ?: HapticsSettings.Default.musicHapticsStrength).coerceIn(0f, 1f),
+                hasSeenWelcome = prefs[Keys.HAS_SEEN_WELCOME] ?: HapticsSettings.Default.hasSeenWelcome,
             )
         }
 
@@ -158,6 +168,15 @@ class HapticsPreferences(context: Context) {
     suspend fun setNavBarHapticPattern(pattern: HapticPattern) = edit { it[Keys.NAVBAR_HAPTIC_PATTERN] = pattern.name }
     suspend fun setNavBarHapticIntensity(intensity: Float) = edit { it[Keys.NAVBAR_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
     suspend fun setNavBarHapticCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.NAVBAR_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
+    suspend fun setStatusBarHapticEnabled(enabled: Boolean) = edit { it[Keys.STATUSBAR_HAPTIC_ENABLED] = enabled }
+    suspend fun setStatusBarExpandEnabled(enabled: Boolean) = edit { it[Keys.STATUSBAR_EXPAND_ENABLED] = enabled }
+    suspend fun setStatusBarExpandPattern(pattern: HapticPattern) = edit { it[Keys.STATUSBAR_EXPAND_PATTERN] = pattern.name }
+    suspend fun setStatusBarExpandIntensity(v: Float) = edit { it[Keys.STATUSBAR_EXPAND_INTENSITY] = v.coerceIn(0f, 1f) }
+    suspend fun setStatusBarExpandCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.STATUSBAR_EXPAND_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
+    suspend fun setStatusBarCollapseEnabled(enabled: Boolean) = edit { it[Keys.STATUSBAR_COLLAPSE_ENABLED] = enabled }
+    suspend fun setStatusBarCollapsePattern(pattern: HapticPattern) = edit { it[Keys.STATUSBAR_COLLAPSE_PATTERN] = pattern.name }
+    suspend fun setStatusBarCollapseIntensity(v: Float) = edit { it[Keys.STATUSBAR_COLLAPSE_INTENSITY] = v.coerceIn(0f, 1f) }
+    suspend fun setStatusBarCollapseCustomSequence(seq: CustomHapticSequence) = edit { it[Keys.STATUSBAR_COLLAPSE_CUSTOM_SEQUENCE] = serializeCustomSequence(seq) }
     suspend fun setUnlockHapticEnabled(enabled: Boolean) = edit { it[Keys.UNLOCK_HAPTIC_ENABLED] = enabled }
     suspend fun setUnlockHapticPattern(pattern: HapticPattern) = edit { it[Keys.UNLOCK_HAPTIC_PATTERN] = pattern.name }
     suspend fun setUnlockHapticIntensity(intensity: Float) = edit { it[Keys.UNLOCK_HAPTIC_INTENSITY] = intensity.coerceIn(0f, 1f) }
@@ -192,6 +211,7 @@ class HapticsPreferences(context: Context) {
     suspend fun setMusicHapticsSource(source: MusicHapticsSource) = edit { it[Keys.MUSIC_HAPTICS_SOURCE] = source.name }
     suspend fun setMusicHapticsSensitivity(value: Float) = edit { it[Keys.MUSIC_HAPTICS_SENSITIVITY] = value.coerceIn(0f, 1f) }
     suspend fun setMusicHapticsStrength(value: Float) = edit { it[Keys.MUSIC_HAPTICS_STRENGTH] = value.coerceIn(0f, 1f) }
+    suspend fun setHasSeenWelcome(seen: Boolean) = edit { it[Keys.HAS_SEEN_WELCOME] = seen }
 
     private suspend inline fun edit(crossinline block: (MutablePreferences) -> Unit) {
         try { dataStore.edit { block(it) } } catch (e: IOException) { Log.w(TAG, "DataStore write failed", e) }
@@ -243,6 +263,15 @@ class HapticsPreferences(context: Context) {
         val NAVBAR_HAPTIC_PATTERN = stringPreferencesKey("navbar_haptic_pattern")
         val NAVBAR_HAPTIC_INTENSITY = floatPreferencesKey("navbar_haptic_intensity")
         val NAVBAR_HAPTIC_CUSTOM_SEQUENCE = stringPreferencesKey("navbar_haptic_custom_sequence")
+        val STATUSBAR_HAPTIC_ENABLED = booleanPreferencesKey("statusbar_haptic_enabled")
+        val STATUSBAR_EXPAND_ENABLED = booleanPreferencesKey("statusbar_expand_enabled")
+        val STATUSBAR_EXPAND_PATTERN = stringPreferencesKey("statusbar_expand_pattern")
+        val STATUSBAR_EXPAND_INTENSITY = floatPreferencesKey("statusbar_expand_intensity")
+        val STATUSBAR_EXPAND_CUSTOM_SEQUENCE = stringPreferencesKey("statusbar_expand_custom_sequence")
+        val STATUSBAR_COLLAPSE_ENABLED = booleanPreferencesKey("statusbar_collapse_enabled")
+        val STATUSBAR_COLLAPSE_PATTERN = stringPreferencesKey("statusbar_collapse_pattern")
+        val STATUSBAR_COLLAPSE_INTENSITY = floatPreferencesKey("statusbar_collapse_intensity")
+        val STATUSBAR_COLLAPSE_CUSTOM_SEQUENCE = stringPreferencesKey("statusbar_collapse_custom_sequence")
         val UNLOCK_HAPTIC_ENABLED = booleanPreferencesKey("unlock_haptic_enabled")
         val UNLOCK_HAPTIC_PATTERN = stringPreferencesKey("unlock_haptic_pattern")
         val UNLOCK_HAPTIC_INTENSITY = floatPreferencesKey("unlock_haptic_intensity")
@@ -275,6 +304,7 @@ class HapticsPreferences(context: Context) {
         val MUSIC_HAPTICS_SOURCE = stringPreferencesKey("music_haptics_source")
         val MUSIC_HAPTICS_SENSITIVITY = floatPreferencesKey("music_haptics_sensitivity")
         val MUSIC_HAPTICS_STRENGTH = floatPreferencesKey("music_haptics_strength")
+        val HAS_SEEN_WELCOME = booleanPreferencesKey("has_seen_welcome")
     }
 
     private companion object {

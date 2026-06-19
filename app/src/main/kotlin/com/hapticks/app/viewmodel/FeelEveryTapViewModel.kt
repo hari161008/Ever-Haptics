@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -40,6 +41,10 @@ class FeelEveryTapViewModel(
     val settings: StateFlow<HapticsSettings> = preferences.settings
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), HapticsSettings.Default)
+
+    val isSettingsLoaded: StateFlow<Boolean> = preferences.settings
+        .map { true }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), false)
 
     private val _isServiceEnabled = MutableStateFlow(false)
     val isServiceEnabled: StateFlow<Boolean> = _isServiceEnabled.asStateFlow()
@@ -154,6 +159,16 @@ class FeelEveryTapViewModel(
     fun setNavBarHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setNavBarHapticPattern(pattern) } }
     fun commitNavBarHapticIntensity(intensity: Float) { viewModelScope.launch { preferences.setNavBarHapticIntensity(intensity) } }
     fun setNavBarHapticCustomSequence(seq: CustomHapticSequence) { viewModelScope.launch { preferences.setNavBarHapticCustomSequence(seq) } }
+    // Status Bar
+    fun setStatusBarHapticEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setStatusBarHapticEnabled(enabled) } }
+    fun setStatusBarExpandEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setStatusBarExpandEnabled(enabled) } }
+    fun setStatusBarExpandPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setStatusBarExpandPattern(pattern) } }
+    fun commitStatusBarExpandIntensity(v: Float) { viewModelScope.launch { preferences.setStatusBarExpandIntensity(v) } }
+    fun setStatusBarExpandCustomSequence(seq: CustomHapticSequence) { viewModelScope.launch { preferences.setStatusBarExpandCustomSequence(seq) } }
+    fun setStatusBarCollapseEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setStatusBarCollapseEnabled(enabled) } }
+    fun setStatusBarCollapsePattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setStatusBarCollapsePattern(pattern) } }
+    fun commitStatusBarCollapseIntensity(v: Float) { viewModelScope.launch { preferences.setStatusBarCollapseIntensity(v) } }
+    fun setStatusBarCollapseCustomSequence(seq: CustomHapticSequence) { viewModelScope.launch { preferences.setStatusBarCollapseCustomSequence(seq) } }
     // Unlock
     fun setUnlockHapticEnabled(enabled: Boolean) { viewModelScope.launch { preferences.setUnlockHapticEnabled(enabled) } }
     fun setUnlockHapticPattern(pattern: HapticPattern) { viewModelScope.launch { preferences.setUnlockHapticPattern(pattern) } }
@@ -166,6 +181,7 @@ class FeelEveryTapViewModel(
     fun setMusicHapticsSource(source: MusicHapticsSource) { viewModelScope.launch { preferences.setMusicHapticsSource(source) } }
     fun commitMusicHapticsSensitivity(value: Float) { viewModelScope.launch { preferences.setMusicHapticsSensitivity(value) } }
     fun commitMusicHapticsStrength(value: Float) { viewModelScope.launch { preferences.setMusicHapticsStrength(value) } }
+    fun setHasSeenWelcome(seen: Boolean) { viewModelScope.launch { preferences.setHasSeenWelcome(seen) } }
 
     fun resetButtonHapticsDefaults() {
         viewModelScope.launch {
@@ -188,6 +204,18 @@ class FeelEveryTapViewModel(
             preferences.setNavBarHapticPattern(HapticsSettings.Default.navBarHapticPattern)
             preferences.setNavBarHapticIntensity(HapticsSettings.Default.navBarHapticIntensity)
             preferences.setNavBarHapticCustomSequence(HapticsSettings.Default.navBarHapticCustomSequence)
+        }
+    }
+    fun resetStatusBarDefaults() {
+        viewModelScope.launch {
+            preferences.setStatusBarExpandEnabled(HapticsSettings.Default.statusBarExpandEnabled)
+            preferences.setStatusBarExpandPattern(HapticsSettings.Default.statusBarExpandPattern)
+            preferences.setStatusBarExpandIntensity(HapticsSettings.Default.statusBarExpandIntensity)
+            preferences.setStatusBarExpandCustomSequence(HapticsSettings.Default.statusBarExpandCustomSequence)
+            preferences.setStatusBarCollapseEnabled(HapticsSettings.Default.statusBarCollapseEnabled)
+            preferences.setStatusBarCollapsePattern(HapticsSettings.Default.statusBarCollapsePattern)
+            preferences.setStatusBarCollapseIntensity(HapticsSettings.Default.statusBarCollapseIntensity)
+            preferences.setStatusBarCollapseCustomSequence(HapticsSettings.Default.statusBarCollapseCustomSequence)
         }
     }
     fun resetUnlockDefaults() {
@@ -290,6 +318,16 @@ class FeelEveryTapViewModel(
         val s = settings.value
         if (!s.navBarHapticCustomSequence.isEmpty) { viewModelScope.launch { playCustomSequenceOnEngine(s.navBarHapticCustomSequence) } }
         else { engine.play(s.navBarHapticPattern, s.navBarHapticIntensity) }
+    }
+    fun testStatusBarExpandHaptic() {
+        val s = settings.value
+        if (!s.statusBarExpandCustomSequence.isEmpty) { viewModelScope.launch { playCustomSequenceOnEngine(s.statusBarExpandCustomSequence) } }
+        else { engine.play(s.statusBarExpandPattern, s.statusBarExpandIntensity) }
+    }
+    fun testStatusBarCollapseHaptic() {
+        val s = settings.value
+        if (!s.statusBarCollapseCustomSequence.isEmpty) { viewModelScope.launch { playCustomSequenceOnEngine(s.statusBarCollapseCustomSequence) } }
+        else { engine.play(s.statusBarCollapsePattern, s.statusBarCollapseIntensity) }
     }
     fun testUnlockHaptic() {
         val s = settings.value

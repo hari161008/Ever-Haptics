@@ -178,25 +178,7 @@ fun SettingsScreen(
 
             // ── About ──
             item(key = "about") {
-                SettingsSection(title = stringResource(R.string.settings_section_about), icon = Icons.Rounded.Settings) {
-                    SettingsRow(
-                        title = "App Version",
-                        subtitle = "Ever Haptics v${appVersion}",
-                        position = RowPosition.Top,
-                        trailing = {
-                            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = androidx.compose.foundation.shape.CircleShape) {
-                                Text("v${appVersion}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
-                            }
-                        },
-                    )
-                    SettingsRow(
-                        title = stringResource(R.string.settings_github_title),
-                        subtitle = stringResource(R.string.settings_github_subtitle),
-                        position = RowPosition.Bottom,
-                        onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, "https://github.com/hari161008/Ever-Haptics".toUri())) },
-                        trailing = { Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
-                    )
-                }
+                AboutSection(context = context, appVersion = appVersion)
             }
             item(key = "bottom_inset") { Spacer(modifier = Modifier.height(96.dp)) }
         }
@@ -565,3 +547,165 @@ private fun ThemeModeRow(selected: ThemeMode, onThemeModeChange: (ThemeMode) -> 
 }
 
 private data class ThemeModeOption(val mode: ThemeMode, val label: String, val icon: ImageVector)
+
+@Composable
+private fun AboutSection(context: android.content.Context, appVersion: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Section header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            FeatureIcon(
+                icon = Icons.Rounded.Info,
+                tint = FeatureColors.Settings,
+                size = 32.dp,
+                iconSize = 17.dp,
+                cornerRadius = 10.dp,
+                backgroundAlpha = 0.15f,
+            )
+            Text(
+                "About",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+
+        // App Version banner card
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Icon(
+                    Icons.Rounded.Vibration,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(26.dp),
+                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        "Ever Haptics",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        "Version $appVersion  |  by SVHP",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(20.dp),
+                ) {
+                    Text(
+                        "v$appVersion",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    )
+                }
+            }
+        }
+
+        // Link cards
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column {
+                AboutLinkRow(
+                    icon = Icons.Rounded.Code,
+                    title = "GitHub",
+                    subtitle = "Source code | Releases | Issue tracker",
+                    isFirst = true,
+                    isLast = false,
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, "https://github.com/hari161008/Ever-Haptics".toUri())
+                        )
+                    },
+                )
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)))
+                AboutLinkRow(
+                    icon = Icons.Rounded.Forum,
+                    title = "Telegram App Support Group",
+                    subtitle = "Announcements | Updates | Bug Fixes | Support",
+                    isFirst = false,
+                    isLast = false,
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, "https://t.me/EverlastingAndroidTweak".toUri())
+                        )
+                    },
+                )
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)))
+                AboutLinkRow(
+                    icon = Icons.Rounded.Campaign,
+                    title = "App Recommending Channel",
+                    subtitle = "Discover | Explore | Cool Apps",
+                    isFirst = false,
+                    isLast = true,
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, "https://t.me/CoolAppStore".toUri())
+                        )
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AboutLinkRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    isFirst: Boolean,
+    isLast: Boolean,
+    onClick: () -> Unit,
+) {
+    val topRadius    = if (isFirst) 24.dp else 4.dp
+    val bottomRadius = if (isLast) 24.dp else 4.dp
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = topRadius, topEnd = topRadius, bottomStart = bottomRadius, bottomEnd = bottomRadius))
+            .hapticClickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Icon(
+            Icons.AutoMirrored.Rounded.ArrowForward,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}

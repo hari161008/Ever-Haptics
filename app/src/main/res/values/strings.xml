@@ -175,6 +175,10 @@
     <string name="home_notification_haptics_title">Calls, Alerts &amp; Alarms</string>
     <string name="home_notification_haptics_subtitle">Custom haptic patterns for incoming calls, notifications, and alarms</string>
 
+    <!-- Status Bar Haptics -->
+    <string name="home_status_bar_haptics_title">Status Bar Haptics</string>
+    <string name="home_status_bar_haptics_subtitle">Feel every status bar expand &amp; collapse</string>
+
     <!-- Music Haptics -->
     <string name="home_music_haptics_title">Music &amp; Sound Haptics</string>
     <string name="home_music_haptics_subtitle">Vibrate to the beat of music and sounds</string>
