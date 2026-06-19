@@ -56,12 +56,21 @@ class HapticsAccessibilityService : AccessibilityService() {
     @Volatile private var lastKeyboardHapticMs: Long = 0L
     private val keyboardDebounceMs = 30L
 
+    // Status bar expand/collapse tracking via window list diff
+    @Volatile private var statusBarExpanded = false
+    @Volatile private var lastStatusBarHapticMs = 0L
+    @Volatile private var knownSystemWindowIds = emptySet<Int>()
+    private val STATUS_BAR_DEBOUNCE_MS = 400L
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         val app = application as HapticksApp
         engine = app.hapticEngine
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         applyEventMask(HapticsSettings.Default)
+        knownSystemWindowIds = windows
+            ?.filter { it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM }
+            ?.map { it.id }?.toSet() ?: emptySet()
         settingsJob = app.preferences.settings
             .distinctUntilChanged()
             .onEach { snapshot ->
@@ -279,11 +288,8 @@ class HapticsAccessibilityService : AccessibilityService() {
             }
 
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                // NavBar gesture navigation: fire only when a new window/activity is shown
-                // and debounce to prevent multiple fires per gesture
                 if (s.navBarHapticEnabled) {
                     val now = System.currentTimeMillis()
-                    // Only fire for actual window transitions (non-null class name = real activity/fragment)
                     val className = ev.className?.toString()
                     val isRealWindow = !className.isNullOrBlank() &&
                             !className.contains("PopupWindow", ignoreCase = true) &&
@@ -294,6 +300,47 @@ class HapticsAccessibilityService : AccessibilityService() {
                     if (isRealWindow && now - lastNavBarHapticMs >= navBarDebounceMs) {
                         lastNavBarHapticMs = now
                         playCustomOrPattern(s.navBarHapticCustomSequence) { engine.play(s.navBarHapticPattern, s.navBarHapticIntensity, 0L) }
+                    }
+                }
+            }
+
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
+                if (s.statusBarHapticEnabled && (s.statusBarExpandEnabled || s.statusBarCollapseEnabled)) {
+                    val allWindows = windows ?: return
+                    val screenWidth = resources.displayMetrics.widthPixels
+                    val currentIds = allWindows
+                        .filter { it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM }
+                        .map { it.id }.toSet()
+                    val prev = knownSystemWindowIds
+                    knownSystemWindowIds = currentIds
+                    if (prev.isEmpty()) return
+                    val addedIds = currentIds - prev
+                    val removedIds = prev - currentIds
+                    val now = System.currentTimeMillis()
+                    if (addedIds.isNotEmpty() && !statusBarExpanded && now - lastStatusBarHapticMs >= STATUS_BAR_DEBOUNCE_MS) {
+                        // Only fire if the new window is wide enough to be a shade (not volume panel etc.)
+                        val isShade = allWindows.filter { it.id in addedIds }
+                            .any { w ->
+                                val b = android.graphics.Rect()
+                                w.getBoundsInScreen(b)
+                                b.width() >= screenWidth / 2
+                            }
+                        if (isShade) {
+                            statusBarExpanded = true
+                            lastStatusBarHapticMs = now
+                            if (s.statusBarExpandEnabled)
+                                playCustomOrPattern(s.statusBarExpandCustomSequence) {
+                                    engine.play(s.statusBarExpandPattern, s.statusBarExpandIntensity)
+                                }
+                        }
+                    }
+                    if (removedIds.isNotEmpty() && statusBarExpanded && now - lastStatusBarHapticMs >= STATUS_BAR_DEBOUNCE_MS) {
+                        statusBarExpanded = false
+                        lastStatusBarHapticMs = now
+                        if (s.statusBarCollapseEnabled)
+                            playCustomOrPattern(s.statusBarCollapseCustomSequence) {
+                                engine.play(s.statusBarCollapsePattern, s.statusBarCollapseIntensity)
+                            }
                     }
                 }
             }
@@ -347,6 +394,8 @@ class HapticsAccessibilityService : AccessibilityService() {
         if (settings.scrollEnabled) mask = mask or AccessibilityEvent.TYPE_VIEW_SCROLLED
         if (settings.navBarHapticEnabled) mask = mask or AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
         if (settings.keyboardHapticEnabled) mask = mask or AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED
+        if (settings.statusBarHapticEnabled && (settings.statusBarExpandEnabled || settings.statusBarCollapseEnabled))
+            mask = mask or AccessibilityEvent.TYPE_WINDOWS_CHANGED
         if (mask == 0) mask = AccessibilityEvent.TYPE_VIEW_CLICKED
         if (info.eventTypes == mask) return
         info.eventTypes = mask; serviceInfo = info

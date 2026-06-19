@@ -27,6 +27,7 @@ import com.hapticks.app.ui.components.SlidingBottomTabHost
 import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.screens.AppExclusionsScreen
 import com.hapticks.app.ui.screens.HomeScreen
+import com.hapticks.app.ui.screens.ExploreAppsWebViewScreen
 import com.hapticks.app.ui.screens.ReviewsWebViewScreen
 import com.hapticks.app.ui.screens.SettingsScreen
 import com.hapticks.app.ui.screens.WelcomeDialog
@@ -168,6 +169,7 @@ class MainActivity : ComponentActivity() {
                                                 onBatterySaverDetectionChange = viewModel::setBatterySaverDetectionEnabled,
                                                 onAutoCheckUpdatesChange = viewModel::setAutoCheckUpdatesEnabled,
                                                 onOpenReviews = { route = Route.REVIEWS_WEBVIEW },
+                                                onOpenExploreApps = { route = Route.EXPLORE_APPS_WEBVIEW },
                                             )
                                         }
                                     }
@@ -436,6 +438,13 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
+                                Route.EXPLORE_APPS_WEBVIEW -> {
+                                    BackHandler { route = Route.SETTINGS }
+                                    ExploreAppsWebViewScreen(
+                                        onBack = { route = Route.SETTINGS },
+                                    )
+                                }
+
                                 Route.CUSTOM_HAPTIC_EDITOR -> {
                                     val origin = previousRoute
                                     BackHandler { route = origin }
@@ -479,7 +488,8 @@ class MainActivity : ComponentActivity() {
         MUSIC_HAPTICS,
         SETTINGS, NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR,
         CALL_AUTO_HAPTICS, ALARM_AUTO_HAPTICS,
-        REVIEWS_WEBVIEW
+        REVIEWS_WEBVIEW,
+        EXPLORE_APPS_WEBVIEW
     }
 
     private fun openAccessibilitySettings() {

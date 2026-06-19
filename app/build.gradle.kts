@@ -5,7 +5,7 @@ plugins {
 }
 
 fun getVersionName(): String {
-    return System.getenv("GITHUB_REF_NAME") ?: "4.0.0"
+    return System.getenv("GITHUB_REF_NAME") ?: "5.0.0"
 }
 
 fun getVersionCode(): Int {

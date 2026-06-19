@@ -7,7 +7,7 @@ import com.hapticks.app.haptics.HapticPattern
 @Immutable
 data class HapticsSettings(
     val globalEnabled: Boolean = true,
-    val tapEnabled: Boolean = true,
+    val tapEnabled: Boolean = false,
     val intensity: Float = 1.0f,
     val pattern: HapticPattern = HapticPattern.Default,
     val tapHapticCustomSequence: CustomHapticSequence = CustomHapticSequence(),
@@ -27,7 +27,7 @@ data class HapticsSettings(
     val scrollExcludedPackages: Set<String> = emptySet(),
     // Charging
     val chargingVibEnabled: Boolean = false,
-    val chargingVibOnConnect: Boolean = true,
+    val chargingVibOnConnect: Boolean = false,
     val chargingVibOnDisconnect: Boolean = false,
     val chargingVibPattern: HapticPattern = HapticPattern.HEAVY_CLICK,
     val chargingVibIntensity: Float = 1.0f,
@@ -53,12 +53,12 @@ data class HapticsSettings(
     val navBarHapticIntensity: Float = 0.8f,
     val navBarHapticCustomSequence: CustomHapticSequence = CustomHapticSequence(),
     // Status Bar
-    val statusBarHapticEnabled: Boolean = true,
-    val statusBarExpandEnabled: Boolean = true,
+    val statusBarHapticEnabled: Boolean = false,
+    val statusBarExpandEnabled: Boolean = false,
     val statusBarExpandPattern: HapticPattern = HapticPattern.TICK,
     val statusBarExpandIntensity: Float = 0.7f,
     val statusBarExpandCustomSequence: CustomHapticSequence = CustomHapticSequence(),
-    val statusBarCollapseEnabled: Boolean = true,
+    val statusBarCollapseEnabled: Boolean = false,
     val statusBarCollapsePattern: HapticPattern = HapticPattern.TICK,
     val statusBarCollapseIntensity: Float = 0.7f,
     val statusBarCollapseCustomSequence: CustomHapticSequence = CustomHapticSequence(),

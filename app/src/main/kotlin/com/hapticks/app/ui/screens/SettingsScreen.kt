@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -31,8 +32,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,6 +66,7 @@ fun SettingsScreen(
     onBatterySaverDetectionChange: (Boolean) -> Unit = {},
     onAutoCheckUpdatesChange: (Boolean) -> Unit = {},
     onOpenReviews: () -> Unit = {},
+    onOpenExploreApps: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -133,6 +133,10 @@ fun SettingsScreen(
 
             item(key = "rate_review") {
                 RateAndReviewSection(context = context, onOpenReviews = onOpenReviews)
+            }
+
+            item(key = "explore_more_apps") {
+                ExploreMoreAppsSection(onOpenExploreApps = onOpenExploreApps)
             }
 
                         // ── Appearance section ──
@@ -258,6 +262,46 @@ private fun RateAndReviewSection(context: android.content.Context, onOpenReviews
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text("Check Ratings & Reviews", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                     Text("See what others are saying about the app", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExploreMoreAppsSection(onOpenExploreApps: () -> Unit) {
+    val exploreColor = FeatureColors.StatusBar
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            FeatureIcon(icon = Icons.Rounded.Apps, tint = exploreColor, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
+            Text("Explore more apps", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        }
+
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth().hapticClickable { onOpenExploreApps() },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Box(
+                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(18.dp)).background(exploreColor.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.Apps, null, tint = exploreColor, modifier = Modifier.size(26.dp))
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("Explore more apps", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Discover other apps by the developer", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             }
@@ -484,9 +528,7 @@ private fun ColorPaletteRow(selectedColor: Color, onColorSelected: (Color) -> Un
 
 @Composable
 private fun SettingsHeader() {
-    val junicode = remember { FontFamily(Font(R.font.junicode_italic)) }
     Column(modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(text = stringResource(R.string.settings_header_caption), style = MaterialTheme.typography.labelLarge.copy(fontFamily = junicode, fontSize = 15.sp), color = MaterialTheme.colorScheme.primary)
         Text(text = stringResource(R.string.settings_header_title), style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
     }
 }

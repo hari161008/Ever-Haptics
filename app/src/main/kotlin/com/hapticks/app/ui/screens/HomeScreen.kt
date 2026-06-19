@@ -21,8 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hapticks.app.R
@@ -167,11 +165,9 @@ private fun BatterySaverWarningCard() {
 
 @Composable
 private fun AnimatedHomeHeader(entered: Boolean) {
-    val junicode = remember { FontFamily(Font(R.font.junicode_italic)) }
     val alpha by animateFloatAsState(if (entered) 1f else 0f, tween(500, easing = FastOutSlowInEasing), label = "h_a")
     val offsetY by animateDpAsState(if (entered) 0.dp else 24.dp, tween(500, easing = FastOutSlowInEasing), label = "h_y")
     Column(modifier = Modifier.offset(y = offsetY).alpha(alpha), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.home_greeting), style = MaterialTheme.typography.labelLarge.copy(fontFamily = junicode, fontSize = 15.sp), color = MaterialTheme.colorScheme.primary)
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
         Text(stringResource(R.string.home_subtitle), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
