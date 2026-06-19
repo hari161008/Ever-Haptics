@@ -132,11 +132,7 @@ fun SettingsScreen(
             }
 
             item(key = "rate_review") {
-                RateAndReviewSection(context = context, onOpenReviews = onOpenReviews)
-            }
-
-            item(key = "explore_more_apps") {
-                ExploreMoreAppsSection(onOpenExploreApps = onOpenExploreApps)
+                RateAndReviewSection(context = context, onOpenReviews = onOpenReviews, onOpenExploreApps = onOpenExploreApps)
             }
 
                         // ── Appearance section ──
@@ -200,8 +196,14 @@ private sealed interface UpdateCheckState {
 }
 
 @Composable
-private fun RateAndReviewSection(context: android.content.Context, onOpenReviews: () -> Unit) {
+private fun RateAndReviewSection(
+    context: android.content.Context,
+    onOpenReviews: () -> Unit,
+    onOpenExploreApps: () -> Unit,
+) {
     val rateColor = FeatureColors.MusicHaptics
+    val exploreColor = FeatureColors.StatusBar
+
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         // Section header
         Row(
@@ -210,100 +212,91 @@ private fun RateAndReviewSection(context: android.content.Context, onOpenReviews
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             FeatureIcon(icon = Icons.Rounded.Star, tint = rateColor, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
-            Text("Rate & Review", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text("Community & More", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
         }
 
-        // Rate & Review card → opens Google Form in browser
+        // All cards in one unified rounded container
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth().hapticClickable {
-                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW,
-                    "https://docs.google.com/forms/d/e/1FAIpQLSci14N7YdirM32f2I7bT6GBv_sQ3KJ4hjM6qDKTVZfsCuIPtw/viewform?usp=header".toUri())
-                context.startActivity(intent)
-            },
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Box(
-                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(18.dp)).background(rateColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center,
+            Column {
+                // Rate & Review row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .hapticClickable {
+                            val intent = android.content.Intent(
+                                android.content.Intent.ACTION_VIEW,
+                                "https://docs.google.com/forms/d/e/1FAIpQLSci14N7YdirM32f2I7bT6GBv_sQ3KJ4hjM6qDKTVZfsCuIPtw/viewform?usp=header".toUri()
+                            )
+                            context.startActivity(intent)
+                        }
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    Icon(Icons.Rounded.RateReview, null, tint = rateColor, modifier = Modifier.size(26.dp))
+                    Box(
+                        modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(rateColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Rounded.RateReview, null, tint = rateColor, modifier = Modifier.size(22.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Rate & Review", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Share your experience with Ever Haptics", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
                 }
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("Rate & Review", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Share your experience with Ever Haptics", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-            }
-        }
 
-        // Check Ratings & Reviews card → opens WebView in-app
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth().hapticClickable { onOpenReviews() },
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Box(
-                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(18.dp)).background(rateColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center,
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+
+                // Check Ratings & Reviews row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .hapticClickable { onOpenReviews() }
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    Icon(Icons.Rounded.Reviews, null, tint = rateColor, modifier = Modifier.size(26.dp))
+                    Box(
+                        modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(rateColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Rounded.Reviews, null, tint = rateColor, modifier = Modifier.size(22.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Ratings & Reviews", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                        Text("See what others are saying about the app", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
                 }
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("Check Ratings & Reviews", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                    Text("See what others are saying about the app", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-            }
-        }
-    }
-}
 
-@Composable
-private fun ExploreMoreAppsSection(onOpenExploreApps: () -> Unit) {
-    val exploreColor = FeatureColors.StatusBar
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            FeatureIcon(icon = Icons.Rounded.Apps, tint = exploreColor, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
-            Text("Explore more apps", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-        }
-
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth().hapticClickable { onOpenExploreApps() },
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Box(
-                    modifier = Modifier.size(52.dp).clip(RoundedCornerShape(18.dp)).background(exploreColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center,
+                // Explore More Apps row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .hapticClickable { onOpenExploreApps() }
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    Icon(Icons.Rounded.Apps, null, tint = exploreColor, modifier = Modifier.size(26.dp))
+                    Box(
+                        modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(exploreColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Rounded.Apps, null, tint = exploreColor, modifier = Modifier.size(22.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Explore More Apps", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Discover other apps by the developer", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
                 }
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("Explore more apps", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Discover other apps by the developer", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             }
         }
     }
