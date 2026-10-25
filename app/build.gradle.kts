@@ -30,19 +30,40 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("keystore.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
+            val ksFile = rootProject.file("app/keystore.jks")
+            val storePass = System.getenv("KEYSTORE_PASSWORD") ?: "everhapticspass"
+            val alias = System.getenv("KEY_ALIAS") ?: "everhaptics"
+            val keyPass = System.getenv("KEY_PASSWORD") ?: storePass
+
+            if (!ksFile.exists()) {
+                ksFile.parentFile?.mkdirs()
+                runCatching {
+                    ProcessBuilder(
+                        "keytool", "-genkeypair", "-v",
+                        "-keystore", ksFile.absolutePath,
+                        "-alias", alias,
+                        "-keyalg", "RSA",
+                        "-keysize", "2048",
+                        "-validity", "10000",
+                        "-storepass", storePass,
+                        "-keypass", keyPass,
+                        "-dname", "CN=EverHaptics, OU=Mobile, O=OpenSource, L=City, ST=State, C=US"
+                    ).start().waitFor()
+                }
+            }
+
+            if (ksFile.exists()) {
+                storeFile = ksFile
+                storePassword = storePass
+                keyAlias = alias
+                keyPassword = keyPass
+            }
         }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            isDebuggable = false
-            isJniDebuggable = false
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -51,6 +72,7 @@ android {
         }
         debug {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
