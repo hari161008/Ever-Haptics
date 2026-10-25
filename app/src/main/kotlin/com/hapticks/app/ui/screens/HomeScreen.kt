@@ -27,6 +27,13 @@ import com.hapticks.app.R
 import com.hapticks.app.ui.components.EnableServiceCard
 import com.hapticks.app.ui.components.FeatureColors
 import com.hapticks.app.ui.components.FeatureIcon
+import com.hapticks.app.ui.components.PetalContainment
+import com.hapticks.app.ui.components.PetalContainmentDefaults
+import com.hapticks.app.ui.components.PetalContainmentSurface
+import com.hapticks.app.ui.components.IconSwitch
+import com.hapticks.app.ui.components.getGroupItemShape
+import com.hapticks.app.ui.theme.PetalMaterialShapes
+import com.hapticks.app.ui.theme.toShape
 import com.hapticks.app.ui.haptics.hapticClickable
 import kotlinx.coroutines.delay
 
@@ -106,7 +113,7 @@ fun HomeScreen(
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(PetalContainmentDefaults.groupSpacing)) {
                 features.forEachIndexed { index, feature ->
                     FeatureCard(
                         title = stringResource(feature.titleRes),
@@ -117,6 +124,7 @@ fun HomeScreen(
                         enabled = globalEnabled && !(batterySaverDetectionEnabled && isBatterySaverActive),
                         entered = entered,
                         staggerIndex = index,
+                        totalCount = features.size,
                     )
                 }
             }
@@ -177,16 +185,37 @@ private fun AnimatedHomeHeader(entered: Boolean) {
 private fun AnimatedGlobalToggleCard(entered: Boolean, enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {
     val alpha by animateFloatAsState(if (entered) 1f else 0f, tween(440, delayMillis = 80, easing = FastOutSlowInEasing), label = "t_a")
     val containerColor by animateColorAsState(if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh, tween(300), label = "t_c")
-    Surface(color = containerColor, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth().alpha(alpha)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+    PetalContainmentSurface(
+        containerColor = containerColor,
+        shape = PetalContainmentDefaults.shape,
+        modifier = Modifier.fillMaxWidth().alpha(alpha),
+        onClick = { onEnabledChange(!enabled) },
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                FeatureIcon(icon = Icons.Rounded.Vibration, tint = MaterialTheme.colorScheme.primary, size = 44.dp, iconSize = 22.dp, cornerRadius = 14.dp, backgroundAlpha = 0.15f)
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(PetalMaterialShapes.Cookie4Sided.toShape())
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.Vibration, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                }
                 Column {
                     Text(stringResource(R.string.home_global_toggle_title), style = MaterialTheme.typography.titleLarge, color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
                     Text(if (enabled) stringResource(R.string.home_global_toggle_on) else stringResource(R.string.home_global_toggle_off), style = MaterialTheme.typography.bodySmall, color = (if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.7f))
                 }
             }
-            Switch(checked = enabled, onCheckedChange = onEnabledChange)
+            IconSwitch(
+                checked = enabled,
+                icon = if (enabled) Icons.Rounded.Check else Icons.Rounded.Close,
+                onCheckedChange = onEnabledChange,
+            )
         }
     }
 }
@@ -201,48 +230,58 @@ private fun FeatureCard(
     enabled: Boolean,
     entered: Boolean,
     staggerIndex: Int,
+    totalCount: Int = 10,
 ) {
-    val delay = 140 + staggerIndex * 50
+    val delay = 140 + staggerIndex * 35
     val alpha by animateFloatAsState(if (entered) 1f else 0f, tween(380, delayMillis = delay, easing = FastOutSlowInEasing), label = "c_a$staggerIndex")
-    val offsetY by animateDpAsState(if (entered) 0.dp else 30.dp, tween(380, delayMillis = delay, easing = FastOutSlowInEasing), label = "c_y$staggerIndex")
+    val offsetY by animateDpAsState(if (entered) 0.dp else 24.dp, tween(380, delayMillis = delay, easing = FastOutSlowInEasing), label = "c_y$staggerIndex")
     val dimAlpha = if (enabled) 1f else 0.4f
+    val shape = getGroupItemShape(staggerIndex, totalCount, topCorner = 24.dp, bottomCorner = 24.dp, middleCorner = 8.dp)
 
-    Box(
+    PetalContainmentSurface(
+        shape = shape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier
             .fillMaxWidth()
             .offset(y = offsetY)
-            .alpha(alpha)
-            .clip(RoundedCornerShape(28.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .then(if (enabled) Modifier.hapticClickable(onClick = onClick) else Modifier),
+            .alpha(alpha),
+        enabled = enabled,
+        onClick = if (enabled) onClick else null,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(
                 modifier = Modifier
-                    .size(58.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(featureColor.copy(alpha = if (enabled) 0.15f else 0.06f)),
+                    .size(52.dp)
+                    .clip(
+                        when (staggerIndex % 4) {
+                            0 -> PetalMaterialShapes.Cookie7Sided.toShape()
+                            1 -> PetalMaterialShapes.Clover4Leaf.toShape()
+                            2 -> PetalMaterialShapes.SoftBurst.toShape()
+                            else -> PetalMaterialShapes.Cookie4Sided.toShape()
+                        }
+                    )
+                    .background(featureColor.copy(alpha = if (enabled) 0.16f else 0.06f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, null, tint = featureColor.copy(alpha = dimAlpha), modifier = Modifier.size(30.dp))
+                Icon(icon, null, tint = featureColor.copy(alpha = dimAlpha), modifier = Modifier.size(26.dp))
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = dimAlpha))
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dimAlpha * 0.85f))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = dimAlpha))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dimAlpha * 0.85f))
             }
             if (enabled) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(34.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 }
             }
         }

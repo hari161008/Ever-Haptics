@@ -29,6 +29,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
+import com.hapticks.app.ui.components.PetalContainmentDefaults
+import com.hapticks.app.ui.components.PetalContainmentSurface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -133,7 +135,7 @@ private fun PatternCard(
 
     val interactionSource = remember { MutableInteractionSource() }
 
-    Surface(
+    PetalContainmentSurface(
         modifier = modifier
             .heightIn(min = 132.dp)
             .selectable(
@@ -146,9 +148,8 @@ private fun PatternCard(
             .semantics {
                 this.stateDescription = stateDescription
             },
-        color = containerColor,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(borderWidth, borderColor),
+        shape = PetalContainmentDefaults.shape,
+        containerColor = containerColor,
     ) {
         Column(
             modifier = Modifier

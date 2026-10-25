@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.hapticks.app.ui.components.PetalContainmentDefaults
+import com.hapticks.app.ui.components.PetalContainmentSurface
 import com.hapticks.app.ui.haptics.hapticClickable
 
 @Composable
@@ -28,12 +30,11 @@ fun SectionCard(
         if (title != null) {
             SectionHeader(title = title, subtitle = subtitle, icon = icon, iconTint = iconTint)
         }
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            shape = RoundedCornerShape(28.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.hapticClickable(onClick = onClick) else Modifier),
+        PetalContainmentSurface(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            shape = PetalContainmentDefaults.shape,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onClick,
         ) {
             Column(
                 modifier = Modifier.padding(contentPadding),

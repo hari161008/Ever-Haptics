@@ -39,6 +39,8 @@ import com.hapticks.app.haptics.HapticBeat
 import com.hapticks.app.ui.haptics.performHapticSliderTick
 import com.hapticks.app.ui.haptics.slider01ToTickIndex
 import com.hapticks.app.ui.haptics.SliderTickStepsDefault
+import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
+import com.hapticks.app.ui.components.rememberPetalHeaderScrollBehavior
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -88,13 +90,10 @@ fun CustomHapticEditorScreen(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            LargeTopAppBar(
-                title = { Text("Edit ${label.replaceFirstChar { it.uppercaseChar() }} Haptic", style = MaterialTheme.typography.displaySmall) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
+            PetalCollapsingTopAppBar(
+                title = "Edit ${label.replaceFirstChar { it.uppercaseChar() }} Haptic",
+                scrollBehavior = scrollBehavior,
+                onNavigateBack = onBack,
                 actions = {
                     if (hasChanges) {
                         TextButton(onClick = { onSave(CustomHapticSequence(beats)); onBack() }) {
@@ -102,11 +101,6 @@ fun CustomHapticEditorScreen(
                         }
                     }
                 },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background,
-                ),
             )
         },
         bottomBar = {

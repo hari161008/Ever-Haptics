@@ -21,6 +21,7 @@ import com.hapticks.app.haptics.HapticPattern
 import com.hapticks.app.ui.components.HapticToggleRow
 import com.hapticks.app.ui.components.PatternSelectorWithCustom
 import com.hapticks.app.ui.components.SectionCard
+import com.hapticks.app.ui.components.FancyExpressiveSlider
 import com.hapticks.app.ui.haptics.SliderTickStepsDefault
 import com.hapticks.app.ui.haptics.performHapticSliderTick
 import com.hapticks.app.ui.haptics.slider01ToTickIndex
@@ -89,15 +90,17 @@ private fun FeelEveryTapIntensityControl(intensity: Float, onIntensityCommit: (F
                 Text(stringResource(id = R.string.intensity_value, percent), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
             }
         }
-        Slider(
+        FancyExpressiveSlider(
             value = draft,
             onValueChange = { newValue ->
                 draft = newValue
                 val t = slider01ToTickIndex(newValue)
                 if (t != lastTickIndex) { lastTickIndex = t; context.performHapticSliderTick() }
+                onIntensityCommit(draft)
             },
-            onValueChangeFinished = { onIntensityCommit(draft) },
             valueRange = 0f..1f,
+            displayValue = "$percent%",
+        )
             steps = SliderTickStepsDefault,
             colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
         )

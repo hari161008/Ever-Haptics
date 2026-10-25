@@ -41,6 +41,12 @@ import com.hapticks.app.data.HapticsSettings
 import com.hapticks.app.data.ThemeMode
 import com.hapticks.app.ui.components.FeatureIcon
 import com.hapticks.app.ui.components.FeatureColors
+import com.hapticks.app.ui.components.PetalChoiceButtonGroup
+import com.hapticks.app.ui.components.PetalButtonGroupItem
+import com.hapticks.app.ui.components.PetalContainment
+import com.hapticks.app.ui.components.PetalContainmentDefaults
+import com.hapticks.app.ui.components.PetalContainmentSurface
+import com.hapticks.app.ui.components.IconSwitch
 import com.hapticks.app.ui.haptics.hapticClickable
 import com.hapticks.app.ui.theme.SeedBlue
 import com.hapticks.app.ui.theme.SeedGreen
@@ -138,7 +144,13 @@ fun SettingsScreen(
                         // ── Appearance section ──
             item(key = "appearance") {
                 SettingsSection(title = stringResource(R.string.settings_section_appearance), icon = Icons.Rounded.Palette, iconTint = FeatureColors.Keyboard) {
-                    SettingsRow(title = stringResource(R.string.settings_dynamic_color_title), subtitle = null, position = RowPosition.Top, trailing = { Switch(checked = settings.useDynamicColors, onCheckedChange = onUseDynamicColorsChange) })
+                    SettingsRow(title = stringResource(R.string.settings_dynamic_color_title), subtitle = null, position = RowPosition.Top, trailing = {
+                        IconSwitch(
+                            checked = settings.useDynamicColors,
+                            icon = if (settings.useDynamicColors) Icons.Rounded.Check else Icons.Rounded.Close,
+                            onCheckedChange = onUseDynamicColorsChange,
+                        )
+                    })
                     if (!settings.useDynamicColors) {
                         RowDivider()
                         ColorPaletteRow(selectedColor = Color(settings.seedColor), onColorSelected = { onSeedColorChange(it.toArgb()) })
@@ -148,7 +160,13 @@ fun SettingsScreen(
                         title = stringResource(R.string.settings_amoled_title),
                         subtitle = if (appInDarkTheme) stringResource(R.string.settings_amoled_subtitle) else stringResource(R.string.settings_amoled_subtitle_light),
                         position = RowPosition.Bottom,
-                        trailing = { Switch(checked = settings.amoledBlack, onCheckedChange = onAmoledBlackChange) },
+                        trailing = {
+                            IconSwitch(
+                                checked = settings.amoledBlack,
+                                icon = if (settings.amoledBlack) Icons.Rounded.Check else Icons.Rounded.Close,
+                                onCheckedChange = onAmoledBlackChange,
+                            )
+                        },
                     )
                     RowDivider()
                     ThemeModeRow(selected = settings.themeMode, onThemeModeChange = onThemeModeChange)
@@ -167,8 +185,9 @@ fun SettingsScreen(
                         subtitle = stringResource(R.string.settings_battery_saver_subtitle),
                         position = RowPosition.Single,
                         trailing = {
-                            Switch(
+                            IconSwitch(
                                 checked = settings.batterySaverDetectionEnabled,
+                                icon = if (settings.batterySaverDetectionEnabled) Icons.Rounded.Check else Icons.Rounded.Close,
                                 onCheckedChange = onBatterySaverDetectionChange,
                             )
                         },
@@ -494,7 +513,11 @@ private fun UpdateCard(
                     Text("Get notified when a new version is available", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Spacer(Modifier.width(12.dp))
-                Switch(checked = autoCheckEnabled, onCheckedChange = onAutoCheckChange)
+                IconSwitch(
+                    checked = autoCheckEnabled,
+                    icon = if (autoCheckEnabled) Icons.Rounded.Check else Icons.Rounded.Close,
+                    onCheckedChange = onAutoCheckChange,
+                )
             }
         }
     }
@@ -528,13 +551,21 @@ private fun SettingsHeader() {
 
 @Composable
 private fun SettingsSection(title: String, icon: ImageVector, iconTint: androidx.compose.ui.graphics.Color = FeatureColors.Settings, content: @Composable () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    PetalContainment(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = PetalContainmentDefaults.shape,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FeatureIcon(icon = icon, tint = iconTint, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
                 Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
             }
-            Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh) { Column { content() } }
+            PetalContainmentSurface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ) { Column { content() } }
         }
     }
 }
@@ -563,21 +594,21 @@ private fun RowDivider() {
     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)))
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ThemeModeRow(selected: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).padding(top = 12.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(R.string.settings_theme_mode_title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         val modes = listOf(
-            ThemeModeOption(ThemeMode.SYSTEM, stringResource(R.string.settings_theme_mode_system), Icons.Rounded.Brightness6),
-            ThemeModeOption(ThemeMode.LIGHT, stringResource(R.string.settings_theme_mode_light), Icons.Rounded.LightMode),
-            ThemeModeOption(ThemeMode.DARK, stringResource(R.string.settings_theme_mode_dark), Icons.Rounded.DarkMode),
+            PetalButtonGroupItem(ThemeMode.SYSTEM, stringResource(R.string.settings_theme_mode_system), Icons.Rounded.Brightness6),
+            PetalButtonGroupItem(ThemeMode.LIGHT, stringResource(R.string.settings_theme_mode_light), Icons.Rounded.LightMode),
+            PetalButtonGroupItem(ThemeMode.DARK, stringResource(R.string.settings_theme_mode_dark), Icons.Rounded.DarkMode),
         )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            modes.forEachIndexed { index, option ->
-                SegmentedButton(selected = selected == option.mode, onClick = { onThemeModeChange(option.mode) }, shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size), icon = { Icon(option.icon, null, modifier = Modifier.size(18.dp)) }) { Text(option.label) }
-            }
-        }
+        PetalChoiceButtonGroup(
+            options = modes,
+            selected = selected,
+            onSelect = onThemeModeChange,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

@@ -24,6 +24,7 @@ import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.ui.components.BottomTab
 import com.hapticks.app.ui.components.FloatingBottomBar
 import com.hapticks.app.ui.components.SlidingBottomTabHost
+import com.hapticks.app.ui.predictive.PetalScreenHost
 import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.screens.AppExclusionsScreen
 import com.hapticks.app.ui.screens.HomeScreen
@@ -115,67 +116,67 @@ class MainActivity : ComponentActivity() {
                     }
 
                     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                        AnimatedContent(
-                            targetState = route,
-                            transitionSpec = {
-                                when {
-                                    targetState == Route.HOME || targetState == Route.SETTINGS ->
-                                        (slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 3 } + fadeIn(tween(260)))
-                                            .togetherWith(slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(200)))
-                                    targetState == Route.CUSTOM_HAPTIC_EDITOR ->
-                                        (slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 2 } + fadeIn(tween(280)))
-                                            .togetherWith(fadeOut(tween(180)))
-                                    initialState == Route.CUSTOM_HAPTIC_EDITOR ->
-                                        fadeIn(tween(240))
-                                            .togetherWith(slideOutVertically(tween(320, easing = FastOutSlowInEasing)) { it / 2 } + fadeOut(tween(220)))
-                                    else ->
-                                        (slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { it } + fadeIn(tween(260)))
-                                            .togetherWith(slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 3 } + fadeOut(tween(200)))
+                        PetalScreenHost(
+                            route = route.name,
+                            rootRoute = if (route == Route.SETTINGS) Route.SETTINGS.name else Route.HOME.name,
+                            routeOrder = Route.entries.map { it.name },
+                            onBack = {
+                                when (route) {
+                                    Route.SETTINGS -> route = Route.HOME
+                                    Route.TAP_APP_EXCLUSIONS -> route = Route.FEEL_EVERY_TAP
+                                    Route.SCROLL_APP_EXCLUSIONS -> route = Route.TACTILE_SCROLLING
+                                    Route.CALL_AUTO_HAPTICS -> route = Route.NOTIFICATION_HAPTICS
+                                    Route.ALARM_AUTO_HAPTICS -> route = Route.NOTIFICATION_HAPTICS
+                                    Route.CUSTOM_HAPTIC_EDITOR -> route = previousRoute
+                                    Route.REVIEWS_WEBVIEW -> route = Route.SETTINGS
+                                    Route.EXPLORE_APPS_WEBVIEW -> route = Route.SETTINGS
+                                    else -> route = Route.HOME
                                 }
                             },
-                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-                            label = "route_anim",
-                        ) { currentRoute ->
-                            when (currentRoute) {
-                                Route.HOME, Route.SETTINGS -> {
-                                    val bottomTab = if (currentRoute == Route.HOME) BottomTab.HOME else BottomTab.SETTINGS
-                                    SlidingBottomTabHost(selectedTab = bottomTab, modifier = Modifier.fillMaxSize()) { tab ->
-                                        when (tab) {
-                                            BottomTab.HOME -> HomeScreen(
-                                                globalEnabled = settings.globalEnabled,
-                                                isServiceEnabled = isServiceEnabled,
-                                                isBatterySaverActive = isBatterySaverActive,
-                                                batterySaverDetectionEnabled = settings.batterySaverDetectionEnabled,
-                                                scrollState = homeScrollState,
-                                                onGlobalEnabledChange = viewModel::setGlobalEnabled,
-                                                onOpenFeelEveryTap = { route = Route.FEEL_EVERY_TAP },
-                                                onOpenTactileScrolling = { route = Route.TACTILE_SCROLLING },
-                                                onOpenChargingHaptics = { route = Route.CHARGING_HAPTICS },
-                                                onOpenButtonHaptics = { route = Route.BUTTON_HAPTICS },
-                                                onOpenNavBarHaptics = { route = Route.NAVBAR_HAPTICS },
-                                                onOpenStatusBarHaptics = { route = Route.STATUSBAR_HAPTICS },
-                                                onOpenUnlockHaptics = { route = Route.UNLOCK_HAPTICS },
-                                                onOpenNotificationHaptics = { route = Route.NOTIFICATION_HAPTICS },
-                                                onOpenKeyboardHaptics = { route = Route.KEYBOARD_HAPTICS },
-                                                onOpenMusicHaptics = { route = Route.MUSIC_HAPTICS },
-                                                onOpenAccessibilitySettings = ::openAccessibilitySettings,
-                                            )
-                                            BottomTab.SETTINGS -> SettingsScreen(
-                                                settings = settings,
-                                                onUseDynamicColorsChange = viewModel::setUseDynamicColors,
-                                                onThemeModeChange = viewModel::setThemeMode,
-                                                onAmoledBlackChange = viewModel::setAmoledBlack,
-                                                onSeedColorChange = viewModel::setSeedColor,
-                                                onBatterySaverDetectionChange = viewModel::setBatterySaverDetectionEnabled,
-                                                onAutoCheckUpdatesChange = viewModel::setAutoCheckUpdatesEnabled,
-                                                onOpenReviews = { route = Route.REVIEWS_WEBVIEW },
-                                                onOpenExploreApps = { route = Route.EXPLORE_APPS_WEBVIEW },
-                                            )
-                                        }
+                            predictiveEnabled = true,
+                            blurEnabled = true,
+                            root = {
+                                val bottomTab = if (route == Route.SETTINGS) BottomTab.SETTINGS else BottomTab.HOME
+                                SlidingBottomTabHost(selectedTab = bottomTab, modifier = Modifier.fillMaxSize()) { tab ->
+                                    when (tab) {
+                                        BottomTab.HOME -> HomeScreen(
+                                            globalEnabled = settings.globalEnabled,
+                                            isServiceEnabled = isServiceEnabled,
+                                            isBatterySaverActive = isBatterySaverActive,
+                                            batterySaverDetectionEnabled = settings.batterySaverDetectionEnabled,
+                                            scrollState = homeScrollState,
+                                            onGlobalEnabledChange = viewModel::setGlobalEnabled,
+                                            onOpenFeelEveryTap = { route = Route.FEEL_EVERY_TAP },
+                                            onOpenTactileScrolling = { route = Route.TACTILE_SCROLLING },
+                                            onOpenChargingHaptics = { route = Route.CHARGING_HAPTICS },
+                                            onOpenButtonHaptics = { route = Route.BUTTON_HAPTICS },
+                                            onOpenNavBarHaptics = { route = Route.NAVBAR_HAPTICS },
+                                            onOpenStatusBarHaptics = { route = Route.STATUSBAR_HAPTICS },
+                                            onOpenUnlockHaptics = { route = Route.UNLOCK_HAPTICS },
+                                            onOpenNotificationHaptics = { route = Route.NOTIFICATION_HAPTICS },
+                                            onOpenKeyboardHaptics = { route = Route.KEYBOARD_HAPTICS },
+                                            onOpenMusicHaptics = { route = Route.MUSIC_HAPTICS },
+                                            onOpenAccessibilitySettings = ::openAccessibilitySettings,
+                                        )
+                                        BottomTab.SETTINGS -> SettingsScreen(
+                                            settings = settings,
+                                            onUseDynamicColorsChange = viewModel::setUseDynamicColors,
+                                            onThemeModeChange = viewModel::setThemeMode,
+                                            onAmoledBlackChange = viewModel::setAmoledBlack,
+                                            onSeedColorChange = viewModel::setSeedColor,
+                                            onBatterySaverDetectionChange = viewModel::setBatterySaverDetectionEnabled,
+                                            onAutoCheckUpdatesChange = viewModel::setAutoCheckUpdatesEnabled,
+                                            onOpenReviews = { route = Route.REVIEWS_WEBVIEW },
+                                            onOpenExploreApps = { route = Route.EXPLORE_APPS_WEBVIEW },
+                                        )
                                     }
                                 }
-
-                                Route.FEEL_EVERY_TAP -> {
+                            },
+                            overlay = { currentOverlayRouteName ->
+                                val currentRoute = Route.valueOf(currentOverlayRouteName)
+                                when (currentRoute) {
+                                    Route.HOME, Route.SETTINGS -> { /* Handled in root */ }
+                                    Route.FEEL_EVERY_TAP -> {
                                     BackHandler { route = Route.HOME }
                                     FeelEveryTapScreen(
                                         settings = settings,
@@ -446,17 +447,17 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 Route.CUSTOM_HAPTIC_EDITOR -> {
-                                    val origin = previousRoute
-                                    BackHandler { route = origin }
-                                    CustomHapticEditorScreen(
-                                        label = customEditorLabel,
-                                        initialSequence = customEditorSequence,
-                                        onSave = { seq -> customEditorOnSave(seq) },
-                                        onBack = { route = origin },
-                                    )
+                                        val origin = previousRoute
+                                        CustomHapticEditorScreen(
+                                            label = customEditorLabel,
+                                            initialSequence = customEditorSequence,
+                                            onSave = { seq -> customEditorOnSave(seq) },
+                                            onBack = { route = origin },
+                                        )
+                                    }
                                 }
                             }
-                        }
+                        )
 
                         AnimatedVisibility(
                             visible = route == Route.HOME || route == Route.SETTINGS,

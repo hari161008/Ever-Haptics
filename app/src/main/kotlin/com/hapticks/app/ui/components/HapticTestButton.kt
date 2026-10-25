@@ -46,21 +46,12 @@ fun HapticTestButton(
         }
     }
 
-    Button(
-        onClick = {
-            isPressed = true
-            currentOnClick()
-        },
+    PetalButton(
+        onClick = currentOnClick,
         enabled = enabled,
-        modifier = modifier.fillMaxWidth().height(60.dp).scale(scale),
-        shape = RoundedCornerShape(100.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-        contentPadding = PaddingValues(horizontal = 24.dp),
+        modifier = modifier.fillMaxWidth(),
+        height = 56.dp,
+        style = PetalButtonStyle.FILLED,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(

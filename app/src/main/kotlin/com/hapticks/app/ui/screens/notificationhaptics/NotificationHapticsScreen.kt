@@ -55,6 +55,8 @@ import com.hapticks.app.ui.components.HapticTestButton
 import com.hapticks.app.ui.components.ScreenIconHeader
 import com.hapticks.app.ui.components.HapticToggleRow
 import com.hapticks.app.ui.components.SectionCard
+import com.hapticks.app.ui.components.PetalScreenScaffold
+import com.hapticks.app.ui.components.rememberPetalHeaderScrollBehavior
 import com.hapticks.app.ui.haptics.SliderTickStepsDefault
 import com.hapticks.app.ui.haptics.performHapticSliderTick
 import com.hapticks.app.ui.haptics.slider01ToTickIndex
@@ -101,109 +103,78 @@ fun NotificationHapticsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-    Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            LargeTopAppBar(
-                title = { Text("Calls, Alerts & Alarms", style = MaterialTheme.typography.displaySmall) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface) } },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(containerColor = MaterialTheme.colorScheme.background, scrolledContainerColor = MaterialTheme.colorScheme.background),
-            )
-        },
-    ) { padding ->
-        LazyColumn(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item("icon_header") {
-                ScreenIconHeader(icon = Icons.Rounded.NotificationsActive, featureColor = FeatureColors.Notifications, subtitle = "Custom haptic patterns for incoming calls, notifications, and alarms.")
-            }
-            item("notif_access") { NotificationListenerCard() }
-            item("phone_perm") { PhonePermissionCard() }
-            item("notice") { SystemHapticsNoticeCard() }
+    val scrollBehavior = rememberPetalHeaderScrollBehavior()
+    PetalScreenScaffold(
+        title = "Calls, Alerts & Alarms",
+        scrollBehavior = scrollBehavior,
+        onNavigateBack = onBack,
+        modifier = modifier,
+    ) {
+        ScreenIconHeader(icon = Icons.Rounded.NotificationsActive, featureColor = FeatureColors.Notifications, subtitle = "Custom haptic patterns for incoming calls, notifications, and alarms.")
+        NotificationListenerCard()
+        PhonePermissionCard()
+        SystemHapticsNoticeCard()
 
-            item("reset") {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onResetToDefaults) {
-                        Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.size(4.dp))
-                        Text("Reset to defaults", style = MaterialTheme.typography.labelLarge)
-                    }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onResetToDefaults) {
+                Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.size(4.dp))
+                Text("Reset to defaults", style = MaterialTheme.typography.labelLarge)
+            }
+        }
+
+        SectionHeader(icon = Icons.Rounded.Call, title = "Incoming Call")
+        SectionCard { HapticToggleRow(title = "Call Haptic", subtitle = "Play a repeating haptic pattern when a call arrives", checked = callHapticEnabled, onCheckedChange = onCallEnabledChange) }
+        AnimatedVisibility(visible = callHapticEnabled) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionCard {
+                    PatternSelectorWithCustom(
+                        pattern = callPattern, intensity = callIntensity, customSequence = callCustomSequence,
+                        isAutoActive = callHapticAuto,
+                        onPatternSelected = onCallPatternSelected, onIntensityCommit = onCallIntensityCommit,
+                        onOpenCustomEditor = { onOpenCustomEditor("call", callCustomSequence) { seq -> onCallCustomSequenceSave(seq); if (!seq.isEmpty) onCallAutoChange(false) } },
+                        onOpenAutoSettings = onOpenCallAutoSettings,
+                        onClearCustom = { onCallCustomSequenceSave(CustomHapticSequence()) },
+                        onDisableAuto = { onCallAutoChange(false) },
+                        label = "call",
+                    )
                 }
+                HapticTestButton("Test Call Haptic", onTestCallHaptic, enabled = callHapticEnabled)
             }
+        }
 
-            item("call_header") { SectionHeader(icon = Icons.Rounded.Call, title = "Incoming Call") }
-            item("call_toggle") {
-                SectionCard { HapticToggleRow(title = "Call Haptic", subtitle = "Play a repeating haptic pattern when a call arrives", checked = callHapticEnabled, onCheckedChange = onCallEnabledChange) }
-            }
-            item("call_content") {
-                AnimatedVisibility(visible = callHapticEnabled) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionCard {
-                            PatternSelectorWithCustom(
-                                pattern = callPattern, intensity = callIntensity, customSequence = callCustomSequence,
-                                isAutoActive = callHapticAuto,
-                                onPatternSelected = onCallPatternSelected, onIntensityCommit = onCallIntensityCommit,
-                                onOpenCustomEditor = { onOpenCustomEditor("call", callCustomSequence) { seq -> onCallCustomSequenceSave(seq); if (!seq.isEmpty) onCallAutoChange(false) } },
-                                onOpenAutoSettings = onOpenCallAutoSettings,
-                                onClearCustom = { onCallCustomSequenceSave(CustomHapticSequence()) },
-                                onDisableAuto = { onCallAutoChange(false) },
-                                label = "call",
-                            )
-                        }
-                        HapticTestButton("Test Call Haptic", onTestCallHaptic, enabled = callHapticEnabled)
-                    }
+        SectionHeader(icon = Icons.Rounded.Notifications, title = "Notifications")
+        SectionCard { HapticToggleRow(title = "Notification Haptic", subtitle = "Play a haptic pattern when a notification arrives", checked = notifHapticEnabled, onCheckedChange = onNotifEnabledChange) }
+        AnimatedVisibility(visible = notifHapticEnabled) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionCard {
+                    PatternSelectorWithCustom(
+                        pattern = notifPattern, intensity = notifIntensity, customSequence = notifCustomSequence,
+                        onPatternSelected = onNotifPatternSelected, onIntensityCommit = onNotifIntensityCommit,
+                        onOpenCustomEditor = { onOpenCustomEditor("notification", notifCustomSequence, onNotifCustomSequenceSave) }, label = "notification",
+                    )
                 }
+                HapticTestButton("Test Notification Haptic", onTestNotifHaptic, enabled = notifHapticEnabled)
             }
+        }
 
-            item("notif_header") { SectionHeader(icon = Icons.Rounded.Notifications, title = "Notifications") }
-            item("notif_toggle") {
-                SectionCard { HapticToggleRow(title = "Notification Haptic", subtitle = "Play a haptic pattern when a notification arrives", checked = notifHapticEnabled, onCheckedChange = onNotifEnabledChange) }
-            }
-            item("notif_content") {
-                AnimatedVisibility(visible = notifHapticEnabled) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionCard {
-                            PatternSelectorWithCustom(
-                                pattern = notifPattern, intensity = notifIntensity, customSequence = notifCustomSequence,
-                                onPatternSelected = onNotifPatternSelected, onIntensityCommit = onNotifIntensityCommit,
-                                onOpenCustomEditor = { onOpenCustomEditor("notification", notifCustomSequence, onNotifCustomSequenceSave) }, label = "notification",
-                            )
-                        }
-                        HapticTestButton("Test Notification Haptic", onTestNotifHaptic, enabled = notifHapticEnabled)
-                    }
+        SectionHeader(icon = Icons.Rounded.Alarm, title = "Alarm")
+        SectionCard { HapticToggleRow(title = "Alarm Haptic", subtitle = "Play a haptic pattern when an alarm fires", checked = alarmHapticEnabled, onCheckedChange = onAlarmEnabledChange) }
+        AnimatedVisibility(visible = alarmHapticEnabled) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionCard {
+                    PatternSelectorWithCustom(
+                        pattern = alarmPattern, intensity = alarmIntensity, customSequence = alarmCustomSequence,
+                        isAutoActive = alarmHapticAuto,
+                        onPatternSelected = onAlarmPatternSelected, onIntensityCommit = onAlarmIntensityCommit,
+                        onOpenCustomEditor = { onOpenCustomEditor("alarm", alarmCustomSequence) { seq -> onAlarmCustomSequenceSave(seq); if (!seq.isEmpty) onAlarmAutoChange(false) } },
+                        onOpenAutoSettings = onOpenAlarmAutoSettings,
+                        onClearCustom = { onAlarmCustomSequenceSave(CustomHapticSequence()) },
+                        onDisableAuto = { onAlarmAutoChange(false) },
+                        label = "alarm",
+                    )
                 }
+                HapticTestButton("Test Alarm Haptic", onTestAlarmHaptic, enabled = alarmHapticEnabled)
             }
-
-            item("alarm_header") { SectionHeader(icon = Icons.Rounded.Alarm, title = "Alarm") }
-            item("alarm_toggle") {
-                SectionCard { HapticToggleRow(title = "Alarm Haptic", subtitle = "Play a haptic pattern when an alarm fires", checked = alarmHapticEnabled, onCheckedChange = onAlarmEnabledChange) }
-            }
-            item("alarm_content") {
-                AnimatedVisibility(visible = alarmHapticEnabled) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionCard {
-                            PatternSelectorWithCustom(
-                                pattern = alarmPattern, intensity = alarmIntensity, customSequence = alarmCustomSequence,
-                                isAutoActive = alarmHapticAuto,
-                                onPatternSelected = onAlarmPatternSelected, onIntensityCommit = onAlarmIntensityCommit,
-                                onOpenCustomEditor = { onOpenCustomEditor("alarm", alarmCustomSequence) { seq -> onAlarmCustomSequenceSave(seq); if (!seq.isEmpty) onAlarmAutoChange(false) } },
-                                onOpenAutoSettings = onOpenAlarmAutoSettings,
-                                onClearCustom = { onAlarmCustomSequenceSave(CustomHapticSequence()) },
-                                onDisableAuto = { onAlarmAutoChange(false) },
-                                label = "alarm",
-                            )
-                        }
-                        HapticTestButton("Test Alarm Haptic", onTestAlarmHaptic, enabled = alarmHapticEnabled)
-                    }
-                }
-            }
-
-            item("bottom") { Spacer(Modifier.size(4.dp)) }
         }
     }
 }

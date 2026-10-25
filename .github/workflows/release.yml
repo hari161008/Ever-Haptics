@@ -2,91 +2,110 @@ name: Build and Release APK
 
 on:
   push:
-    tags:
-      - "v*"
-  workflow_dispatch:
-    inputs:
-      tag_name:
-        description: "Tag name (e.g., v1.2.3)"
-        required: true
-        type: string
-      release_type:
-        description: "Type of release"
-        required: true
-        default: "release"
-        type: choice
-        options:
-          - release
-          - pre-release
+    branches: [ "main", "master" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: {}
 
 jobs:
   build:
-    name: Build Release APK
+    name: Build & Package APK
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.ref }}
+          fetch-depth: 0
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: "21"
-          cache: "gradle"
+          java-version: "17"
 
-      - name: Decode Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Release APK
-        run: bash ./gradlew assembleRelease --no-daemon --stacktrace
+      - name: Decode or Prepare Keystore
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Decoding KEYSTORE_BASE64 from secret..."
+            echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
+          else
+            echo "Generating release keystore on the fly..."
+            keytool -genkeypair -v \
+              -keystore app/keystore.jks \
+              -alias everhaptics \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass everhapticspass \
+              -keypass everhapticspass \
+              -dname "CN=EverHaptics, OU=Mobile, O=OpenSource, L=City, ST=State, C=US"
+          fi
 
-      - name: Upload APK as Artifact
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x gradlew
+
+      - name: Build Release and Debug APKs
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || 'everhapticspass' }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS || 'everhaptics' }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'everhapticspass' }}
+        run: ./gradlew assemble --no-daemon --stacktrace
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release_assets
+          for apk in app/build/outputs/apk/release/*.apk; do
+            if [ -f "$apk" ]; then
+              cp "$apk" release_assets/EverHaptics-release.apk
+            fi
+          done
+          for apk in app/build/outputs/apk/debug/*.apk; do
+            if [ -f "$apk" ]; then
+              cp "$apk" release_assets/EverHaptics-debug.apk
+            fi
+          done
+
+      - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
-          path: app/build/outputs/apk/release/app-release.apk
+          name: EverHaptics-release-apk
+          path: release_assets/EverHaptics-release.apk
+          if-no-files-found: warn
 
-      - name: Set release variables
-        id: release_vars
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            TAG="${{ github.event.inputs.tag_name }}"
-            if [[ "${{ github.event.inputs.release_type }}" == "pre-release" ]]; then
-              PRERELEASE="true"
-            else
-              PRERELEASE="false"
-            fi
-          else
-            TAG="${{ github.ref_name }}"
-            # For tag push: treat as pre-release if tag contains alpha/beta/rc/pre
-            if [[ "$TAG" =~ alpha|beta|rc|pre ]]; then
-              PRERELEASE="true"
-            else
-              PRERELEASE="false"
-            fi
-          fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "prerelease=$PRERELEASE" >> $GITHUB_OUTPUT
-
-      - name: Create Release and Upload APK
-        uses: ncipollo/release-action@v1
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
         with:
-          artifacts: "app/build/outputs/apk/release/app-release.apk"
-          tag: ${{ steps.release_vars.outputs.tag }}
-          name: Release ${{ steps.release_vars.outputs.tag }}
-          body: |
-            Signed release APK for **${{ steps.release_vars.outputs.tag }}** (commit ${{ github.sha }}).
-          generateReleaseNotes: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-          allowUpdates: true
-          replacesArtifacts: true
-          prerelease: ${{ steps.release_vars.outputs.prerelease }}
+          name: EverHaptics-debug-apk
+          path: release_assets/EverHaptics-debug.apk
+          if-no-files-found: warn
+
+      - name: Determine Release Tag
+        id: release_meta
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+          else
+            TAG_NAME="v5.1.0-$(date +'%Y%m%d%H%M')"
+          fi
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "Target Tag: ${TAG_NAME}"
+
+      - name: Create GitHub Release with APKs
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+        with:
+          tag_name: ${{ steps.release_meta.outputs.tag_name }}
+          name: Release ${{ steps.release_meta.outputs.tag_name }}
+          files: release_assets/*.apk
+          generate_release_notes: true
+          make_latest: true
