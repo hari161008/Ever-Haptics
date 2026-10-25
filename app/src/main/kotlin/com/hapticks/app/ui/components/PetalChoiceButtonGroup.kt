@@ -1,23 +1,30 @@
 package com.hapticks.app.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -37,17 +44,9 @@ data class PetalButtonGroupItem<T>(
 )
 
 /**
- * Pick-one connected toggle button group, ported from Petal Browser's `PetalChoiceButtonGroup`.
- *
- * - A Row of Material 3 Expressive [ToggleButton]s spaced with [ButtonGroupDefaults.ConnectedSpaceBetween].
- * - Leading / middle / trailing connected shapes; the checked button morphs to a full pill with
- *   the stock expressive spring.
- * - Checked = primaryContainer / onPrimaryContainer, unchecked = surfaceContainerHighest.
- * - Light haptic tick on every selection, [Role.RadioButton] semantics.
- * - Crowded groups (more than four options, or long labels) scroll horizontally instead of
- *   truncating their labels.
+ * Material 3 Expressive connected segmented button group.
+ * Connected shapes with active item morphing into pill with spring animation.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun <T> PetalChoiceButtonGroup(
     options: List<PetalButtonGroupItem<T>>,
@@ -63,11 +62,6 @@ fun <T> PetalChoiceButtonGroup(
     val haptic = LocalHapticFeedback.current
     val shouldScroll = scrollableIfCrowded && (options.size > 4 || options.any { it.label.length > 12 })
 
-    val unselectedContainer = MaterialTheme.colorScheme.surfaceContainerHighest
-    val unselectedContent = MaterialTheme.colorScheme.onSurface
-    val selectedContainer = MaterialTheme.colorScheme.primaryContainer
-    val selectedContent = MaterialTheme.colorScheme.onPrimaryContainer
-
     val rowModifier = if (shouldScroll) {
         modifier
             .fillMaxWidth()
@@ -76,71 +70,84 @@ fun <T> PetalChoiceButtonGroup(
         modifier.fillMaxWidth()
     }
 
-    Row(
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
         modifier = rowModifier,
-        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        val count = options.size
-        options.forEachIndexed { index, option ->
-            val isChecked = option.value == selected
+        Row(
+            modifier = Modifier.padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val count = options.size
+            options.forEachIndexed { index, option ->
+                val isChecked = option.value == selected
 
-            val baseModifier = if (shouldScroll) {
-                Modifier
-                    .defaultMinSize(minHeight = minHeight)
-                    .semantics { role = Role.RadioButton }
-            } else {
-                Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = minHeight)
-                    .semantics { role = Role.RadioButton }
-            }
+                val itemModifier = if (shouldScroll) {
+                    Modifier
+                        .defaultMinSize(minHeight = minHeight)
+                        .semantics { role = Role.RadioButton }
+                } else {
+                    Modifier
+                        .weight(1f)
+                        .defaultMinSize(minHeight = minHeight)
+                        .semantics { role = Role.RadioButton }
+                }
 
-            val shapes = when {
-                count == 1 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                index == count - 1 -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-            }
+                val cornerRadius by animateDpAsState(
+                    targetValue = if (isChecked) 20.dp else 12.dp,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+                    label = "segmented_corner",
+                )
 
-            ToggleButton(
-                checked = isChecked,
-                onCheckedChange = {
-                    if (!isChecked) {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onSelect(option.value)
-                    }
-                },
-                modifier = baseModifier,
-                enabled = enabled && option.enabled,
-                shapes = shapes,
-                colors = ToggleButtonDefaults.toggleButtonColors(
-                    containerColor = unselectedContainer,
-                    contentColor = unselectedContent,
-                    checkedContainerColor = selectedContainer,
-                    checkedContentColor = selectedContent,
-                ),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                val backgroundColor by animateColorAsState(
+                    targetValue = if (isChecked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0f),
+                    animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                    label = "segmented_bg",
+                )
+
+                val contentColor by animateColorAsState(
+                    targetValue = if (isChecked) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                    animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                    label = "segmented_text",
+                )
+
+                Box(
+                    modifier = itemModifier
+                        .clip(RoundedCornerShape(cornerRadius))
+                        .background(backgroundColor)
+                        .clickable(enabled = enabled && option.enabled) {
+                            if (!isChecked) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onSelect(option.value)
+                            }
+                        }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    if (option.icon != null) {
-                        Icon(
-                            imageVector = option.icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                    if (option.label.isNotEmpty()) {
-                        Text(
-                            text = option.label,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (isChecked) FontWeight.Bold else FontWeight.Normal,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        if (option.icon != null) {
+                            Icon(
+                                imageVector = option.icon,
+                                contentDescription = null,
+                                tint = contentColor,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                        if (option.label.isNotEmpty()) {
+                            Text(
+                                text = option.label,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (isChecked) FontWeight.Bold else FontWeight.Medium,
+                                color = contentColor,
+                                maxLines = 1,
+                                softWrap = false,
+                            )
+                        }
                     }
                 }
             }

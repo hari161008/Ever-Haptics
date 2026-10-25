@@ -101,9 +101,6 @@ private fun FeelEveryTapIntensityControl(intensity: Float, onIntensityCommit: (F
             valueRange = 0f..1f,
             displayValue = "$percent%",
         )
-            steps = SliderTickStepsDefault,
-            colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-        )
     }
 }
 
