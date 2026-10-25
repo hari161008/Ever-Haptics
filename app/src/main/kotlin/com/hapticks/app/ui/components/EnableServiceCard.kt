@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.hapticks.app.R
+import com.hapticks.app.ui.theme.PetalMaterialShapes
 
 @Composable
 fun EnableServiceCard(
@@ -47,10 +48,10 @@ fun EnableServiceCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(52.dp)
                         .background(
-                            color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.14f),
+                            shape = PetalMaterialShapes.Sunny.toShape(),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -58,7 +59,7 @@ fun EnableServiceCard(
                         imageVector = Icons.Rounded.AccessibilityNew,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(26.dp),
                     )
                 }
                 Text(
@@ -74,15 +75,13 @@ fun EnableServiceCard(
                 color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.86f),
             )
             Spacer(modifier = Modifier.height(2.dp))
-            Button(
+            PetalButton(
                 onClick = onOpenSettings,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(100.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.14f),
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    containerColor = MaterialTheme.colorScheme.onErrorContainer,
+                    contentColor = MaterialTheme.colorScheme.errorContainer,
                 ),
-                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
                 Text(
                     text = stringResource(id = R.string.enable_service_cta),

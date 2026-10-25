@@ -46,9 +46,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hapticks.app.R
-import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
-import com.hapticks.app.ui.components.rememberPetalHeaderScrollBehavior
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import com.hapticks.app.ui.components.PetalBadgeVariant
+import com.hapticks.app.ui.components.PetalButton
+import com.hapticks.app.ui.components.PetalButtonStyle
+import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
+import com.hapticks.app.ui.components.PetalContainedLoadingIndicator
+import com.hapticks.app.ui.components.PetalGroupItem
+import com.hapticks.app.ui.components.PetalGroupPosition
+import com.hapticks.app.ui.components.PetalShapedIcon
+import com.hapticks.app.ui.components.petalGroupPositionFor
+import com.hapticks.app.ui.components.rememberPetalHeaderScrollBehavior
+import com.hapticks.app.ui.theme.PetalMaterialShapes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -96,8 +109,8 @@ fun AppExclusionsScreen(
     }
 
     val allSelected = apps.isNotEmpty() && apps.all { it.packageName in excludedPackages }
-    val scrollBehavior = rememberPetalHeaderScrollBehavior()
 
+    val scrollBehavior = rememberPetalHeaderScrollBehavior()
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
@@ -107,7 +120,7 @@ fun AppExclusionsScreen(
                 scrollBehavior = scrollBehavior,
                 onNavigateBack = onBack,
                 actions = {
-                    TextButton(
+                    PetalButton(
                         onClick = {
                             if (allSelected) {
                                 onExcludedPackagesChange(emptySet())
@@ -116,6 +129,9 @@ fun AppExclusionsScreen(
                             }
                         },
                         enabled = apps.isNotEmpty(),
+                        style = PetalButtonStyle.TONAL,
+                        height = 40.dp,
+                        modifier = Modifier.padding(end = 8.dp),
                     ) {
                         Text(
                             text = if (allSelected) {
@@ -133,39 +149,47 @@ fun AppExclusionsScreen(
         when {
             isLoading -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    PetalContainedLoadingIndicator(size = 72.dp)
                 }
             }
             apps.isEmpty() -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = stringResource(R.string.app_exclusions_no_apps),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        PetalShapedIcon(
+                            icon = Icons.Rounded.Android,
+                            shape = PetalMaterialShapes.Clover4Leaf,
+                            variant = PetalBadgeVariant.SURFACE_TONAL,
+                            size = 88.dp,
+                            iconSize = 40.dp,
+                        )
+                        Text(
+                            text = stringResource(R.string.app_exclusions_no_apps),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             else -> {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(bottom = 24.dp),
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    items(apps, key = { it.packageName }) { app ->
+                    itemsIndexed(apps, key = { _, app -> app.packageName }) { index, app ->
                         AppExclusionItem(
                             app = app,
                             isExcluded = app.packageName in excludedPackages,
+                            position = petalGroupPositionFor(index, apps.size),
                             onToggle = { checked ->
                                 val newSet = if (checked) {
                                     excludedPackages + app.packageName
@@ -174,11 +198,6 @@ fun AppExclusionsScreen(
                                 }
                                 onExcludedPackagesChange(newSet)
                             },
-                        )
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            thickness = 0.5.dp,
-                            modifier = Modifier.padding(start = 80.dp, end = 16.dp),
                         )
                     }
                 }
@@ -191,42 +210,56 @@ fun AppExclusionsScreen(
 private fun AppExclusionItem(
     app: AppInfo,
     isExcluded: Boolean,
+    position: PetalGroupPosition,
     onToggle: (Boolean) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        AppIconImage(
-            drawable = app.icon,
-            modifier = Modifier.size(48.dp),
-        )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+    PetalGroupItem(position = position, onClick = { onToggle(!isExcluded) }) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(
-                text = app.label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            AppIconImage(
+                drawable = app.icon,
+                modifier = Modifier.size(48.dp),
             )
-            Text(
-                text = app.packageName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = app.label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = app.packageName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Switch(
+                checked = isExcluded,
+                onCheckedChange = null,
+                thumbContent = if (isExcluded) {
+                    {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                } else {
+                    null
+                },
             )
         }
-        Checkbox(
-            checked = isExcluded,
-            onCheckedChange = onToggle,
-        )
     }
 }
 

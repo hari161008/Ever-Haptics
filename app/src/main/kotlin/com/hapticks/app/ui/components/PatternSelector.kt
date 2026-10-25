@@ -29,8 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
-import com.hapticks.app.ui.components.PetalContainmentDefaults
-import com.hapticks.app.ui.components.PetalContainmentSurface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -134,8 +132,9 @@ private fun PatternCard(
     )
 
     val interactionSource = remember { MutableInteractionSource() }
+    val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
 
-    PetalContainmentSurface(
+    Surface(
         modifier = modifier
             .heightIn(min = 132.dp)
             .selectable(
@@ -148,8 +147,9 @@ private fun PatternCard(
             .semantics {
                 this.stateDescription = stateDescription
             },
-        shape = PetalContainmentDefaults.shape,
-        containerColor = containerColor,
+        color = containerColor,
+        shape = RoundedCornerShape(corner),
+        border = BorderStroke(borderWidth, borderColor),
     ) {
         Column(
             modifier = Modifier
@@ -204,7 +204,7 @@ private fun PatternIconBadge(icon: ImageVector, isSelected: Boolean) {
     Box(
         modifier = Modifier
             .size(40.dp)
-            .background(color = background, shape = RoundedCornerShape(14.dp)),
+            .background(color = background, shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape()),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

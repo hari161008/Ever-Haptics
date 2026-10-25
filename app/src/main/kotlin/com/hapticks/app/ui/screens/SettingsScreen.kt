@@ -41,12 +41,6 @@ import com.hapticks.app.data.HapticsSettings
 import com.hapticks.app.data.ThemeMode
 import com.hapticks.app.ui.components.FeatureIcon
 import com.hapticks.app.ui.components.FeatureColors
-import com.hapticks.app.ui.components.PetalChoiceButtonGroup
-import com.hapticks.app.ui.components.PetalButtonGroupItem
-import com.hapticks.app.ui.components.PetalContainment
-import com.hapticks.app.ui.components.PetalContainmentDefaults
-import com.hapticks.app.ui.components.PetalContainmentSurface
-import com.hapticks.app.ui.components.IconSwitch
 import com.hapticks.app.ui.haptics.hapticClickable
 import com.hapticks.app.ui.theme.SeedBlue
 import com.hapticks.app.ui.theme.SeedGreen
@@ -56,6 +50,14 @@ import com.hapticks.app.ui.theme.SeedPurple
 import com.hapticks.app.util.UpdateChecker
 import kotlinx.coroutines.launch
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import com.hapticks.app.ui.components.*
+import com.hapticks.app.ui.theme.PetalMaterialShapes
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.graphics.luminance
+import com.hapticks.app.ui.haptics.performHapticClick
 private val PresetColors = listOf(
     Color(0xFF4F5A28), SeedPurple, SeedBlue, SeedGreen, SeedRed, SeedYellow,
     Color(0xFFD6E09A), Color(0xFF006A60), Color(0xFF984816), Color(0xFF8B008B),
@@ -71,6 +73,8 @@ fun SettingsScreen(
     onSeedColorChange: (Int) -> Unit = {},
     onBatterySaverDetectionChange: (Boolean) -> Unit = {},
     onAutoCheckUpdatesChange: (Boolean) -> Unit = {},
+    onPredictiveBackChange: (Boolean) -> Unit = {},
+    onDepthBlurChange: (Boolean) -> Unit = {},
     onOpenReviews: () -> Unit = {},
     onOpenExploreApps: () -> Unit = {},
 ) {
@@ -83,123 +87,285 @@ fun SettingsScreen(
 
     var updateCheckState by remember { mutableStateOf<UpdateCheckState>(UpdateCheckState.Idle) }
     var updateInfo by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
+    val scrollBehavior = rememberPetalHeaderScrollBehavior()
+    val scrollState = rememberScrollState()
 
-    Scaffold(modifier = Modifier.fillMaxSize(), containerColor = MaterialTheme.colorScheme.background) { padding ->
+    fun openUrl(url: String) {
+        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            PetalCollapsingTopAppBar(
+                title = stringResource(R.string.settings_header_title),
+                scrollBehavior = scrollBehavior,
+            )
+        },
+    ) { padding ->
         val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        LazyColumn(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 90.dp + navBarBottom),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(scrollState)
+                .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp + navBarBottom),
+            verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
-            item(key = "header") { SettingsHeader() }
-
-            // ── Updates section FIRST ──
-            item(key = "updates") {
-                UpdateCard(
-                    appVersion = appVersion,
-                    updateCheckState = updateCheckState,
-                    updateInfo = updateInfo,
-                    autoCheckEnabled = settings.autoCheckUpdatesEnabled,
-                    onAutoCheckChange = onAutoCheckUpdatesChange,
-                    onCheckClick = {
-                        if (updateCheckState is UpdateCheckState.Idle ||
-                            updateCheckState is UpdateCheckState.UpToDate ||
-                            updateCheckState is UpdateCheckState.Error) {
-                            updateCheckState = UpdateCheckState.Checking
-                            scope.launch {
-                                UpdateChecker.checkForUpdate(appVersion).fold(
-                                    onSuccess = { info ->
-                                        updateInfo = info
-                                        updateCheckState = if (info.isUpdateAvailable)
-                                            UpdateCheckState.UpdateAvailable(info.latestVersion)
-                                        else UpdateCheckState.UpToDate
-                                    },
-                                    onFailure = { e -> updateCheckState = UpdateCheckState.Error(e.message ?: "Unknown error") },
-                                )
-                            }
-                        }
-                    },
-                    onDownloadClick = {
-                        val info = updateInfo ?: return@UpdateCard
-                        if (info.downloadUrl.isBlank()) return@UpdateCard
-                        updateCheckState = UpdateCheckState.Downloading(0)
-                        scope.launch {
-                            UpdateChecker.downloadWithProgress(context, info.downloadUrl, info.latestVersion) { state ->
-                                when (state) {
-                                    is UpdateChecker.DownloadState.Progress -> updateCheckState = UpdateCheckState.Downloading(state.percent)
-                                    is UpdateChecker.DownloadState.Done -> updateCheckState = UpdateCheckState.Downloaded
-                                    is UpdateChecker.DownloadState.Error -> updateCheckState = UpdateCheckState.Error(state.message)
+            // ── Updates ──
+            PetalSection(title = "Updates", modifier = Modifier.entrance(0)) {
+                row { position ->
+                    UpdateCard(
+                        position = position,
+                        appVersion = appVersion,
+                        updateCheckState = updateCheckState,
+                        updateInfo = updateInfo,
+                        onCheckClick = {
+                            if (updateCheckState is UpdateCheckState.Idle ||
+                                updateCheckState is UpdateCheckState.UpToDate ||
+                                updateCheckState is UpdateCheckState.Error) {
+                                updateCheckState = UpdateCheckState.Checking
+                                scope.launch {
+                                    UpdateChecker.checkForUpdate(appVersion).fold(
+                                        onSuccess = { info ->
+                                            updateInfo = info
+                                            updateCheckState = if (info.isUpdateAvailable)
+                                                UpdateCheckState.UpdateAvailable(info.latestVersion)
+                                            else UpdateCheckState.UpToDate
+                                        },
+                                        onFailure = { e -> updateCheckState = UpdateCheckState.Error(e.message ?: "Unknown error") },
+                                    )
                                 }
                             }
-                        }
-                    },
-                )
-            }
-
-            item(key = "rate_review") {
-                RateAndReviewSection(context = context, onOpenReviews = onOpenReviews, onOpenExploreApps = onOpenExploreApps)
-            }
-
-                        // ── Appearance section ──
-            item(key = "appearance") {
-                SettingsSection(title = stringResource(R.string.settings_section_appearance), icon = Icons.Rounded.Palette, iconTint = FeatureColors.Keyboard) {
-                    SettingsRow(title = stringResource(R.string.settings_dynamic_color_title), subtitle = null, position = RowPosition.Top, trailing = {
-                        IconSwitch(
-                            checked = settings.useDynamicColors,
-                            icon = if (settings.useDynamicColors) Icons.Rounded.Check else Icons.Rounded.Close,
-                            onCheckedChange = onUseDynamicColorsChange,
-                        )
-                    })
-                    if (!settings.useDynamicColors) {
-                        RowDivider()
-                        ColorPaletteRow(selectedColor = Color(settings.seedColor), onColorSelected = { onSeedColorChange(it.toArgb()) })
-                    }
-                    RowDivider()
-                    SettingsRow(
-                        title = stringResource(R.string.settings_amoled_title),
-                        subtitle = if (appInDarkTheme) stringResource(R.string.settings_amoled_subtitle) else stringResource(R.string.settings_amoled_subtitle_light),
-                        position = RowPosition.Bottom,
-                        trailing = {
-                            IconSwitch(
-                                checked = settings.amoledBlack,
-                                icon = if (settings.amoledBlack) Icons.Rounded.Check else Icons.Rounded.Close,
-                                onCheckedChange = onAmoledBlackChange,
-                            )
+                        },
+                        onDownloadClick = {
+                            val info = updateInfo ?: return@UpdateCard
+                            if (info.downloadUrl.isBlank()) return@UpdateCard
+                            updateCheckState = UpdateCheckState.Downloading(0)
+                            scope.launch {
+                                UpdateChecker.downloadWithProgress(context, info.downloadUrl, info.latestVersion) { state ->
+                                    when (state) {
+                                        is UpdateChecker.DownloadState.Progress -> updateCheckState = UpdateCheckState.Downloading(state.percent)
+                                        is UpdateChecker.DownloadState.Done -> updateCheckState = UpdateCheckState.Downloaded
+                                        is UpdateChecker.DownloadState.Error -> updateCheckState = UpdateCheckState.Error(state.message)
+                                    }
+                                }
+                            }
                         },
                     )
-                    RowDivider()
-                    ThemeModeRow(selected = settings.themeMode, onThemeModeChange = onThemeModeChange)
+                }
+                row { position ->
+                    PetalGroupToggleRow(
+                        icon = Icons.Rounded.Update,
+                        title = "Auto-check on launch",
+                        subtitle = "Get notified when a new version is available",
+                        checked = settings.autoCheckUpdatesEnabled,
+                        onCheckedChange = onAutoCheckUpdatesChange,
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Clover8Leaf,
+                        variant = PetalBadgeVariant.SECONDARY,
+                    )
                 }
             }
 
-            // ── Battery Saver Detection ──
-            item(key = "battery_saver") {
-                SettingsSection(
-                    title = stringResource(R.string.settings_battery_saver_section),
-                    icon = Icons.Rounded.BatterySaver,
-                    iconTint = MaterialTheme.colorScheme.error,
-                ) {
-                    SettingsRow(
+            // ── Community ──
+            PetalSection(title = "Community & More", modifier = Modifier.entrance(1)) {
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.RateReview,
+                        title = "Rate & Review",
+                        subtitle = "Share your experience with Ever Haptics",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Flower,
+                        onClick = { openUrl("https://docs.google.com/forms/d/e/1FAIpQLSci14N7YdirM32f2I7bT6GBv_sQ3KJ4hjM6qDKTVZfsCuIPtw/viewform?usp=header") },
+                        trailing = { Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    )
+                }
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.Reviews,
+                        title = "Ratings & Reviews",
+                        subtitle = "See what others are saying about the app",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.SoftBurst,
+                        variant = PetalBadgeVariant.SECONDARY,
+                        onClick = onOpenReviews,
+                    )
+                }
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.Apps,
+                        title = "Explore More Apps",
+                        subtitle = "Discover other apps by the developer",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Clover4Leaf,
+                        variant = PetalBadgeVariant.TERTIARY,
+                        onClick = onOpenExploreApps,
+                    )
+                }
+            }
+
+            // ── Appearance ──
+            PetalSection(title = stringResource(R.string.settings_section_appearance), modifier = Modifier.entrance(2)) {
+                row { position ->
+                    PetalGroupControlRow(
+                        icon = Icons.Rounded.Brightness6,
+                        title = stringResource(R.string.settings_theme_mode_title),
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Sunny,
+                    ) {
+                        PetalChoiceButtonGroup(
+                            options = listOf(
+                                PetalButtonGroupItem(ThemeMode.SYSTEM, stringResource(R.string.settings_theme_mode_system), Icons.Rounded.Brightness6),
+                                PetalButtonGroupItem(ThemeMode.LIGHT, stringResource(R.string.settings_theme_mode_light), Icons.Rounded.LightMode),
+                                PetalButtonGroupItem(ThemeMode.DARK, stringResource(R.string.settings_theme_mode_dark), Icons.Rounded.DarkMode),
+                            ),
+                            selected = settings.themeMode,
+                            onSelect = onThemeModeChange,
+                        )
+                    }
+                }
+                row { position ->
+                    PetalGroupToggleRow(
+                        icon = Icons.Rounded.ColorLens,
+                        title = stringResource(R.string.settings_dynamic_color_title),
+                        checked = settings.useDynamicColors,
+                        onCheckedChange = onUseDynamicColorsChange,
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Flower,
+                        variant = PetalBadgeVariant.TERTIARY,
+                    )
+                }
+                if (!settings.useDynamicColors) {
+                    row { position ->
+                        PetalGroupControlRow(
+                            icon = Icons.Rounded.Palette,
+                            title = stringResource(R.string.settings_color_palette_title),
+                            position = position,
+                            badgeShape = PetalMaterialShapes.Clover4Leaf,
+                            variant = PetalBadgeVariant.SECONDARY,
+                        ) {
+                            ColorSwatches(selectedColor = Color(settings.seedColor), onColorSelected = { onSeedColorChange(it.toArgb()) })
+                        }
+                    }
+                }
+                row { position ->
+                    PetalGroupToggleRow(
+                        icon = Icons.Rounded.Contrast,
+                        title = stringResource(R.string.settings_amoled_title),
+                        subtitle = if (appInDarkTheme) stringResource(R.string.settings_amoled_subtitle) else stringResource(R.string.settings_amoled_subtitle_light),
+                        checked = settings.amoledBlack,
+                        onCheckedChange = onAmoledBlackChange,
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Cookie4Sided,
+                        variant = PetalBadgeVariant.SECONDARY,
+                    )
+                }
+            }
+
+            // ── Motion ──
+            PetalSection(
+                title = "Motion & back gestures",
+                description = "Live preview of the previous screen while you swipe back",
+                modifier = Modifier.entrance(3),
+            ) {
+                row { position ->
+                    PetalGroupToggleRow(
+                        icon = Icons.Rounded.Swipe,
+                        title = "Predictive back animation",
+                        subtitle = "Shrinks and rounds the screen as you swipe back",
+                        checked = settings.predictiveBackEnabled,
+                        onCheckedChange = onPredictiveBackChange,
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Arrow,
+                    )
+                }
+                row { position ->
+                    PetalGroupToggleRow(
+                        icon = Icons.Rounded.BlurOn,
+                        title = "Depth blur",
+                        subtitle = "Blur and dim the screen behind during back gestures",
+                        checked = settings.depthBlurEnabled,
+                        onCheckedChange = onDepthBlurChange,
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Cookie9Sided,
+                        variant = PetalBadgeVariant.SECONDARY,
+                    )
+                }
+            }
+
+            // ── Battery saver ──
+            PetalSection(title = stringResource(R.string.settings_battery_saver_section), modifier = Modifier.entrance(4)) {
+                row { position ->
+                    PetalGroupToggleRow(
+                        icon = Icons.Rounded.BatterySaver,
                         title = stringResource(R.string.settings_battery_saver_title),
                         subtitle = stringResource(R.string.settings_battery_saver_subtitle),
-                        position = RowPosition.Single,
-                        trailing = {
-                            IconSwitch(
-                                checked = settings.batterySaverDetectionEnabled,
-                                icon = if (settings.batterySaverDetectionEnabled) Icons.Rounded.Check else Icons.Rounded.Close,
-                                onCheckedChange = onBatterySaverDetectionChange,
-                            )
-                        },
+                        checked = settings.batterySaverDetectionEnabled,
+                        onCheckedChange = onBatterySaverDetectionChange,
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Sunny,
+                        variant = PetalBadgeVariant.ERROR,
                     )
                 }
             }
 
             // ── About ──
-            item(key = "about") {
-                AboutSection(context = context, appVersion = appVersion)
+            PetalSection(title = "About", modifier = Modifier.entrance(5)) {
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.Vibration,
+                        title = "Ever Haptics",
+                        subtitle = "Version $appVersion  |  by SVHP",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Cookie12Sided,
+                        trailing = {
+                            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
+                                Text(
+                                    "v$appVersion",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                )
+                            }
+                        },
+                    )
+                }
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.Code,
+                        title = "GitHub",
+                        subtitle = "Source code | Releases | Issue tracker",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Burst,
+                        variant = PetalBadgeVariant.SECONDARY,
+                        onClick = { openUrl("https://github.com/hari161008/Ever-Haptics") },
+                    )
+                }
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.Forum,
+                        title = "Telegram App Support Group",
+                        subtitle = "Announcements | Updates | Bug Fixes | Support",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Flower,
+                        variant = PetalBadgeVariant.TERTIARY,
+                        onClick = { openUrl("https://t.me/EverlastingAndroidTweak") },
+                    )
+                }
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.Campaign,
+                        title = "App Recommending Channel",
+                        subtitle = "Discover | Explore | Cool Apps",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Pentagon,
+                        onClick = { openUrl("https://t.me/CoolAppStore") },
+                    )
+                }
             }
-            item(key = "bottom_inset") { Spacer(modifier = Modifier.height(96.dp)) }
         }
     }
 }
@@ -215,119 +381,11 @@ private sealed interface UpdateCheckState {
 }
 
 @Composable
-private fun RateAndReviewSection(
-    context: android.content.Context,
-    onOpenReviews: () -> Unit,
-    onOpenExploreApps: () -> Unit,
-) {
-    val rateColor = FeatureColors.MusicHaptics
-    val exploreColor = FeatureColors.StatusBar
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // Section header
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            FeatureIcon(icon = Icons.Rounded.Star, tint = rateColor, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
-            Text("Community & More", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-        }
-
-        // All cards in one unified rounded container
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column {
-                // Rate & Review row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .hapticClickable {
-                            val intent = android.content.Intent(
-                                android.content.Intent.ACTION_VIEW,
-                                "https://docs.google.com/forms/d/e/1FAIpQLSci14N7YdirM32f2I7bT6GBv_sQ3KJ4hjM6qDKTVZfsCuIPtw/viewform?usp=header".toUri()
-                            )
-                            context.startActivity(intent)
-                        }
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    Box(
-                        modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(rateColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(Icons.Rounded.RateReview, null, tint = rateColor, modifier = Modifier.size(22.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Rate & Review", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Share your experience with Ever Haptics", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-                // Check Ratings & Reviews row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .hapticClickable { onOpenReviews() }
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    Box(
-                        modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(rateColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(Icons.Rounded.Reviews, null, tint = rateColor, modifier = Modifier.size(22.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Ratings & Reviews", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                        Text("See what others are saying about the app", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
-
-                // Explore More Apps row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .hapticClickable { onOpenExploreApps() }
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    Box(
-                        modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(exploreColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(Icons.Rounded.Apps, null, tint = exploreColor, modifier = Modifier.size(22.dp))
-                    }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Explore More Apps", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Discover other apps by the developer", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(16.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun UpdateCard(
+    position: PetalGroupPosition,
     appVersion: String,
     updateCheckState: UpdateCheckState,
     updateInfo: UpdateChecker.UpdateInfo?,
-    autoCheckEnabled: Boolean,
-    onAutoCheckChange: (Boolean) -> Unit,
     onCheckClick: () -> Unit,
     onDownloadClick: () -> Unit,
 ) {
@@ -335,443 +393,163 @@ private fun UpdateCard(
     val isDownloading = updateCheckState is UpdateCheckState.Downloading
     val isDownloaded = updateCheckState is UpdateCheckState.Downloaded
     val isChecking = updateCheckState is UpdateCheckState.Checking
+    val isPositive = isUpdateAvailable || isDownloading || isDownloaded
 
-    val accentColor = when {
-        isUpdateAvailable || isDownloading || isDownloaded -> MaterialTheme.colorScheme.primary
-        updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondary
-        updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
     val containerColor by animateColorAsState(
         targetValue = when {
-            isUpdateAvailable || isDownloading || isDownloaded -> MaterialTheme.colorScheme.primaryContainer
+            isPositive -> MaterialTheme.colorScheme.primaryContainer
             updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondaryContainer
             updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.errorContainer
-            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+            else -> petalGroupColor()
         },
         animationSpec = tween(400), label = "uc_bg",
     )
-    val onContainerColor by animateColorAsState(
+    val onContainer by animateColorAsState(
         targetValue = when {
-            isUpdateAvailable || isDownloading || isDownloaded -> MaterialTheme.colorScheme.onPrimaryContainer
+            isPositive -> MaterialTheme.colorScheme.onPrimaryContainer
             updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.onSecondaryContainer
             updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.onErrorContainer
             else -> MaterialTheme.colorScheme.onSurface
         },
         animationSpec = tween(400), label = "uc_fg",
     )
+    val accent = when {
+        updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.error
+        updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.primary
+    }
 
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // Header row
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            FeatureIcon(icon = Icons.Rounded.SystemUpdate, tint = FeatureColors.Updates, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
-            Text("Updates", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-        }
-
-        // Main update card
-        Surface(
-            color = containerColor,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Top row: icon + text + badge
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Box(
-                        modifier = Modifier.size(56.dp).clip(RoundedCornerShape(18.dp)).background(accentColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Crossfade(targetState = updateCheckState, label = "uc_icon") { state ->
-                            when (state) {
-                                is UpdateCheckState.Checking -> CircularProgressIndicator(modifier = Modifier.size(26.dp), strokeWidth = 2.5.dp, color = accentColor)
-                                is UpdateCheckState.UpdateAvailable -> Icon(Icons.Rounded.NewReleases, null, tint = accentColor, modifier = Modifier.size(28.dp))
-                                is UpdateCheckState.UpToDate -> Icon(Icons.Rounded.CheckCircle, null, tint = accentColor, modifier = Modifier.size(28.dp))
-                                is UpdateCheckState.Downloading -> CircularProgressIndicator(modifier = Modifier.size(26.dp), strokeWidth = 2.5.dp, color = accentColor)
-                                is UpdateCheckState.Downloaded -> Icon(Icons.Rounded.CheckCircle, null, tint = accentColor, modifier = Modifier.size(28.dp))
-                                is UpdateCheckState.Error -> Icon(Icons.Rounded.ErrorOutline, null, tint = accentColor, modifier = Modifier.size(28.dp))
-                                else -> Icon(Icons.Rounded.SystemUpdate, null, tint = accentColor, modifier = Modifier.size(28.dp))
-                            }
+    PetalGroupItem(position = position, color = containerColor) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                // The single loading visual: indeterminate while checking, determinate while downloading.
+                Crossfade(targetState = updateCheckState::class, label = "uc_icon") { kind ->
+                    when (kind) {
+                        UpdateCheckState.Checking::class ->
+                            PetalContainedLoadingIndicator(size = 56.dp)
+                        UpdateCheckState.Downloading::class -> {
+                            val pct = (updateCheckState as? UpdateCheckState.Downloading)?.progress ?: 0
+                            PetalContainedLoadingIndicator(size = 56.dp, progress = { pct / 100f })
                         }
-                    }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = when {
-                                isUpdateAvailable -> "Update Available"
-                                isDownloading -> "Downloading…"
-                                isDownloaded -> "Ready to Install"
-                                updateCheckState is UpdateCheckState.UpToDate -> "Up to Date"
-                                updateCheckState is UpdateCheckState.Error -> "Check Failed"
-                                else -> "Ever Haptics"
-                            },
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                            color = onContainerColor,
-                        )
-                        Crossfade(targetState = updateCheckState, label = "uc_sub") { state ->
-                            Text(
-                                text = when (state) {
-                                    is UpdateCheckState.Idle -> "v$appVersion  ·  Tap to check for updates"
-                                    is UpdateCheckState.Checking -> "Fetching latest release info…"
-                                    is UpdateCheckState.UpToDate -> "v$appVersion is the latest release"
-                                    is UpdateCheckState.UpdateAvailable -> "v${state.version} is ready  ·  current: v$appVersion"
-                                    is UpdateCheckState.Downloading -> "${state.progress}%  ·  Saving to Downloads folder"
-                                    is UpdateCheckState.Downloaded -> "APK saved to Downloads — tap Install"
-                                    is UpdateCheckState.Error -> state.message
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = onContainerColor.copy(alpha = 0.72f),
+                        else -> {
+                            val icon = when (kind) {
+                                UpdateCheckState.UpdateAvailable::class -> Icons.Rounded.NewReleases
+                                UpdateCheckState.UpToDate::class, UpdateCheckState.Downloaded::class -> Icons.Rounded.CheckCircle
+                                UpdateCheckState.Error::class -> Icons.Rounded.ErrorOutline
+                                else -> Icons.Rounded.SystemUpdate
+                            }
+                            FeatureIcon(
+                                icon = icon,
+                                tint = accent,
+                                size = 56.dp,
+                                iconSize = 28.dp,
+                                backgroundAlpha = 0.2f,
+                                shape = PetalMaterialShapes.Cookie9Sided,
                             )
                         }
                     }
-                    // Version chip
-                    Surface(color = accentColor.copy(alpha = 0.18f), shape = RoundedCornerShape(20.dp)) {
-                        Text("v$appVersion", style = MaterialTheme.typography.labelSmall, color = accentColor, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
-                    }
                 }
-
-                // Download progress bar
-                AnimatedVisibility(visible = isDownloading) {
-                    val progress = (updateCheckState as? UpdateCheckState.Downloading)?.progress ?: 0
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        LinearProgressIndicator(
-                            progress = { progress / 100f },
-                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
-                            color = accentColor,
-                            trackColor = accentColor.copy(alpha = 0.2f),
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = when {
+                            isUpdateAvailable -> "Update Available"
+                            isDownloading -> "Downloading…"
+                            isDownloaded -> "Ready to Install"
+                            updateCheckState is UpdateCheckState.UpToDate -> "Up to Date"
+                            updateCheckState is UpdateCheckState.Error -> "Check Failed"
+                            isChecking -> "Checking…"
+                            else -> "Ever Haptics"
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = onContainer,
+                    )
+                    Crossfade(targetState = updateCheckState, label = "uc_sub") { state ->
+                        Text(
+                            text = when (state) {
+                                is UpdateCheckState.Idle -> "v$appVersion  ·  Tap to check for updates"
+                                is UpdateCheckState.Checking -> "Fetching latest release info…"
+                                is UpdateCheckState.UpToDate -> "v$appVersion is the latest release"
+                                is UpdateCheckState.UpdateAvailable -> "v${state.version} is ready  ·  current: v$appVersion"
+                                is UpdateCheckState.Downloading -> "${state.progress}%  ·  Saving to Downloads folder"
+                                is UpdateCheckState.Downloaded -> "APK saved to Downloads — tap Install"
+                                is UpdateCheckState.Error -> state.message
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = onContainer.copy(alpha = 0.72f),
                         )
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Downloading APK", style = MaterialTheme.typography.labelSmall, color = onContainerColor.copy(alpha = 0.6f))
-                            Text("$progress%", style = MaterialTheme.typography.labelSmall, color = onContainerColor.copy(alpha = 0.6f))
-                        }
-                    }
-                }
-
-                // Release notes
-                if (isUpdateAvailable && !updateInfo?.releaseNotes.isNullOrBlank()) {
-                    HorizontalDivider(color = onContainerColor.copy(alpha = 0.12f))
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("What's new", style = MaterialTheme.typography.labelLarge, color = accentColor, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
-                        val notes = updateInfo!!.releaseNotes
-                        Text(notes.take(300).let { if (notes.length > 300) "$it…" else it }, style = MaterialTheme.typography.bodySmall, color = onContainerColor.copy(alpha = 0.75f))
-                    }
-                }
-
-                // Action buttons
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    when {
-                        isUpdateAvailable -> {
-                            Button(
-                                onClick = onDownloadClick,
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
-                            ) {
-                                Icon(Icons.Rounded.Download, null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Download & Install")
-                            }
-                        }
-                        isDownloaded -> {
-                            Button(
-                                onClick = onDownloadClick,
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
-                            ) {
-                                Icon(Icons.Rounded.InstallMobile, null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Install Now")
-                            }
-                        }
-                        !isChecking && !isDownloading -> {
-                            OutlinedButton(
-                                onClick = onCheckClick,
-                                modifier = Modifier.weight(1f),
-                                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.5f)),
-                            ) {
-                                Icon(Icons.Rounded.Refresh, null, modifier = Modifier.size(16.dp), tint = accentColor)
-                                Spacer(Modifier.width(6.dp))
-                                Text(if (updateCheckState is UpdateCheckState.UpToDate || updateCheckState is UpdateCheckState.Error) "Check Again" else "Check for Updates", color = accentColor)
-                            }
-                        }
                     }
                 }
             }
-        }
 
-        // Auto-check toggle
-        Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("Auto-check on launch", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Get notified when a new version is available", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (isUpdateAvailable && !updateInfo?.releaseNotes.isNullOrBlank()) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("What's new", style = MaterialTheme.typography.labelLarge, color = accent, fontWeight = FontWeight.SemiBold)
+                    val notes = updateInfo!!.releaseNotes
+                    Text(
+                        notes.take(300).let { if (notes.length > 300) "$it…" else it },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = onContainer.copy(alpha = 0.75f),
+                    )
                 }
-                Spacer(Modifier.width(12.dp))
-                IconSwitch(
-                    checked = autoCheckEnabled,
-                    icon = if (autoCheckEnabled) Icons.Rounded.Check else Icons.Rounded.Close,
-                    onCheckedChange = onAutoCheckChange,
-                )
+            }
+
+            when {
+                isUpdateAvailable -> PetalButton(onClick = onDownloadClick, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Rounded.Download, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Download & Install")
+                }
+                isDownloaded -> PetalButton(onClick = onDownloadClick, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Rounded.InstallMobile, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Install Now")
+                }
+                !isChecking && !isDownloading -> PetalButton(
+                    onClick = onCheckClick,
+                    style = PetalButtonStyle.TONAL,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Rounded.Refresh, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (updateCheckState is UpdateCheckState.UpToDate || updateCheckState is UpdateCheckState.Error) "Check Again" else "Check for Updates")
+                }
             }
         }
     }
 }
 
+/** Seed colour picker: swatches morph from a circle to a cookie when selected. */
 @Composable
-private fun ColorPaletteRow(selectedColor: Color, onColorSelected: (Color) -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).padding(top = 12.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(text = stringResource(R.string.settings_color_palette_title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun ColorSwatches(selectedColor: Color, onColorSelected: (Color) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         PresetColors.chunked(6).forEach { rowColors ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 rowColors.forEach { color ->
-                    val isSelected = remember(selectedColor, color) { selectedColor.toArgb() == color.toArgb() }
-                    Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(color)
-                        .then(if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape) else Modifier.border(1.5.dp, Color.White.copy(alpha = 0.15f), CircleShape))
-                        .clickable { onColorSelected(color) }) {
-                        if (isSelected) Box(modifier = Modifier.size(14.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.8f)).align(Alignment.Center))
+                    val isSelected = selectedColor.toArgb() == color.toArgb()
+                    val context = LocalContext.current
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(if (isSelected) PetalMaterialShapes.Cookie9Sided.toShape() else CircleShape)
+                            .background(color)
+                            .clickable {
+                                context.performHapticClick()
+                                onColorSelected(color)
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (isSelected) {
+                            Icon(
+                                Icons.Rounded.Check,
+                                contentDescription = null,
+                                tint = if (color.luminance() > 0.5f) Color.Black else Color.White,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SettingsHeader() {
-    Column(modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(text = stringResource(R.string.settings_header_title), style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
-    }
-}
-
-@Composable
-private fun SettingsSection(title: String, icon: ImageVector, iconTint: androidx.compose.ui.graphics.Color = FeatureColors.Settings, content: @Composable () -> Unit) {
-    PetalContainment(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = PetalContainmentDefaults.shape,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                FeatureIcon(icon = icon, tint = iconTint, size = 32.dp, iconSize = 17.dp, cornerRadius = 10.dp, backgroundAlpha = 0.15f)
-                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-            }
-            PetalContainmentSurface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ) { Column { content() } }
-        }
-    }
-}
-
-private enum class RowPosition { Top, Middle, Bottom, Single }
-
-@Composable
-private fun SettingsRow(title: String, subtitle: String? = null, position: RowPosition = RowPosition.Middle, onClick: (() -> Unit)? = null, trailing: @Composable (() -> Unit)? = null) {
-    val vPad = when (position) {
-        RowPosition.Top -> PaddingValues(top = 14.dp, bottom = 10.dp)
-        RowPosition.Middle -> PaddingValues(vertical = 10.dp)
-        RowPosition.Bottom -> PaddingValues(top = 10.dp, bottom = 14.dp)
-        RowPosition.Single -> PaddingValues(vertical = 14.dp)
-    }
-    Row(modifier = Modifier.fillMaxWidth().then(if (onClick != null) Modifier.hapticClickable(onClick = onClick) else Modifier).defaultMinSize(minHeight = 52.dp).padding(horizontal = 14.dp).padding(vPad), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-            subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        }
-        trailing?.invoke()
-    }
-}
-
-@Composable
-private fun RowDivider() {
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)))
-}
-
-@Composable
-private fun ThemeModeRow(selected: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).padding(top = 12.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(stringResource(R.string.settings_theme_mode_title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        val modes = listOf(
-            PetalButtonGroupItem(ThemeMode.SYSTEM, stringResource(R.string.settings_theme_mode_system), Icons.Rounded.Brightness6),
-            PetalButtonGroupItem(ThemeMode.LIGHT, stringResource(R.string.settings_theme_mode_light), Icons.Rounded.LightMode),
-            PetalButtonGroupItem(ThemeMode.DARK, stringResource(R.string.settings_theme_mode_dark), Icons.Rounded.DarkMode),
-        )
-        PetalChoiceButtonGroup(
-            options = modes,
-            selected = selected,
-            onSelect = onThemeModeChange,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-private data class ThemeModeOption(val mode: ThemeMode, val label: String, val icon: ImageVector)
-
-@Composable
-private fun AboutSection(context: android.content.Context, appVersion: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // Section header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            FeatureIcon(
-                icon = Icons.Rounded.Info,
-                tint = FeatureColors.Settings,
-                size = 32.dp,
-                iconSize = 17.dp,
-                cornerRadius = 10.dp,
-                backgroundAlpha = 0.15f,
-            )
-            Text(
-                "About",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-
-        // App Version banner card
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Icon(
-                    Icons.Rounded.Vibration,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(26.dp),
-                )
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        "Ever Haptics",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        "Version $appVersion  |  by SVHP",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(20.dp),
-                ) {
-                    Text(
-                        "v$appVersion",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                    )
-                }
-            }
-        }
-
-        // Link cards
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column {
-                AboutLinkRow(
-                    icon = Icons.Rounded.Code,
-                    title = "GitHub",
-                    subtitle = "Source code | Releases | Issue tracker",
-                    isFirst = true,
-                    isLast = false,
-                    onClick = {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, "https://github.com/hari161008/Ever-Haptics".toUri())
-                        )
-                    },
-                )
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)))
-                AboutLinkRow(
-                    icon = Icons.Rounded.Forum,
-                    title = "Telegram App Support Group",
-                    subtitle = "Announcements | Updates | Bug Fixes | Support",
-                    isFirst = false,
-                    isLast = false,
-                    onClick = {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, "https://t.me/EverlastingAndroidTweak".toUri())
-                        )
-                    },
-                )
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)))
-                AboutLinkRow(
-                    icon = Icons.Rounded.Campaign,
-                    title = "App Recommending Channel",
-                    subtitle = "Discover | Explore | Cool Apps",
-                    isFirst = false,
-                    isLast = true,
-                    onClick = {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, "https://t.me/CoolAppStore".toUri())
-                        )
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AboutLinkRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    isFirst: Boolean,
-    isLast: Boolean,
-    onClick: () -> Unit,
-) {
-    val topRadius    = if (isFirst) 24.dp else 4.dp
-    val bottomRadius = if (isLast) 24.dp else 4.dp
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(topStart = topRadius, topEnd = topRadius, bottomStart = bottomRadius, bottomEnd = bottomRadius))
-            .hapticClickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(22.dp),
-        )
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Icon(
-            Icons.AutoMirrored.Rounded.ArrowForward,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
-        )
     }
 }

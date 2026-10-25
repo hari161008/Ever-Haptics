@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
@@ -34,6 +36,7 @@ fun PetalButton(
     enabled: Boolean = true,
     style: PetalButtonStyle = PetalButtonStyle.FILLED,
     height: Dp = 48.dp,
+    colors: ButtonColors? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
@@ -62,6 +65,7 @@ fun PetalButton(
             modifier = buttonModifier,
             enabled = enabled,
             shape = shape,
+            colors = colors ?: ButtonDefaults.buttonColors(),
             interactionSource = source,
             content = content,
         )
@@ -70,6 +74,7 @@ fun PetalButton(
             modifier = buttonModifier,
             enabled = enabled,
             shape = shape,
+            colors = colors ?: ButtonDefaults.filledTonalButtonColors(),
             interactionSource = source,
             content = content,
         )

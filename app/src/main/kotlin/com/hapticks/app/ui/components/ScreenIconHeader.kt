@@ -1,21 +1,18 @@
 package com.hapticks.app.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.hapticks.app.ui.theme.PetalMaterialShapes
-import com.hapticks.app.ui.theme.toShape
 
+/** Intro banner at the top of every feature screen: expressive shaped icon + one-line description. */
 @Composable
 fun ScreenIconHeader(
     icon: ImageVector,
@@ -23,29 +20,19 @@ fun ScreenIconHeader(
     subtitle: String,
     modifier: Modifier = Modifier,
 ) {
-    PetalContainment(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        shape = PetalContainmentDefaults.shape,
-        modifier = modifier.fillMaxWidth(),
-    ) {
+    PetalGroupItem(position = PetalGroupPosition.SINGLE, modifier = modifier) {
         Row(
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(PetalMaterialShapes.Cookie7Sided.toShape())
-                    .background(featureColor.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = featureColor,
-                    modifier = Modifier.size(28.dp),
-                )
-            }
+            FeatureIcon(
+                icon = icon,
+                tint = featureColor,
+                size = 64.dp,
+                iconSize = 30.dp,
+                backgroundAlpha = 0.18f,
+            )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,

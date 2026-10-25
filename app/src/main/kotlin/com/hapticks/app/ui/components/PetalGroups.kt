@@ -35,6 +35,8 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
+import com.hapticks.app.ui.haptics.performHapticClick
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -234,8 +236,9 @@ fun PetalGroupItem(
     } else {
         val source = remember { MutableInteractionSource() }
         val scale = rememberPressScale(source)
+        val context = LocalContext.current
         Surface(
-            onClick = onClick,
+            onClick = { context.performHapticClick(); onClick() },
             enabled = enabled,
             modifier = modifier
                 .fillMaxWidth()

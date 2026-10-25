@@ -7,7 +7,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.*
+import com.hapticks.app.ui.theme.PetalMaterialShapes
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,9 +18,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
 import com.hapticks.app.ui.haptics.hapticClickable
 import com.hapticks.app.ui.haptics.performHapticClick
 
@@ -59,7 +59,10 @@ fun HapticToggleRow(
         ) {
             if (leadingIcon != null) {
                 Box(
-                    modifier = Modifier.size(40.dp).background(color = iconBgColor, shape = RoundedCornerShape(14.dp)).scale(iconScale),
+                    modifier = Modifier
+                        .size(44.dp)
+                        .scale(iconScale)
+                        .background(color = iconBgColor, shape = PetalMaterialShapes.Cookie6Sided.toShape()),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(leadingIcon, null, tint = iconTint, modifier = Modifier.size(22.dp))
@@ -73,10 +76,28 @@ fun HapticToggleRow(
                 Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        IconSwitch(
+        Switch(
             checked = checked,
-            icon = if (checked) androidx.compose.material.icons.Icons.Rounded.Check else androidx.compose.material.icons.Icons.Rounded.Close,
             onCheckedChange = { value -> context.performHapticClick(); onCheckedChange(value) },
+            thumbContent = if (checked) {
+                {
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                    )
+                }
+            } else {
+                null
+            },
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                checkedBorderColor = MaterialTheme.colorScheme.primary,
+                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+            ),
         )
     }
 }

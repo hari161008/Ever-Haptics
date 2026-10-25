@@ -115,6 +115,8 @@ class HapticsPreferences(context: Context) {
                 keyboardHapticCustomSequence = parseCustomSequence(prefs[Keys.KEYBOARD_HAPTIC_CUSTOM_SEQUENCE]),
                 batterySaverDetectionEnabled = prefs[Keys.BATTERY_SAVER_DETECTION_ENABLED] ?: HapticsSettings.Default.batterySaverDetectionEnabled,
                 autoCheckUpdatesEnabled = prefs[Keys.AUTO_CHECK_UPDATES_ENABLED] ?: HapticsSettings.Default.autoCheckUpdatesEnabled,
+                predictiveBackEnabled = prefs[Keys.PREDICTIVE_BACK_ENABLED] ?: HapticsSettings.Default.predictiveBackEnabled,
+                depthBlurEnabled = prefs[Keys.DEPTH_BLUR_ENABLED] ?: HapticsSettings.Default.depthBlurEnabled,
                 musicHapticsEnabled = prefs[Keys.MUSIC_HAPTICS_ENABLED] ?: HapticsSettings.Default.musicHapticsEnabled,
                 musicHapticsSource = prefs[Keys.MUSIC_HAPTICS_SOURCE]?.let { runCatching { MusicHapticsSource.valueOf(it) }.getOrNull() } ?: HapticsSettings.Default.musicHapticsSource,
                 musicHapticsSensitivity = (prefs[Keys.MUSIC_HAPTICS_SENSITIVITY] ?: HapticsSettings.Default.musicHapticsSensitivity).coerceIn(0f, 1f),
@@ -207,6 +209,8 @@ class HapticsPreferences(context: Context) {
 
     suspend fun setBatterySaverDetectionEnabled(enabled: Boolean) = edit { it[Keys.BATTERY_SAVER_DETECTION_ENABLED] = enabled }
     suspend fun setAutoCheckUpdatesEnabled(enabled: Boolean) = edit { it[Keys.AUTO_CHECK_UPDATES_ENABLED] = enabled }
+    suspend fun setPredictiveBackEnabled(enabled: Boolean) = edit { it[Keys.PREDICTIVE_BACK_ENABLED] = enabled }
+    suspend fun setDepthBlurEnabled(enabled: Boolean) = edit { it[Keys.DEPTH_BLUR_ENABLED] = enabled }
     suspend fun setMusicHapticsEnabled(enabled: Boolean) = edit { it[Keys.MUSIC_HAPTICS_ENABLED] = enabled }
     suspend fun setMusicHapticsSource(source: MusicHapticsSource) = edit { it[Keys.MUSIC_HAPTICS_SOURCE] = source.name }
     suspend fun setMusicHapticsSensitivity(value: Float) = edit { it[Keys.MUSIC_HAPTICS_SENSITIVITY] = value.coerceIn(0f, 1f) }
@@ -300,6 +304,8 @@ class HapticsPreferences(context: Context) {
         val KEYBOARD_HAPTIC_CUSTOM_SEQUENCE = stringPreferencesKey("keyboard_haptic_custom_sequence")
         val BATTERY_SAVER_DETECTION_ENABLED = booleanPreferencesKey("battery_saver_detection_enabled")
         val AUTO_CHECK_UPDATES_ENABLED = booleanPreferencesKey("auto_check_updates_enabled")
+        val PREDICTIVE_BACK_ENABLED = booleanPreferencesKey("predictive_back_enabled")
+        val DEPTH_BLUR_ENABLED = booleanPreferencesKey("depth_blur_enabled")
         val MUSIC_HAPTICS_ENABLED = booleanPreferencesKey("music_haptics_enabled")
         val MUSIC_HAPTICS_SOURCE = stringPreferencesKey("music_haptics_source")
         val MUSIC_HAPTICS_SENSITIVITY = floatPreferencesKey("music_haptics_sensitivity")

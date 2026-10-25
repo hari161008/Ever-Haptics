@@ -1,6 +1,10 @@
 package com.hapticks.app.ui.screens.scrollhaptics
 
 import androidx.compose.foundation.clickable
+import com.hapticks.app.ui.components.PetalButtonStyle
+import com.hapticks.app.ui.components.PetalButton
+import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
+import com.hapticks.app.ui.components.PetalSlider
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -67,38 +71,61 @@ fun ScrollHapticsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrollBehavior = rememberPetalHeaderScrollBehavior()
-    PetalScreenScaffold(
-        title = stringResource(R.string.scroll_haptics_title),
-        scrollBehavior = scrollBehavior,
-        onNavigateBack = onBack,
-        modifier = modifier,
-    ) {
-        if (!isServiceEnabled) {
-            EnableServiceCard(onOpenSettings = onOpenAccessibilitySettings)
-        }
-        ScreenIconHeader(icon = Icons.Rounded.SwipeUp, featureColor = FeatureColors.TactileScrolling, subtitle = "Feel every scroll tick — tune how often and how strong.")
-
-        SectionCard {
-            HapticToggleRow(stringResource(R.string.scroll_toggle_title), stringResource(R.string.scroll_toggle_subtitle), settings.scrollEnabled, onScrollEnabledChange)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
-            HapticToggleRow(stringResource(R.string.scroll_horizontal_toggle_title), stringResource(R.string.scroll_horizontal_toggle_subtitle), settings.scrollHorizontalEnabled, onScrollHorizontalEnabledChange)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
-            AppExclusionRow(settings.scrollExcludedPackages.size, onOpenAppExclusions)
-        }
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onResetToDefaults) {
-                Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.size(4.dp))
-                Text(stringResource(R.string.reset_to_defaults), style = MaterialTheme.typography.labelLarge)
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    Scaffold(
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            PetalCollapsingTopAppBar(
+                title = stringResource(R.string.scroll_haptics_title),
+                scrollBehavior = scrollBehavior,
+                onNavigateBack = onBack,
+            )
+        },
+    ) { padding ->
+        LazyColumn(
+            state = rememberLazyListState(),
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            if (!isServiceEnabled) {
+                item("service_card") { EnableServiceCard(onOpenSettings = onOpenAccessibilitySettings) }
             }
+            item("icon_header") {
+                ScreenIconHeader(icon = Icons.Rounded.SwipeUp, featureColor = FeatureColors.TactileScrolling, subtitle = "Feel every scroll tick — tune how often and how strong.")
+            }
+            item("toggles") {
+                SectionCard {
+                    HapticToggleRow(stringResource(R.string.scroll_toggle_title), stringResource(R.string.scroll_toggle_subtitle), settings.scrollEnabled, onScrollEnabledChange)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
+                    HapticToggleRow(stringResource(R.string.scroll_horizontal_toggle_title), stringResource(R.string.scroll_horizontal_toggle_subtitle), settings.scrollHorizontalEnabled, onScrollHorizontalEnabledChange)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
+                    AppExclusionRow(settings.scrollExcludedPackages.size, onOpenAppExclusions)
+                }
+            }
+            item("reset") {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                    PetalButton(onClick = onResetToDefaults, style = PetalButtonStyle.TEXT) {
+                        Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.size(4.dp))
+                        Text(stringResource(R.string.reset_to_defaults), style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+            item("distance") {
+                SectionCard { ScrollDistanceControl(settings.scrollHapticEventsPerCm, onScrollHapticEventsPerCmCommit) }
+            }
+            item("intensity") {
+                SectionCard { ScrollIntensityControl(settings.scrollIntensity, onIntensityCommit) }
+            }
+            item("pattern") {
+                SectionCard { PatternSelector(settings.scrollPattern, onPatternSelected) }
+            }
+            item("test") {
+                HapticTestButton(stringResource(R.string.scroll_haptic_screen_test_button), onTestHaptic, enabled = settings.scrollEnabled)
+            }
+            item("bottom") { Spacer(Modifier.height(4.dp)) }
         }
-
-        SectionCard { ScrollDistanceControl(settings.scrollHapticEventsPerCm, onScrollHapticEventsPerCmCommit) }
-        SectionCard { ScrollIntensityControl(settings.scrollIntensity, onIntensityCommit) }
-        SectionCard { PatternSelector(settings.scrollPattern, onPatternSelected) }
-
-        HapticTestButton(stringResource(R.string.scroll_haptic_screen_test_button), onTestHaptic, enabled = settings.scrollEnabled)
     }
 }
 
@@ -120,16 +147,17 @@ private fun ScrollDistanceControl(eventsPerCm: Float, onCommit: (Float) -> Unit)
                 Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
             }
         }
-        FancyExpressiveSlider(
+        PetalSlider(
             value = sliderVal,
             onValueChange = { v ->
                 sliderVal = v
                 val t = (v * SLIDER_STEPS).toInt()
                 if (t != lastTick) { lastTick = t; ctx.performHapticSliderTick() }
-                onCommit(distanceCmToEventsPerCm(sliderToDistanceCm(sliderVal)))
             },
+            onValueChangeFinished = { onCommit(distanceCmToEventsPerCm(sliderToDistanceCm(sliderVal))) },
             valueRange = 0f..1f,
-            displayValue = label,
+            steps = SLIDER_STEPS,
+            colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("1 cm  (frequent)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -150,17 +178,7 @@ private fun ScrollIntensityControl(intensity: Float, onCommit: (Float) -> Unit) 
                 Text(stringResource(R.string.intensity_value, (draft * 100f).roundToInt()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
             }
         }
-        FancyExpressiveSlider(
-            value = draft,
-            onValueChange = {
-                draft = it
-                val t = slider01ToTickIndex(it)
-                if (t != lastTick) { lastTick = t; ctx.performHapticSliderTick() }
-                onCommit(draft)
-            },
-            valueRange = 0f..1f,
-            displayValue = "${(draft * 100f).roundToInt()}%",
-        )
+        PetalSlider(value = draft, onValueChange = { draft = it; val t = slider01ToTickIndex(it); if (t != lastTick) { lastTick = t; ctx.performHapticSliderTick() } }, onValueChangeFinished = { onCommit(draft) }, valueRange = 0f..1f, steps = SliderTickStepsDefault, colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest))
     }
 }
 

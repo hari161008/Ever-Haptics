@@ -11,8 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.hapticks.app.ui.components.PetalContainmentDefaults
-import com.hapticks.app.ui.components.PetalContainmentSurface
 import com.hapticks.app.ui.haptics.hapticClickable
 
 @Composable
@@ -30,11 +28,12 @@ fun SectionCard(
         if (title != null) {
             SectionHeader(title = title, subtitle = subtitle, icon = icon, iconTint = iconTint)
         }
-        PetalContainmentSurface(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            shape = PetalContainmentDefaults.shape,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = onClick,
+        Surface(
+            color = petalGroupColor(),
+            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (onClick != null) Modifier.hapticClickable(onClick = onClick) else Modifier),
         ) {
             Column(
                 modifier = Modifier.padding(contentPadding),
@@ -62,14 +61,13 @@ private fun SectionHeader(
             FeatureIcon(
                 icon = icon,
                 tint = tint,
-                size = 34.dp,
-                iconSize = 18.dp,
-                cornerRadius = 11.dp,
-                backgroundAlpha = 0.14f,
+                size = 40.dp,
+                iconSize = 20.dp,
+                backgroundAlpha = 0.16f,
             )
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

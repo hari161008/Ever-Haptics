@@ -110,6 +110,7 @@ private fun PatternCard(
     val titleColor = if (isSelected) accentOnContainer else MaterialTheme.colorScheme.onSurface
     val descColor = if (isSelected) accentOnContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant
     val interactionSource = remember { MutableInteractionSource() }
+    val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
 
     Surface(
         modifier = modifier
@@ -122,7 +123,7 @@ private fun PatternCard(
                 indication = ripple(bounded = true),
             ),
         color = containerColor,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(corner),
         border = BorderStroke(borderWidth, borderColor),
     ) {
         Column(
@@ -142,7 +143,7 @@ private fun PatternCard(
                         .size(40.dp)
                         .background(
                             color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            shape = RoundedCornerShape(14.dp),
+                            shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape(),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -182,6 +183,7 @@ private fun CustomPatternCard(
     )
     val borderWidth by animateDpAsState(if (isSelected) 1.5.dp else 1.dp, label = "cbw")
     val interactionSource = remember { MutableInteractionSource() }
+    val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
 
     Surface(
         modifier = modifier.selectable(
@@ -192,7 +194,7 @@ private fun CustomPatternCard(
             indication = ripple(bounded = true),
         ),
         color = containerColor,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(corner),
         border = BorderStroke(borderWidth, borderColor),
     ) {
         Row(
@@ -205,7 +207,7 @@ private fun CustomPatternCard(
                     .size(40.dp)
                     .background(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape(),
                     ),
                 contentAlignment = Alignment.Center,
             ) {
@@ -270,7 +272,7 @@ private fun IntensityRow(
                 )
             }
         }
-        Slider(
+        PetalSlider(
             value = draft,
             onValueChange = {
                 draft = it

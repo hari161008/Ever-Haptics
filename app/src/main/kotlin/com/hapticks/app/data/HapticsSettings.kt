@@ -81,6 +81,8 @@ data class HapticsSettings(
     val batterySaverDetectionEnabled: Boolean = false,
     // Auto Check Updates
     val autoCheckUpdatesEnabled: Boolean = true,
+    val predictiveBackEnabled: Boolean = true,
+    val depthBlurEnabled: Boolean = true,
     // Music Haptics
     val musicHapticsEnabled: Boolean = false,
     val musicHapticsSource: MusicHapticsSource = MusicHapticsSource.Default,

@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.hapticks.app.ui.components.PetalContainedLoadingIndicator
 import androidx.compose.ui.viewinterop.AndroidView
 
 private const val REVIEWS_URL =
@@ -68,7 +69,7 @@ fun ReviewsWebViewScreen(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.Center),
         ) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            PetalContainedLoadingIndicator(size = 64.dp)
         }
 
         // Floating back button
@@ -82,8 +83,8 @@ fun ReviewsWebViewScreen(
                 onClick = onBack,
                 modifier = Modifier
                     .size(56.dp)
-                    .shadow(8.dp, CircleShape)
-                    .clip(CircleShape)
+                    .shadow(8.dp, com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie9Sided.toShape())
+                    .clip(com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie9Sided.toShape())
                     .background(MaterialTheme.colorScheme.primaryContainer),
             ) {
                 Icon(
