@@ -173,3 +173,80 @@ fun PetalChoiceButtonGroup(
         enabled = enabled,
     )
 }
+
+
+/** Option model for [PetalMultiChoiceButtonGroup]. */
+data class PetalMultiChoiceItem(
+    val label: String,
+    val checked: Boolean,
+    val onCheckedChange: (Boolean) -> Unit,
+    val icon: ImageVector? = null,
+    val enabled: Boolean = true,
+)
+
+/**
+ * Pick-any connected toggle button group (the multi-select sibling of [PetalChoiceButtonGroup]).
+ * Same Material 3 Expressive connected shapes and colours, but every button toggles on its own.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun PetalMultiChoiceButtonGroup(
+    options: List<PetalMultiChoiceItem>,
+    modifier: Modifier = Modifier,
+    minHeight: Dp = 48.dp,
+    enabled: Boolean = true,
+) {
+    if (options.isEmpty()) return
+    val context = LocalContext.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val count = options.size
+        options.forEachIndexed { index, option ->
+            val shapes = when {
+                count == 1 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                index == count - 1 -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+            }
+            ToggleButton(
+                checked = option.checked,
+                onCheckedChange = {
+                    context.performHapticClick()
+                    option.onCheckedChange(it)
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .defaultMinSize(minHeight = minHeight)
+                    .semantics { role = Role.Checkbox },
+                enabled = enabled && option.enabled,
+                shapes = shapes,
+                colors = ToggleButtonDefaults.toggleButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    if (option.icon != null) {
+                        Icon(option.icon, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
+                    Text(
+                        text = option.label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (option.checked) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+            }
+        }
+    }
+}

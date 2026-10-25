@@ -80,20 +80,9 @@ fun FloatingBottomBar(
             modifier = Modifier
                 .wrapContentWidth()
                 .height(64.dp)
-                .shadow(16.dp, CircleShape, spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f))
-                .border(
-                    0.75.dp,
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
-                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f),
-                        ),
-                    ),
-                    CircleShape,
-                )
                 .clip(CircleShape),
             colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(
-                toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 toolbarContentColor = MaterialTheme.colorScheme.onSurface,
             ),
         ) {

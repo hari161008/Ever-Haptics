@@ -59,7 +59,7 @@ fun KeyboardHapticsScreen(
                 ScreenIconHeader(icon = Icons.Rounded.Keyboard, featureColor = FeatureColors.Keyboard, subtitle = "Custom haptic feedback on every keystroke for a premium typing feel.")
             }
             item("info") {
-                Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = com.hapticks.app.ui.components.PetalContainmentDefaults.shape, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
                         Icon(Icons.Rounded.Info, null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(20.dp).padding(top = 2.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

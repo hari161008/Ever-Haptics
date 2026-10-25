@@ -2,6 +2,7 @@ package com.hapticks.app.ui.screens.notificationhaptics
 
 import android.os.Build
 import com.hapticks.app.ui.components.PetalButtonStyle
+import com.hapticks.app.ui.components.PetalContainmentDefaults
 import com.hapticks.app.ui.components.PetalButton
 import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
 import com.hapticks.app.ui.components.PetalSlider
@@ -280,8 +281,7 @@ private fun TimelineVisualizer(
     val totalMs = maxOf(elapsedMs, beats.maxOfOrNull { it.offsetMs }?.plus(500L) ?: 3000L)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, if (isRecording) MaterialTheme.colorScheme.error.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outlineVariant),
+        shape = PetalContainmentDefaults.shape,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -359,8 +359,7 @@ private fun RecordingControls(
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(if (isRecording || isCountingDown) 2.dp else 1.dp, borderColor),
+        shape = PetalContainmentDefaults.shape,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -535,10 +534,10 @@ private fun BeatEditorRow(
     val borderColor by animateColorAsState(if (isExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, spring(stiffness = 300f), label = "bb")
     val barColor = amplitudeToColor(beat.amplitude, MaterialTheme.colorScheme)
 
-    Surface(color = containerColor, shape = RoundedCornerShape(16.dp), border = BorderStroke(if (isExpanded) 1.5.dp else 1.dp, borderColor), modifier = Modifier.fillMaxWidth()) {
+    Surface(color = containerColor, shape = PetalContainmentDefaults.shape, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(modifier = Modifier.size(36.dp).background(barColor.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).border(1.dp, barColor.copy(alpha = 0.4f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.size(36.dp).background(barColor.copy(alpha = 0.15f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
                     Text("${index + 1}", style = MaterialTheme.typography.labelLarge, color = barColor, fontWeight = FontWeight.Bold)
                 }
                 Column(Modifier.weight(1f)) {

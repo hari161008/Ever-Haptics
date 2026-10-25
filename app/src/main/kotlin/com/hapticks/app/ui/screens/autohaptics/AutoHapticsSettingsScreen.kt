@@ -148,7 +148,7 @@ fun AutoHapticsSettingsScreen(
             item("info") {
                 Surface(
                     color = featureColor.copy(alpha = 0.12f),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = com.hapticks.app.ui.components.PetalContainmentDefaults.shape,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {

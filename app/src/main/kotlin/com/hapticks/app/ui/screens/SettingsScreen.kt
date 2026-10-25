@@ -169,6 +169,12 @@ fun SettingsScreen(
                 }
             }
 
+            // ── Collab ──
+            CollabCard(
+                onClick = { openUrl("https://my-petal-browser.vercel.app/") },
+                modifier = Modifier.entrance(1),
+            )
+
             // ── Community ──
             PetalSection(title = "Community & More", modifier = Modifier.entrance(1)) {
                 row { position ->
@@ -550,6 +556,64 @@ private fun ColorSwatches(selectedColor: Color, onColorSelected: (Color) -> Unit
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CollabCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    PetalContainment(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(PetalMaterialShapes.Cookie9Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Rounded.LocalFlorist, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(26.dp))
+            }
+            Icon(Icons.Rounded.Close, null, modifier = Modifier.size(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(PetalMaterialShapes.Cookie12Sided.toShape())
+                    .background(MaterialTheme.colorScheme.tertiary),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Rounded.Vibration, null, tint = MaterialTheme.colorScheme.onTertiary, modifier = Modifier.size(26.dp))
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                "Petal \u00D7 Ever Haptics",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                "A collab between Petal Browser and Ever Haptics",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+            )
+        }
+        PetalButton(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ),
+        ) {
+            Icon(Icons.Rounded.Handshake, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(8.dp))
+            Text("Collab", style = MaterialTheme.typography.labelLarge)
         }
     }
 }

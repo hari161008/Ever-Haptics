@@ -7,7 +7,12 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.flow.first
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -36,7 +41,11 @@ import kotlin.math.sqrt
 
 class MusicHapticsService : Service() {
 
-    private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    // Any failure inside a detection coroutine must never take the whole app down.
+    private val serviceScope = CoroutineScope(
+        Dispatchers.Default + SupervisorJob() +
+            CoroutineExceptionHandler { _, _ -> shutDownAndDisable() },
+    )
     private var visualizer: Visualizer? = null
     private var micRecord: AudioRecord? = null
     private var micJob: Job? = null
@@ -68,10 +77,38 @@ class MusicHapticsService : Service() {
             ?: lastSource
         lastSource = source
 
-        startForegroundCompat(source)
+        // Both the microphone foreground-service type and the Visualizer need RECORD_AUDIO.
+        // Starting without it throws SecurityException, so bail out cleanly instead.
+        if (!hasRecordAudioPermission(this)) {
+            shutDownAndDisable()
+            return START_NOT_STICKY
+        }
+
+        val startedForeground = runCatching { startForegroundCompat(source) }.isSuccess
+        if (!startedForeground) {
+            shutDownAndDisable()
+            return START_NOT_STICKY
+        }
         startSettingsWatcher()
-        startBeatDetection(source)
-        return START_STICKY
+        runCatching { startBeatDetection(source) }.onFailure { shutDownAndDisable() }
+        return START_NOT_STICKY
+    }
+
+    private fun showToast(message: String) {
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            runCatching { android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_LONG).show() }
+        }
+    }
+
+    /** Stops the service and switches the saved toggle off so the UI never lies about its state. */
+    private fun shutDownAndDisable() {
+        runCatching {
+            (applicationContext as HapticksApp).let { app ->
+                CoroutineScope(Dispatchers.IO).launch { runCatching { app.preferences.setMusicHapticsEnabled(false) } }
+            }
+        }
+        runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
+        stopSelf()
     }
 
     override fun onDestroy() {
@@ -97,8 +134,9 @@ class MusicHapticsService : Service() {
             MusicHapticsSource.DEVICE -> startVisualizer(fallbackToMic = false)
             MusicHapticsSource.SURROUNDINGS -> micJob = serviceScope.launch { detectFromMic() }
             MusicHapticsSource.BOTH -> {
-                startVisualizer(fallbackToMic = false)
+                // Start the mic first so a Visualizer failure does not shut the whole service down.
                 micJob = serviceScope.launch { detectFromMic() }
+                startVisualizer(fallbackToMic = false)
             }
         }
     }
@@ -171,7 +209,7 @@ class MusicHapticsService : Service() {
                             val amplitude = (currentStrength * (0.35f + 0.65f * beatStrength) * 255f)
                                 .toInt().coerceIn(30, 255)
                             val durationMs = (35L + (beatStrength * 55f).toLong()).coerceIn(30L, 90L)
-                            vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude))
+                            runCatching { vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude)) }
                         }
                     }
                 }
@@ -179,7 +217,10 @@ class MusicHapticsService : Service() {
             vis.enabled = true
             visualizer = vis
         } catch (_: Exception) {
-            if (fallbackToMic) micJob = serviceScope.launch { detectFromMic() }
+            if (fallbackToMic) micJob = serviceScope.launch { detectFromMic() } else if (micJob == null) {
+                showToast("Device audio capture isn't available on this phone. Try the Mic source.")
+                shutDownAndDisable()
+            }
         }
     }
 
@@ -191,16 +232,18 @@ class MusicHapticsService : Service() {
             AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT) * 2,
             4096,
         )
-        val recorder = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            bufferSize,
-        )
-        if (recorder.state != AudioRecord.STATE_INITIALIZED) { recorder.release(); return }
+        val recorder = try {
+            AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSize,
+            )
+        } catch (_: Throwable) { shutDownAndDisable(); return }
+        if (recorder.state != AudioRecord.STATE_INITIALIZED) { recorder.release(); shutDownAndDisable(); return }
         micRecord = recorder
-        recorder.startRecording()
+        try { recorder.startRecording() } catch (_: Throwable) { recorder.release(); micRecord = null; shutDownAndDisable(); return }
 
         val buffer = ShortArray(bufferSize / 2)
         var dynThreshold = 0.02f
@@ -211,7 +254,8 @@ class MusicHapticsService : Service() {
         while (loopCtx.isActive) {
             if (!currentEnabled) { delay(200L); continue }
             val read = recorder.read(buffer, 0, buffer.size)
-            if (read <= 0) continue
+            if (read < 0) break
+            if (read == 0) { delay(10L); continue }
             var sumSq = 0.0
             for (i in 0 until read) { val s = buffer[i] / 32768f; sumSq += s * s }
             val rms = sqrt(sumSq / read).toFloat()
@@ -235,7 +279,7 @@ class MusicHapticsService : Service() {
                 val norm = ((rms / beatThreshold).coerceIn(1f, 3f) - 1f) / 2f
                 val amplitude = (currentStrength * norm * 255f).toInt().coerceIn(20, 255)
                 val durationMs = (40 + norm * 60f).toLong().coerceIn(30L, 100L)
-                vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude))
+                runCatching { vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude)) }
             }
         }
     }
@@ -285,17 +329,21 @@ class MusicHapticsService : Service() {
         const val EXTRA_SOURCE = "extra_source"
         var lastSource: MusicHapticsSource = MusicHapticsSource.Default
 
-        fun start(context: Context, source: MusicHapticsSource = MusicHapticsSource.Default) {
+        fun hasRecordAudioPermission(context: Context): Boolean =
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+
+        /** @return true if the service was asked to start, false if it could not (e.g. no mic permission). */
+        fun start(context: Context, source: MusicHapticsSource = MusicHapticsSource.Default): Boolean {
+            if (!hasRecordAudioPermission(context)) return false
             lastSource = source
             val intent = Intent(context, MusicHapticsService::class.java).apply {
                 putExtra(EXTRA_SOURCE, source.name)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
-            else context.startService(intent)
+            return runCatching { context.startForegroundService(intent) }.isSuccess
         }
 
         fun stop(context: Context) {
-            context.stopService(Intent(context, MusicHapticsService::class.java))
+            runCatching { context.stopService(Intent(context, MusicHapticsService::class.java)) }
         }
     }
 }

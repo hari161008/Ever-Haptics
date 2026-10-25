@@ -294,7 +294,7 @@ private fun PermissionCard(
     val btnBg = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
     val btnFg = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onSecondary
 
-    Surface(color = bg, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+    Surface(color = bg, shape = com.hapticks.app.ui.components.PetalContainmentDefaults.shape, modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, tint = fg, modifier = Modifier.size(20.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -311,7 +311,7 @@ private fun PermissionCard(
 @Composable
 private fun SystemHapticsNoticeCard() {
     val ctx = LocalContext.current
-    Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = com.hapticks.app.ui.components.PetalContainmentDefaults.shape, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
                 Icon(Icons.Rounded.Info, null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(20.dp).padding(top = 2.dp))
@@ -413,7 +413,7 @@ private fun PatternCard(pattern: HapticPattern, isSelected: Boolean, onClick: ()
     val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
     Surface(
         modifier = modifier.heightIn(min = 132.dp).selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)).semantics { this.stateDescription = stateDesc },
-        color = containerColor, shape = RoundedCornerShape(corner), border = BorderStroke(borderWidth, borderColor),
+        color = containerColor, shape = RoundedCornerShape(corner),
     ) {
         Column(Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Top)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -436,7 +436,7 @@ private fun AutoPatternCard(isSelected: Boolean, onClick: () -> Unit, modifier: 
     val borderWidth by animateDpAsState(if (isSelected) 1.5.dp else 1.dp, label = "abw")
     val interactionSource = remember { MutableInteractionSource() }
     val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
-    Surface(modifier = modifier.selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)), color = containerColor, shape = RoundedCornerShape(corner), border = BorderStroke(borderWidth, borderColor)) {
+    Surface(modifier = modifier.selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)), color = containerColor, shape = RoundedCornerShape(corner)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(modifier = Modifier.size(40.dp).background(color = MaterialTheme.colorScheme.surfaceContainerHighest, shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape()), contentAlignment = Alignment.Center) {
                 Icon(Icons.Rounded.GraphicEq, null, tint = if (isSelected) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
@@ -457,7 +457,7 @@ private fun CustomPatternCard(isSelected: Boolean, beatCount: Int, durationMs: L
     val borderWidth by animateDpAsState(if (isSelected) 1.5.dp else 1.dp, label = "cbw")
     val interactionSource = remember { MutableInteractionSource() }
     val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
-    Surface(modifier = modifier.selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)), color = containerColor, shape = RoundedCornerShape(corner), border = BorderStroke(borderWidth, borderColor)) {
+    Surface(modifier = modifier.selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton, interactionSource = interactionSource, indication = ripple(bounded = true)), color = containerColor, shape = RoundedCornerShape(corner)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(modifier = Modifier.size(40.dp).background(color = MaterialTheme.colorScheme.surfaceContainerHighest, shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape()), contentAlignment = Alignment.Center) {
                 Icon(Icons.Rounded.Draw, null, tint = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))

@@ -124,7 +124,7 @@ private fun PatternCard(
             ),
         color = containerColor,
         shape = RoundedCornerShape(corner),
-        border = BorderStroke(borderWidth, borderColor),
+        
     ) {
         Column(
             Modifier
@@ -195,7 +195,7 @@ private fun CustomPatternCard(
         ),
         color = containerColor,
         shape = RoundedCornerShape(corner),
-        border = BorderStroke(borderWidth, borderColor),
+        
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),

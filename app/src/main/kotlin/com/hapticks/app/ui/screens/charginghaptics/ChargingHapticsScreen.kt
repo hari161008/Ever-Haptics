@@ -71,21 +71,29 @@ fun ChargingHapticsScreen(
                         leadingIcon = Icons.Rounded.ElectricBolt,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
-                    HapticToggleRow(
-                        title = stringResource(R.string.charging_vib_on_connect_title),
-                        subtitle = stringResource(R.string.charging_vib_on_connect_subtitle),
-                        checked = settings.chargingVibOnConnect,
-                        onCheckedChange = onChargingVibOnConnectChange,
-                        leadingIcon = Icons.Rounded.BatteryChargingFull,
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
-                    HapticToggleRow(
-                        title = stringResource(R.string.charging_vib_on_disconnect_title),
-                        subtitle = stringResource(R.string.charging_vib_on_disconnect_subtitle),
-                        checked = settings.chargingVibOnDisconnect,
-                        onCheckedChange = onChargingVibOnDisconnectChange,
-                        leadingIcon = Icons.Rounded.BatteryFull,
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text("Play haptic when", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                        PetalMultiChoiceButtonGroup(
+                            options = listOf(
+                                PetalMultiChoiceItem(
+                                    label = "Plugged in",
+                                    checked = settings.chargingVibOnConnect,
+                                    onCheckedChange = onChargingVibOnConnectChange,
+                                    icon = Icons.Rounded.BatteryChargingFull,
+                                ),
+                                PetalMultiChoiceItem(
+                                    label = "Unplugged",
+                                    checked = settings.chargingVibOnDisconnect,
+                                    onCheckedChange = onChargingVibOnDisconnectChange,
+                                    icon = Icons.Rounded.BatteryFull,
+                                ),
+                            ),
+                            enabled = settings.chargingVibEnabled,
+                        )
+                    }
                 }
             }
             item("reset") {

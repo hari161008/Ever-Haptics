@@ -149,7 +149,6 @@ private fun PatternCard(
             },
         color = containerColor,
         shape = RoundedCornerShape(corner),
-        border = BorderStroke(borderWidth, borderColor),
     ) {
         Column(
             modifier = Modifier

@@ -35,7 +35,7 @@ fun EnableServiceCard(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
-        shape = RoundedCornerShape(28.dp),
+        shape = PetalContainmentDefaults.shape,
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(

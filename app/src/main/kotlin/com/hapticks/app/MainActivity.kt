@@ -48,6 +48,8 @@ import com.hapticks.app.ui.screens.scrollhaptics.ScrollHapticsScreen
 import com.hapticks.app.ui.screens.tapHaptics.FeelEveryTapScreen
 import com.hapticks.app.ui.screens.musichaptics.MusicHapticsScreen
 import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
+import com.hapticks.app.ui.splash.EverHapticsSplashScreen
+import com.hapticks.app.ui.splash.EverHapticsSplashState
 import com.hapticks.app.util.AppVersion
 import com.hapticks.app.util.UpdateChecker
 import com.hapticks.app.ui.theme.HapticksTheme
@@ -74,6 +76,15 @@ class MainActivity : ComponentActivity() {
                 amoledBlack = settings.amoledBlack,
                 seedColor = if (settings.useDynamicColors) null else settings.seedColor,
             ) {
+                var isSplashFinished by remember { mutableStateOf(EverHapticsSplashState.hasShownThisSession) }
+                AnimatedContent(
+                    targetState = isSplashFinished,
+                    transitionSpec = { fadeIn(tween(450)) togetherWith fadeOut(tween(300)) },
+                    label = "splash_to_main",
+                ) { splashDone ->
+                if (!splashDone) {
+                EverHapticsSplashScreen(onSplashComplete = { isSplashFinished = true })
+                } else {
                 ProvideHapticksEdgeOverscrollHaptics {
                     // Back stack of route names (saveable). HOME is always the root; SETTINGS sits on top of it.
                     var stack by rememberSaveable { mutableStateOf(listOf(Route.HOME.name)) }
@@ -450,6 +461,8 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                }
+                }
                 }
             }
         }

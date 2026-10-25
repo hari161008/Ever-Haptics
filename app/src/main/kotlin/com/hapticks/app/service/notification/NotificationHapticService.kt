@@ -20,9 +20,9 @@ import kotlin.math.sqrt
 
 class NotificationHapticService : NotificationListenerService() {
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val repeatingJobs = mutableMapOf<String, Job>()
-    private val autoVisualizers = mutableMapOf<String, Visualizer>()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob() + CoroutineExceptionHandler { _, t -> android.util.Log.w("Hapticks", "Coroutine failed", t) })
+    private val repeatingJobs = java.util.concurrent.ConcurrentHashMap<String, Job>()
+    private val autoVisualizers = java.util.concurrent.ConcurrentHashMap<String, Visualizer>()
     private val lastHapticMs = AtomicLong(0L)
 
     private val vibrator: Vibrator by lazy {
@@ -39,6 +39,7 @@ class NotificationHapticService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val notification = sbn.notification ?: return
         if (sbn.packageName == packageName) return
+        val key = sbn.key ?: return
         if (notification.priority < Notification.PRIORITY_DEFAULT) return
         val app = applicationContext as? HapticksApp ?: return
         scope.launch {
@@ -125,7 +126,7 @@ class NotificationHapticService : NotificationListenerService() {
                             val bs = ((energy - threshold) / threshold).coerceIn(0f, 1f)
                             val amp = (strength * (0.35f + 0.65f * bs) * 255f).toInt().coerceIn(30, 255)
                             val dur = (35L + (bs * 55f).toLong()).coerceIn(30L, 90L)
-                            vibrator.vibrate(VibrationEffect.createOneShot(dur, amp), attrs)
+                            runCatching { vibrator.vibrate(VibrationEffect.createOneShot(dur, amp), attrs) }
                         }
                     }
                 }

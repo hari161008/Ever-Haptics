@@ -30,7 +30,7 @@ fun SectionCard(
         }
         Surface(
             color = petalGroupColor(),
-            shape = RoundedCornerShape(28.dp),
+            shape = PetalContainmentDefaults.shape,
             modifier = Modifier
                 .fillMaxWidth()
                 .then(if (onClick != null) Modifier.hapticClickable(onClick = onClick) else Modifier),

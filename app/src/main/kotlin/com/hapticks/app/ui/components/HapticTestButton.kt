@@ -24,7 +24,7 @@ import com.hapticks.app.ui.theme.PetalMaterialShapes
 
 @Composable
 fun BottomPinnedActionBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Surface(modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.background) {
+    Surface(modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Box(modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)) { content() }
     }
 }
