@@ -139,26 +139,6 @@ Ever Haptics is crafted using modern Android development practices and the lates
 
 ---
 
-## ⚙️ Building from Source
-
-You will need **JDK 17** and the Android SDK (API 36).
-
-```bash
-# Clone the repository
-git clone https://github.com/hari161008/Ever-Haptics.git
-cd Ever-Haptics
-
-# Build Debug APK
-./gradlew assembleDebug
-
-# Build Release APK
-./gradlew assembleRelease
-```
-
-<br>
-
----
-
 ## 🤝 Community & Collaboration
 
 - **Petal Browser Collaboration**: Integrated with Petal's Material 3 Expressive design tokens. Visit [petal-browser.runs-on.dev](https://petal-browser.runs-on.dev/).
