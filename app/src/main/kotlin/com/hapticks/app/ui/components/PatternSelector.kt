@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.components
 
+import com.hapticks.app.ui.theme.PetalIcons
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -98,7 +99,7 @@ private fun PatternCard(
         targetValue = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
+            MaterialTheme.colorScheme.surfaceContainerHighest
         },
         animationSpec = spring(stiffness = 300f),
         label = "pattern-container",
@@ -132,6 +133,7 @@ private fun PatternCard(
     )
 
     val interactionSource = remember { MutableInteractionSource() }
+    val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
 
     Surface(
         modifier = modifier
@@ -147,8 +149,7 @@ private fun PatternCard(
                 this.stateDescription = stateDescription
             },
         color = containerColor,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(borderWidth, borderColor),
+        shape = RoundedCornerShape(corner),
     ) {
         Column(
             modifier = Modifier
@@ -186,7 +187,7 @@ private fun PatternIconBadge(icon: ImageVector, isSelected: Boolean) {
         targetValue = if (isSelected) {
             MaterialTheme.colorScheme.primary
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHighest
+            MaterialTheme.colorScheme.surfaceContainerLow
         },
         animationSpec = spring(stiffness = 300f),
         label = "badge-bg",
@@ -203,7 +204,7 @@ private fun PatternIconBadge(icon: ImageVector, isSelected: Boolean) {
     Box(
         modifier = Modifier
             .size(40.dp)
-            .background(color = background, shape = RoundedCornerShape(14.dp)),
+            .background(color = background, shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape()),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -234,7 +235,7 @@ private fun SelectionDot(isSelected: Boolean) {
     ) {
         if (isSelected) {
             Icon(
-                imageVector = Icons.Rounded.Check,
+                imageVector = PetalIcons.Check,
                 contentDescription = stringResource(id = R.string.pattern_selected),
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(14.dp),

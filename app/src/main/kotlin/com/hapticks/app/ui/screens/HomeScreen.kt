@@ -24,9 +24,31 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hapticks.app.R
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import com.hapticks.app.ui.components.featureShape
+import com.hapticks.app.ui.components.petalGroupColor
+import com.hapticks.app.ui.components.PetalSectionLabel
+import com.hapticks.app.ui.theme.PetalIcons
 import com.hapticks.app.ui.components.EnableServiceCard
 import com.hapticks.app.ui.components.FeatureColors
 import com.hapticks.app.ui.components.FeatureIcon
+import com.hapticks.app.ui.components.PetalBadgeVariant
+import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
+import com.hapticks.app.ui.components.PetalGroupItem
+import com.hapticks.app.ui.components.PetalGroupPosition
+import com.hapticks.app.ui.components.PetalShapedIcon
+import com.hapticks.app.ui.components.entrance
+import com.hapticks.app.ui.components.petalGroupPositionFor
+import com.hapticks.app.ui.components.rememberPetalHeaderScrollBehavior
+import com.hapticks.app.ui.theme.PetalMaterialShapes
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.hapticks.app.ui.haptics.hapticClickable
 import kotlinx.coroutines.delay
 
@@ -37,6 +59,8 @@ private data class FeatureEntry(
     val color: Color,
     val onClick: () -> Unit,
 )
+
+private data class FeatureGroup(val title: String, val description: String, val items: List<FeatureEntry>)
 
 @Composable
 fun HomeScreen(
@@ -59,100 +83,141 @@ fun HomeScreen(
     onOpenAccessibilitySettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var entered by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { delay(60); entered = true }
-
-    val features = listOf(
-        FeatureEntry(R.string.home_feel_every_tap_title, R.string.home_feel_every_tap_subtitle, Icons.Rounded.TouchApp, FeatureColors.FeelEveryTap, onOpenFeelEveryTap),
-        FeatureEntry(R.string.home_tactile_scrolling_title, R.string.home_tactile_scrolling_subtitle, Icons.Rounded.SwipeUp, FeatureColors.TactileScrolling, onOpenTactileScrolling),
-        FeatureEntry(R.string.home_charging_haptics_title, R.string.home_charging_haptics_subtitle, Icons.Rounded.BatteryChargingFull, FeatureColors.Charging, onOpenChargingHaptics),
-        FeatureEntry(R.string.home_button_haptics_title, R.string.home_button_haptics_subtitle, Icons.Rounded.RadioButtonChecked, FeatureColors.ButtonHaptics, onOpenButtonHaptics),
-        FeatureEntry(R.string.home_navbar_haptics_title, R.string.home_navbar_haptics_subtitle, Icons.Rounded.Home, FeatureColors.NavBar, onOpenNavBarHaptics),
-        FeatureEntry(R.string.home_status_bar_haptics_title, R.string.home_status_bar_haptics_subtitle, Icons.Rounded.Notifications, FeatureColors.StatusBar, onOpenStatusBarHaptics),
-        FeatureEntry(R.string.home_unlock_haptics_title, R.string.home_unlock_haptics_subtitle, Icons.Rounded.LockOpen, FeatureColors.Unlock, onOpenUnlockHaptics),
-        FeatureEntry(R.string.home_keyboard_haptics_title, R.string.home_keyboard_haptics_subtitle, Icons.Rounded.Keyboard, FeatureColors.Keyboard, onOpenKeyboardHaptics),
-        FeatureEntry(R.string.home_notification_haptics_title, R.string.home_notification_haptics_subtitle, Icons.Rounded.NotificationsActive, FeatureColors.Notifications, onOpenNotificationHaptics),
-        FeatureEntry(R.string.home_music_haptics_title, R.string.home_music_haptics_subtitle, Icons.Rounded.MusicNote, FeatureColors.MusicHaptics, onOpenMusicHaptics),
+    val scrollBehavior = rememberPetalHeaderScrollBehavior()
+    val groups = listOf(
+        FeatureGroup(
+            title = "Touch & typing",
+            description = "How taps, scrolls and keystrokes feel",
+            items = listOf(
+                FeatureEntry(R.string.home_feel_every_tap_title, R.string.home_feel_every_tap_subtitle, Icons.Rounded.TouchApp, FeatureColors.FeelEveryTap, onOpenFeelEveryTap),
+                FeatureEntry(R.string.home_tactile_scrolling_title, R.string.home_tactile_scrolling_subtitle, Icons.Rounded.SwipeUp, FeatureColors.TactileScrolling, onOpenTactileScrolling),
+                FeatureEntry(R.string.home_keyboard_haptics_title, R.string.home_keyboard_haptics_subtitle, Icons.Rounded.Keyboard, FeatureColors.Keyboard, onOpenKeyboardHaptics),
+            ),
+        ),
+        FeatureGroup(
+            title = "System & hardware",
+            description = "Buttons, navigation, lock screen and power",
+            items = listOf(
+                FeatureEntry(R.string.home_button_haptics_title, R.string.home_button_haptics_subtitle, Icons.Rounded.RadioButtonChecked, FeatureColors.ButtonHaptics, onOpenButtonHaptics),
+                FeatureEntry(R.string.home_navbar_haptics_title, R.string.home_navbar_haptics_subtitle, PetalIcons.NavBar, FeatureColors.NavBar, onOpenNavBarHaptics),
+                FeatureEntry(R.string.home_status_bar_haptics_title, R.string.home_status_bar_haptics_subtitle, PetalIcons.StatusBar, FeatureColors.StatusBar, onOpenStatusBarHaptics),
+                FeatureEntry(R.string.home_unlock_haptics_title, R.string.home_unlock_haptics_subtitle, Icons.Rounded.LockOpen, FeatureColors.Unlock, onOpenUnlockHaptics),
+                FeatureEntry(R.string.home_charging_haptics_title, R.string.home_charging_haptics_subtitle, PetalIcons.Charging, FeatureColors.Charging, onOpenChargingHaptics),
+            ),
+        ),
+        FeatureGroup(
+            title = "Alerts & media",
+            description = "Calls, notifications, alarms and music",
+            items = listOf(
+                FeatureEntry(R.string.home_notification_haptics_title, R.string.home_notification_haptics_subtitle, Icons.Rounded.NotificationsActive, FeatureColors.Notifications, onOpenNotificationHaptics),
+                FeatureEntry(R.string.home_music_haptics_title, R.string.home_music_haptics_subtitle, Icons.Rounded.MusicNote, FeatureColors.MusicHaptics, onOpenMusicHaptics),
+            ),
+        ),
     )
 
-    Scaffold(modifier = modifier.fillMaxSize(), containerColor = MaterialTheme.colorScheme.background) { padding ->
+    val paused = batterySaverDetectionEnabled && isBatterySaverActive
+    val featuresEnabled = globalEnabled && !paused
+
+    Scaffold(
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            PetalCollapsingTopAppBar(
+                title = stringResource(R.string.app_name),
+                scrollBehavior = scrollBehavior,
+                actions = { HomeStatusChip(globalEnabled = globalEnabled, isServiceEnabled = isServiceEnabled, paused = paused) },
+            )
+        },
+    ) { padding ->
+        val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(top = padding.calculateTopPadding())
                 .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp)
-                .padding(top = 24.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp + navBarBottom),
+            verticalArrangement = Arrangement.spacedBy(22.dp),
         ) {
-            AnimatedHomeHeader(entered)
-            Spacer(Modifier.height(20.dp))
-            AnimatedGlobalToggleCard(entered, globalEnabled, onGlobalEnabledChange)
-            Spacer(Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.home_subtitle),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp).entrance(0),
+            )
 
-            if (!isServiceEnabled) {
-                AnimatedVisibility(visible = entered, enter = fadeIn(tween(320)) + slideInVertically(tween(320, easing = FastOutSlowInEasing)) { it / 2 }) {
-                    Column { EnableServiceCard(onOpenSettings = onOpenAccessibilitySettings); Spacer(Modifier.height(16.dp)) }
-                }
+            GlobalToggleCard(globalEnabled, onGlobalEnabledChange, Modifier.entrance(1))
+
+            AnimatedVisibility(visible = !isServiceEnabled, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
+                EnableServiceCard(onOpenSettings = onOpenAccessibilitySettings)
             }
 
-            AnimatedVisibility(
-                visible = batterySaverDetectionEnabled && isBatterySaverActive,
-                enter = fadeIn(tween(300)) + expandVertically(tween(300, easing = FastOutSlowInEasing)),
-                exit = fadeOut(tween(250)) + shrinkVertically(tween(250)),
-            ) {
-                Column {
-                    BatterySaverWarningCard()
-                    Spacer(Modifier.height(16.dp))
-                }
+            AnimatedVisibility(visible = paused, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
+                BatterySaverWarningCard()
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                features.forEachIndexed { index, feature ->
-                    FeatureCard(
-                        title = stringResource(feature.titleRes),
-                        subtitle = stringResource(feature.subtitleRes),
-                        icon = feature.icon,
-                        featureColor = feature.color,
-                        onClick = feature.onClick,
-                        enabled = globalEnabled && !(batterySaverDetectionEnabled && isBatterySaverActive),
-                        entered = entered,
-                        staggerIndex = index,
-                    )
+            var entranceIndex = 2
+            groups.forEach { group ->
+                val groupIndex = entranceIndex++
+                Column(modifier = Modifier.fillMaxWidth().entrance(groupIndex)) {
+                    PetalSectionLabel(text = group.title, description = group.description)
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        group.items.forEachIndexed { index, feature ->
+                            FeatureRow(
+                                title = stringResource(feature.titleRes),
+                                subtitle = stringResource(feature.subtitleRes),
+                                icon = feature.icon,
+                                featureColor = feature.color,
+                                position = petalGroupPositionFor(index, group.items.size),
+                                onClick = feature.onClick,
+                                enabled = featuresEnabled,
+                            )
+                        }
+                    }
                 }
             }
-            val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-            Spacer(Modifier.height(90.dp + navBarBottom))
         }
     }
 }
 
 @Composable
+private fun HomeStatusChip(globalEnabled: Boolean, isServiceEnabled: Boolean, paused: Boolean) {
+    val (label, icon, container, content) = when {
+        paused -> StatusStyle("Paused", PetalIcons.BatterySaver, MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
+        !isServiceEnabled -> StatusStyle("Setup", Icons.Rounded.AccessibilityNew, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+        globalEnabled -> StatusStyle("Active", PetalIcons.Vibration, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+        else -> StatusStyle("Off", Icons.Rounded.PowerSettingsNew, MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    Surface(color = container, shape = CircleShape, modifier = Modifier.padding(end = 12.dp)) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(icon, null, tint = content, modifier = Modifier.size(16.dp))
+            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = content)
+        }
+    }
+}
+
+private data class StatusStyle(val label: String, val icon: ImageVector, val container: Color, val content: Color)
+
+@Composable
 private fun BatterySaverWarningCard() {
-    Surface(
-        color = MaterialTheme.colorScheme.errorContainer,
-        shape = RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    PetalGroupItem(position = PetalGroupPosition.SINGLE, color = MaterialTheme.colorScheme.errorContainer) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.error.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Rounded.BatterySaver, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(24.dp))
-            }
+            PetalShapedIcon(
+                icon = PetalIcons.BatterySaver,
+                shape = PetalMaterialShapes.Sunny,
+                variant = PetalBadgeVariant.ERROR,
+                size = 52.dp,
+                iconSize = 26.dp,
+            )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    "Functionality Paused",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                )
+                Text("Functionality Paused", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onErrorContainer)
                 Text(
                     "Paused the functionality due to Battery Saver being turned on",
                     style = MaterialTheme.typography.bodySmall,
@@ -164,85 +229,126 @@ private fun BatterySaverWarningCard() {
 }
 
 @Composable
-private fun AnimatedHomeHeader(entered: Boolean) {
-    val alpha by animateFloatAsState(if (entered) 1f else 0f, tween(500, easing = FastOutSlowInEasing), label = "h_a")
-    val offsetY by animateDpAsState(if (entered) 0.dp else 24.dp, tween(500, easing = FastOutSlowInEasing), label = "h_y")
-    Column(modifier = Modifier.offset(y = offsetY).alpha(alpha), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onBackground)
-        Text(stringResource(R.string.home_subtitle), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun AnimatedGlobalToggleCard(entered: Boolean, enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {
-    val alpha by animateFloatAsState(if (entered) 1f else 0f, tween(440, delayMillis = 80, easing = FastOutSlowInEasing), label = "t_a")
-    val containerColor by animateColorAsState(if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh, tween(300), label = "t_c")
-    Surface(color = containerColor, shape = RoundedCornerShape(22.dp), modifier = Modifier.fillMaxWidth().alpha(alpha)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                FeatureIcon(icon = Icons.Rounded.Vibration, tint = MaterialTheme.colorScheme.primary, size = 44.dp, iconSize = 22.dp, cornerRadius = 14.dp, backgroundAlpha = 0.15f)
-                Column {
-                    Text(stringResource(R.string.home_global_toggle_title), style = MaterialTheme.typography.titleLarge, color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
-                    Text(if (enabled) stringResource(R.string.home_global_toggle_on) else stringResource(R.string.home_global_toggle_off), style = MaterialTheme.typography.bodySmall, color = (if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.7f))
-                }
+private fun GlobalToggleCard(enabled: Boolean, onEnabledChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    val containerColor by animateColorAsState(
+        if (enabled) MaterialTheme.colorScheme.primaryContainer else petalGroupColor(),
+        spring(stiffness = Spring.StiffnessLow), label = "global_toggle_bg",
+    )
+    val onContainer = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+    val badgeColor by animateColorAsState(
+        if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+        spring(stiffness = Spring.StiffnessLow), label = "global_toggle_badge",
+    )
+    val badgeContent = if (enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+    val spin = rememberInfiniteTransition(label = "global_spin")
+    val angle by spin.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(26_000, easing = LinearEasing), RepeatMode.Restart),
+        label = "global_angle",
+    )
+    PetalGroupItem(
+        position = PetalGroupPosition.SINGLE,
+        modifier = modifier,
+        color = containerColor,
+        onClick = { onEnabledChange(!enabled) },
+    ) {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 104.dp).padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Box(Modifier.size(68.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { rotationZ = if (enabled) angle else 0f }
+                        .clip((if (enabled) PetalMaterialShapes.Cookie12Sided else PetalMaterialShapes.Cookie6Sided).toShape())
+                        .background(badgeColor),
+                )
+                Icon(PetalIcons.Vibration, null, tint = badgeContent, modifier = Modifier.size(32.dp))
             }
-            Switch(checked = enabled, onCheckedChange = onEnabledChange)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    stringResource(R.string.home_global_toggle_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = onContainer,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    if (enabled) stringResource(R.string.home_global_toggle_on) else stringResource(R.string.home_global_toggle_off),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = onContainer.copy(alpha = 0.75f),
+                )
+            }
+            Switch(
+                checked = enabled,
+                onCheckedChange = null,
+                thumbContent = if (enabled) {
+                    { Icon(PetalIcons.Check, null, modifier = Modifier.size(SwitchDefaults.IconSize)) }
+                } else {
+                    null
+                },
+            )
         }
     }
 }
 
 @Composable
-private fun FeatureCard(
+private fun FeatureRow(
     title: String,
     subtitle: String,
     icon: ImageVector,
     featureColor: Color,
+    position: PetalGroupPosition,
     onClick: () -> Unit,
     enabled: Boolean,
-    entered: Boolean,
-    staggerIndex: Int,
+    modifier: Modifier = Modifier,
 ) {
-    val delay = 140 + staggerIndex * 50
-    val alpha by animateFloatAsState(if (entered) 1f else 0f, tween(380, delayMillis = delay, easing = FastOutSlowInEasing), label = "c_a$staggerIndex")
-    val offsetY by animateDpAsState(if (entered) 0.dp else 30.dp, tween(380, delayMillis = delay, easing = FastOutSlowInEasing), label = "c_y$staggerIndex")
-    val dimAlpha = if (enabled) 1f else 0.4f
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .offset(y = offsetY)
-            .alpha(alpha)
-            .clip(RoundedCornerShape(28.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .then(if (enabled) Modifier.hapticClickable(onClick = onClick) else Modifier),
+    val dim = if (enabled) 1f else 0.45f
+    PetalGroupItem(
+        position = position,
+        modifier = modifier,
+        onClick = if (enabled) onClick else null,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 18.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(58.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(featureColor.copy(alpha = if (enabled) 0.15f else 0.06f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(icon, null, tint = featureColor.copy(alpha = dimAlpha), modifier = Modifier.size(30.dp))
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = dimAlpha))
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dimAlpha * 0.85f))
+            FeatureIcon(
+                icon = icon,
+                tint = featureColor.copy(alpha = dim),
+                size = 54.dp,
+                iconSize = 26.dp,
+                backgroundAlpha = if (enabled) 0.18f else 0.08f,
+                shape = featureShape(featureColor),
+            )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = dim),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dim),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             if (enabled) {
                 Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
                 }
             }
         }

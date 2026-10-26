@@ -23,7 +23,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.ui.components.BottomTab
 import com.hapticks.app.ui.components.FloatingBottomBar
-import com.hapticks.app.ui.components.SlidingBottomTabHost
+import com.hapticks.app.ui.components.PetalAlertDialog
+import com.hapticks.app.ui.predictive.PetalStackHost
+import com.hapticks.app.ui.theme.PetalMaterialShapes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.SystemUpdate
 import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.screens.AppExclusionsScreen
 import com.hapticks.app.ui.screens.HomeScreen
@@ -44,6 +48,8 @@ import com.hapticks.app.ui.screens.scrollhaptics.ScrollHapticsScreen
 import com.hapticks.app.ui.screens.tapHaptics.FeelEveryTapScreen
 import com.hapticks.app.ui.screens.musichaptics.MusicHapticsScreen
 import com.hapticks.app.ui.screens.unlockHaptics.UnlockHapticsScreen
+import com.hapticks.app.ui.splash.EverHapticsSplashScreen
+import com.hapticks.app.ui.splash.EverHapticsSplashState
 import com.hapticks.app.util.AppVersion
 import com.hapticks.app.util.UpdateChecker
 import com.hapticks.app.ui.theme.HapticksTheme
@@ -70,9 +76,26 @@ class MainActivity : ComponentActivity() {
                 amoledBlack = settings.amoledBlack,
                 seedColor = if (settings.useDynamicColors) null else settings.seedColor,
             ) {
+                var isSplashFinished by remember { mutableStateOf(EverHapticsSplashState.hasShownThisSession) }
+                AnimatedContent(
+                    targetState = isSplashFinished,
+                    transitionSpec = { fadeIn(tween(450)) togetherWith fadeOut(tween(300)) },
+                    label = "splash_to_main",
+                ) { splashDone ->
+                if (!splashDone) {
+                EverHapticsSplashScreen(onSplashComplete = { isSplashFinished = true })
+                } else {
                 ProvideHapticksEdgeOverscrollHaptics {
-                    var route by rememberSaveable { mutableStateOf(Route.HOME) }
-                    var previousRoute by rememberSaveable { mutableStateOf(Route.HOME) }
+                    // Back stack of route names (saveable). HOME is always the root; SETTINGS sits on top of it.
+                    var stack by rememberSaveable { mutableStateOf(listOf(Route.HOME.name)) }
+                    val routes = stack.map { Route.valueOf(it) }
+                    val currentRoute = routes.last()
+                    fun push(target: Route) { if (target !in routes) stack = stack + target.name }
+                    fun pop() { if (stack.size > 1) stack = stack.dropLast(1) }
+                    fun selectTab(tab: BottomTab) {
+                        stack = if (tab == BottomTab.HOME) listOf(Route.HOME.name) else listOf(Route.HOME.name, Route.SETTINGS.name)
+                    }
+                    var pendingUpdate by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
 
                     // Hoisted scroll state — persists when navigating into and back from features
                     val homeScrollState = rememberScrollState()
@@ -83,19 +106,10 @@ class MainActivity : ComponentActivity() {
                         if (settings.autoCheckUpdatesEnabled && !hasAutoChecked) {
                             hasAutoChecked = true
                             UpdateChecker.checkForUpdate(AppVersion.get(this@MainActivity)).onSuccess { info ->
-                                if (info.isUpdateAvailable) {
-                                    android.widget.Toast.makeText(
-                                        this@MainActivity,
-                                        "Ever Haptics v${info.latestVersion} is available! Check Settings → Updates.",
-                                        android.widget.Toast.LENGTH_LONG,
-                                    ).show()
-                                }
+                                if (info.isUpdateAvailable) pendingUpdate = info
                             }
                         }
                     }
-
-                    // Back press in Settings tab → go to Home instead of closing app
-                    BackHandler(enabled = route == Route.SETTINGS) { route = Route.HOME }
 
                     // Welcome dialog — only after DataStore has emitted once (prevents false show from default value)
                     if (isSettingsLoaded && !settings.hasSeenWelcome) {
@@ -106,61 +120,57 @@ class MainActivity : ComponentActivity() {
                     var customEditorSequence by remember { mutableStateOf(CustomHapticSequence()) }
                     var customEditorOnSave by remember { mutableStateOf<(CustomHapticSequence) -> Unit>({}) }
 
-                    fun openCustomEditor(origin: Route, label: String, sequence: CustomHapticSequence, onSave: (CustomHapticSequence) -> Unit) {
+                    fun openCustomEditor(label: String, sequence: CustomHapticSequence, onSave: (CustomHapticSequence) -> Unit) {
                         customEditorLabel = label
                         customEditorSequence = sequence
                         customEditorOnSave = onSave
-                        previousRoute = origin
-                        route = Route.CUSTOM_HAPTIC_EDITOR
+                        push(Route.CUSTOM_HAPTIC_EDITOR)
+                    }
+
+                    pendingUpdate?.let { info ->
+                        PetalAlertDialog(
+                            onDismissRequest = { pendingUpdate = null },
+                            title = "Update available",
+                            message = "Ever Haptics v${info.latestVersion} is ready. You can download and install it from Settings.",
+                            icon = Icons.Rounded.SystemUpdate,
+                            badgeShape = PetalMaterialShapes.Cookie9Sided,
+                            confirmText = "Open Settings",
+                            onConfirm = { pendingUpdate = null; selectTab(BottomTab.SETTINGS) },
+                            dismissText = "Later",
+                        )
                     }
 
                     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                        AnimatedContent(
-                            targetState = route,
-                            transitionSpec = {
-                                when {
-                                    targetState == Route.HOME || targetState == Route.SETTINGS ->
-                                        (slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 3 } + fadeIn(tween(260)))
-                                            .togetherWith(slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(200)))
-                                    targetState == Route.CUSTOM_HAPTIC_EDITOR ->
-                                        (slideInVertically(tween(340, easing = FastOutSlowInEasing)) { it / 2 } + fadeIn(tween(280)))
-                                            .togetherWith(fadeOut(tween(180)))
-                                    initialState == Route.CUSTOM_HAPTIC_EDITOR ->
-                                        fadeIn(tween(240))
-                                            .togetherWith(slideOutVertically(tween(320, easing = FastOutSlowInEasing)) { it / 2 } + fadeOut(tween(220)))
-                                    else ->
-                                        (slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { it } + fadeIn(tween(260)))
-                                            .togetherWith(slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { -it / 3 } + fadeOut(tween(200)))
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-                            label = "route_anim",
+                        PetalStackHost(
+                            stack = routes,
+                            onBack = { pop() },
+                            predictiveEnabled = settings.predictiveBackEnabled,
+                            blurEnabled = settings.depthBlurEnabled,
+                            modifier = Modifier.fillMaxSize(),
                         ) { currentRoute ->
                             when (currentRoute) {
-                                Route.HOME, Route.SETTINGS -> {
-                                    val bottomTab = if (currentRoute == Route.HOME) BottomTab.HOME else BottomTab.SETTINGS
-                                    SlidingBottomTabHost(selectedTab = bottomTab, modifier = Modifier.fillMaxSize()) { tab ->
-                                        when (tab) {
-                                            BottomTab.HOME -> HomeScreen(
+                                Route.HOME ->
+                                            HomeScreen(
                                                 globalEnabled = settings.globalEnabled,
                                                 isServiceEnabled = isServiceEnabled,
                                                 isBatterySaverActive = isBatterySaverActive,
                                                 batterySaverDetectionEnabled = settings.batterySaverDetectionEnabled,
                                                 scrollState = homeScrollState,
                                                 onGlobalEnabledChange = viewModel::setGlobalEnabled,
-                                                onOpenFeelEveryTap = { route = Route.FEEL_EVERY_TAP },
-                                                onOpenTactileScrolling = { route = Route.TACTILE_SCROLLING },
-                                                onOpenChargingHaptics = { route = Route.CHARGING_HAPTICS },
-                                                onOpenButtonHaptics = { route = Route.BUTTON_HAPTICS },
-                                                onOpenNavBarHaptics = { route = Route.NAVBAR_HAPTICS },
-                                                onOpenStatusBarHaptics = { route = Route.STATUSBAR_HAPTICS },
-                                                onOpenUnlockHaptics = { route = Route.UNLOCK_HAPTICS },
-                                                onOpenNotificationHaptics = { route = Route.NOTIFICATION_HAPTICS },
-                                                onOpenKeyboardHaptics = { route = Route.KEYBOARD_HAPTICS },
-                                                onOpenMusicHaptics = { route = Route.MUSIC_HAPTICS },
+                                                onOpenFeelEveryTap = { push(Route.FEEL_EVERY_TAP) },
+                                                onOpenTactileScrolling = { push(Route.TACTILE_SCROLLING) },
+                                                onOpenChargingHaptics = { push(Route.CHARGING_HAPTICS) },
+                                                onOpenButtonHaptics = { push(Route.BUTTON_HAPTICS) },
+                                                onOpenNavBarHaptics = { push(Route.NAVBAR_HAPTICS) },
+                                                onOpenStatusBarHaptics = { push(Route.STATUSBAR_HAPTICS) },
+                                                onOpenUnlockHaptics = { push(Route.UNLOCK_HAPTICS) },
+                                                onOpenNotificationHaptics = { push(Route.NOTIFICATION_HAPTICS) },
+                                                onOpenKeyboardHaptics = { push(Route.KEYBOARD_HAPTICS) },
+                                                onOpenMusicHaptics = { push(Route.MUSIC_HAPTICS) },
                                                 onOpenAccessibilitySettings = ::openAccessibilitySettings,
                                             )
-                                            BottomTab.SETTINGS -> SettingsScreen(
+                                Route.SETTINGS ->
+                                            SettingsScreen(
                                                 settings = settings,
                                                 onUseDynamicColorsChange = viewModel::setUseDynamicColors,
                                                 onThemeModeChange = viewModel::setThemeMode,
@@ -168,15 +178,13 @@ class MainActivity : ComponentActivity() {
                                                 onSeedColorChange = viewModel::setSeedColor,
                                                 onBatterySaverDetectionChange = viewModel::setBatterySaverDetectionEnabled,
                                                 onAutoCheckUpdatesChange = viewModel::setAutoCheckUpdatesEnabled,
-                                                onOpenReviews = { route = Route.REVIEWS_WEBVIEW },
-                                                onOpenExploreApps = { route = Route.EXPLORE_APPS_WEBVIEW },
+                                                onPredictiveBackChange = viewModel::setPredictiveBackEnabled,
+                                                onDepthBlurChange = viewModel::setDepthBlurEnabled,
+                                                onOpenReviews = { push(Route.REVIEWS_WEBVIEW) },
+                                                onOpenExploreApps = { push(Route.EXPLORE_APPS_WEBVIEW) },
                                             )
-                                        }
-                                    }
-                                }
 
                                 Route.FEEL_EVERY_TAP -> {
-                                    BackHandler { route = Route.HOME }
                                     FeelEveryTapScreen(
                                         settings = settings,
                                         onTapEnabledChange = viewModel::setTapEnabled,
@@ -185,24 +193,22 @@ class MainActivity : ComponentActivity() {
                                         onTapCustomSequenceSave = viewModel::setTapHapticCustomSequence,
                                         onTestHaptic = viewModel::testHaptic,
                                         onResetToDefaults = viewModel::resetTapDefaults,
-                                        onOpenAppExclusions = { route = Route.TAP_APP_EXCLUSIONS },
-                                        onOpenCustomEditor = { label, seq, onSave -> openCustomEditor(Route.FEEL_EVERY_TAP, label, seq, onSave) },
-                                        onBack = { route = Route.HOME },
+                                        onOpenAppExclusions = { push(Route.TAP_APP_EXCLUSIONS) },
+                                        onOpenCustomEditor = { label, seq, onSave -> openCustomEditor(label, seq, onSave) },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.TAP_APP_EXCLUSIONS -> {
-                                    BackHandler { route = Route.FEEL_EVERY_TAP }
                                     AppExclusionsScreen(
                                         title = getString(R.string.app_exclusions_title),
                                         excludedPackages = settings.tapExcludedPackages,
                                         onExcludedPackagesChange = viewModel::setTapExcludedPackages,
-                                        onBack = { route = Route.FEEL_EVERY_TAP },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.TACTILE_SCROLLING -> {
-                                    BackHandler { route = Route.HOME }
                                     ScrollHapticsScreen(
                                         settings = settings,
                                         isServiceEnabled = isServiceEnabled,
@@ -221,23 +227,21 @@ class MainActivity : ComponentActivity() {
                                         onTailCutoffMsCommit = viewModel::commitScrollTailCutoffMs,
                                         onTestHaptic = viewModel::testScrollHaptic,
                                         onResetToDefaults = viewModel::resetScrollDefaults,
-                                        onOpenAppExclusions = { route = Route.SCROLL_APP_EXCLUSIONS },
-                                        onBack = { route = Route.HOME },
+                                        onOpenAppExclusions = { push(Route.SCROLL_APP_EXCLUSIONS) },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.SCROLL_APP_EXCLUSIONS -> {
-                                    BackHandler { route = Route.TACTILE_SCROLLING }
                                     AppExclusionsScreen(
                                         title = getString(R.string.app_exclusions_title),
                                         excludedPackages = settings.scrollExcludedPackages,
                                         onExcludedPackagesChange = viewModel::setScrollExcludedPackages,
-                                        onBack = { route = Route.TACTILE_SCROLLING },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.CHARGING_HAPTICS -> {
-                                    BackHandler { route = Route.HOME }
                                     ChargingHapticsScreen(
                                         settings = settings,
                                         onChargingVibEnabledChange = viewModel::setChargingVibEnabled,
@@ -248,40 +252,38 @@ class MainActivity : ComponentActivity() {
                                         onCustomSequenceSaved = viewModel::setChargingVibCustomSequence,
                                         onTestHaptic = viewModel::testChargingHaptic,
                                         onResetToDefaults = viewModel::resetChargingDefaults,
-                                        onOpenCustomEditor = { openCustomEditor(Route.CHARGING_HAPTICS, "charging", settings.chargingVibCustomSequence, viewModel::setChargingVibCustomSequence) },
-                                        onBack = { route = Route.HOME },
+                                        onOpenCustomEditor = { openCustomEditor("charging", settings.chargingVibCustomSequence, viewModel::setChargingVibCustomSequence) },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.BUTTON_HAPTICS -> {
-                                    BackHandler { route = Route.HOME }
                                     ButtonHapticsScreen(
                                         settings = settings,
                                         onVolumeHapticEnabledChange = viewModel::setVolumeHapticEnabled,
                                         onVolumePatternSelected = viewModel::setVolumeHapticPattern,
                                         onVolumeIntensityCommit = viewModel::commitVolumeHapticIntensity,
-                                        onVolumeOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "volume", settings.volumeHapticCustomSequence, viewModel::setVolumeHapticCustomSequence) },
+                                        onVolumeOpenCustomEditor = { openCustomEditor("volume", settings.volumeHapticCustomSequence, viewModel::setVolumeHapticCustomSequence) },
                                         onVolumeClearCustomSequence = { viewModel.setVolumeHapticCustomSequence(CustomHapticSequence()) },
                                         onPowerHapticEnabledChange = viewModel::setPowerHapticEnabled,
                                         onPowerPatternSelected = viewModel::setPowerHapticPattern,
                                         onPowerIntensityCommit = viewModel::commitPowerHapticIntensity,
-                                        onPowerOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "power", settings.powerHapticCustomSequence, viewModel::setPowerHapticCustomSequence) },
+                                        onPowerOpenCustomEditor = { openCustomEditor("power", settings.powerHapticCustomSequence, viewModel::setPowerHapticCustomSequence) },
                                         onPowerClearCustomSequence = { viewModel.setPowerHapticCustomSequence(CustomHapticSequence()) },
                                         onBrightnessHapticEnabledChange = viewModel::setBrightnessHapticEnabled,
                                         onBrightnessPatternSelected = viewModel::setBrightnessHapticPattern,
                                         onBrightnessIntensityCommit = viewModel::commitBrightnessHapticIntensity,
-                                        onBrightnessOpenCustomEditor = { openCustomEditor(Route.BUTTON_HAPTICS, "brightness", settings.brightnessHapticCustomSequence, viewModel::setBrightnessHapticCustomSequence) },
+                                        onBrightnessOpenCustomEditor = { openCustomEditor("brightness", settings.brightnessHapticCustomSequence, viewModel::setBrightnessHapticCustomSequence) },
                                         onBrightnessClearCustomSequence = { viewModel.setBrightnessHapticCustomSequence(CustomHapticSequence()) },
                                         onTestVolumeHaptic = viewModel::testVolumeHaptic,
                                         onTestPowerHaptic = viewModel::testPowerHaptic,
                                         onTestBrightnessHaptic = viewModel::testBrightnessHaptic,
                                         onResetToDefaults = viewModel::resetButtonHapticsDefaults,
-                                        onBack = { route = Route.HOME },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.NAVBAR_HAPTICS -> {
-                                    BackHandler { route = Route.HOME }
                                     NavBarHapticsScreen(
                                         settings = settings,
                                         onNavBarHapticEnabledChange = viewModel::setNavBarHapticEnabled,
@@ -289,14 +291,13 @@ class MainActivity : ComponentActivity() {
                                         onIntensityCommit = viewModel::commitNavBarHapticIntensity,
                                         onTestHaptic = viewModel::testNavBarHaptic,
                                         onResetToDefaults = viewModel::resetNavBarDefaults,
-                                        onOpenCustomEditor = { openCustomEditor(Route.NAVBAR_HAPTICS, "navbar", settings.navBarHapticCustomSequence, viewModel::setNavBarHapticCustomSequence) },
+                                        onOpenCustomEditor = { openCustomEditor("navbar", settings.navBarHapticCustomSequence, viewModel::setNavBarHapticCustomSequence) },
                                         onClearCustomSequence = { viewModel.setNavBarHapticCustomSequence(CustomHapticSequence()) },
-                                        onBack = { route = Route.HOME },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.STATUSBAR_HAPTICS -> {
-                                    BackHandler { route = Route.HOME }
                                     StatusBarHapticsScreen(
                                         settings = settings,
                                         onStatusBarHapticEnabledChange = viewModel::setStatusBarHapticEnabled,
@@ -311,16 +312,15 @@ class MainActivity : ComponentActivity() {
                                         onCollapseCustomSequenceSave = viewModel::setStatusBarCollapseCustomSequence,
                                         onTestCollapseHaptic = viewModel::testStatusBarCollapseHaptic,
                                         onResetToDefaults = viewModel::resetStatusBarDefaults,
-                                        onOpenExpandCustomEditor = { openCustomEditor(Route.STATUSBAR_HAPTICS, "statusbar_expand", settings.statusBarExpandCustomSequence, viewModel::setStatusBarExpandCustomSequence) },
+                                        onOpenExpandCustomEditor = { openCustomEditor("statusbar_expand", settings.statusBarExpandCustomSequence, viewModel::setStatusBarExpandCustomSequence) },
                                         onClearExpandCustomSequence = { viewModel.setStatusBarExpandCustomSequence(CustomHapticSequence()) },
-                                        onOpenCollapseCustomEditor = { openCustomEditor(Route.STATUSBAR_HAPTICS, "statusbar_collapse", settings.statusBarCollapseCustomSequence, viewModel::setStatusBarCollapseCustomSequence) },
+                                        onOpenCollapseCustomEditor = { openCustomEditor("statusbar_collapse", settings.statusBarCollapseCustomSequence, viewModel::setStatusBarCollapseCustomSequence) },
                                         onClearCollapseCustomSequence = { viewModel.setStatusBarCollapseCustomSequence(CustomHapticSequence()) },
-                                        onBack = { route = Route.HOME },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.UNLOCK_HAPTICS -> {
-                                    BackHandler { route = Route.HOME }
                                     UnlockHapticsScreen(
                                         settings = settings,
                                         onUnlockHapticEnabledChange = viewModel::setUnlockHapticEnabled,
@@ -328,14 +328,13 @@ class MainActivity : ComponentActivity() {
                                         onIntensityCommit = viewModel::commitUnlockHapticIntensity,
                                         onTestHaptic = viewModel::testUnlockHaptic,
                                         onResetToDefaults = viewModel::resetUnlockDefaults,
-                                        onOpenCustomEditor = { openCustomEditor(Route.UNLOCK_HAPTICS, "unlock", settings.unlockHapticCustomSequence, viewModel::setUnlockHapticCustomSequence) },
+                                        onOpenCustomEditor = { openCustomEditor("unlock", settings.unlockHapticCustomSequence, viewModel::setUnlockHapticCustomSequence) },
                                         onClearCustomSequence = { viewModel.setUnlockHapticCustomSequence(CustomHapticSequence()) },
-                                        onBack = { route = Route.HOME },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.KEYBOARD_HAPTICS -> {
-                                    BackHandler { route = Route.HOME }
                                     KeyboardHapticsScreen(
                                         settings = settings,
                                         onKeyboardHapticEnabledChange = viewModel::setKeyboardHapticEnabled,
@@ -343,14 +342,13 @@ class MainActivity : ComponentActivity() {
                                         onIntensityCommit = viewModel::commitKeyboardHapticIntensity,
                                         onTestHaptic = viewModel::testKeyboardHaptic,
                                         onResetToDefaults = viewModel::resetKeyboardDefaults,
-                                        onOpenCustomEditor = { openCustomEditor(Route.KEYBOARD_HAPTICS, "keyboard", settings.keyboardHapticCustomSequence, viewModel::setKeyboardHapticCustomSequence) },
+                                        onOpenCustomEditor = { openCustomEditor("keyboard", settings.keyboardHapticCustomSequence, viewModel::setKeyboardHapticCustomSequence) },
                                         onClearCustomSequence = { viewModel.setKeyboardHapticCustomSequence(CustomHapticSequence()) },
-                                        onBack = { route = Route.HOME },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.NOTIFICATION_HAPTICS -> {
-                                    BackHandler { route = Route.HOME }
                                     NotificationHapticsScreen(
                                         callHapticEnabled = settings.callHapticEnabled,
                                         callPattern = settings.callHapticPattern,
@@ -362,7 +360,7 @@ class MainActivity : ComponentActivity() {
                                         onCallCustomSequenceSave = viewModel::setCallHapticCustomSequence,
                                         onTestCallHaptic = viewModel::testCallHaptic,
                                         callHapticAuto = settings.callHapticAuto,
-                                        onOpenCallAutoSettings = { viewModel.setCallHapticAuto(true); viewModel.setCallHapticCustomSequence(CustomHapticSequence()); route = Route.CALL_AUTO_HAPTICS },
+                                        onOpenCallAutoSettings = { viewModel.setCallHapticAuto(true); viewModel.setCallHapticCustomSequence(CustomHapticSequence()); push(Route.CALL_AUTO_HAPTICS) },
                                         onCallAutoChange = viewModel::setCallHapticAuto,
                                         notifHapticEnabled = settings.notifHapticEnabled,
                                         notifPattern = settings.notifHapticPattern,
@@ -383,28 +381,26 @@ class MainActivity : ComponentActivity() {
                                         onAlarmCustomSequenceSave = viewModel::setAlarmHapticCustomSequence,
                                         onTestAlarmHaptic = viewModel::testAlarmHaptic,
                                         alarmHapticAuto = settings.alarmHapticAuto,
-                                        onOpenAlarmAutoSettings = { viewModel.setAlarmHapticAuto(true); viewModel.setAlarmHapticCustomSequence(CustomHapticSequence()); route = Route.ALARM_AUTO_HAPTICS },
+                                        onOpenAlarmAutoSettings = { viewModel.setAlarmHapticAuto(true); viewModel.setAlarmHapticCustomSequence(CustomHapticSequence()); push(Route.ALARM_AUTO_HAPTICS) },
                                         onAlarmAutoChange = viewModel::setAlarmHapticAuto,
                                         onResetToDefaults = viewModel::resetNotificationHapticsDefaults,
-                                        onOpenCustomEditor = { label, sequence, onSave -> openCustomEditor(Route.NOTIFICATION_HAPTICS, label, sequence, onSave) },
-                                        onBack = { route = Route.HOME },
+                                        onOpenCustomEditor = { label, sequence, onSave -> openCustomEditor(label, sequence, onSave) },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.MUSIC_HAPTICS -> {
-                                    BackHandler { route = Route.HOME }
                                     MusicHapticsScreen(
                                         settings = settings,
                                         onMusicHapticsEnabledChange = viewModel::setMusicHapticsEnabled,
                                         onMusicHapticsSourceChange = viewModel::setMusicHapticsSource,
                                         onSensitivityCommit = viewModel::commitMusicHapticsSensitivity,
                                         onStrengthCommit = viewModel::commitMusicHapticsStrength,
-                                        onBack = { route = Route.HOME },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.CALL_AUTO_HAPTICS -> {
-                                    BackHandler { route = Route.NOTIFICATION_HAPTICS }
                                     AutoHapticsSettingsScreen(
                                         type = AutoHapticsType.CALL,
                                         isEnabled = settings.callHapticAuto,
@@ -413,12 +409,11 @@ class MainActivity : ComponentActivity() {
                                         onEnabledChange = viewModel::setCallHapticAuto,
                                         onSensitivityCommit = viewModel::commitCallAutoSensitivity,
                                         onStrengthCommit = viewModel::commitCallAutoStrength,
-                                        onBack = { route = Route.NOTIFICATION_HAPTICS },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.ALARM_AUTO_HAPTICS -> {
-                                    BackHandler { route = Route.NOTIFICATION_HAPTICS }
                                     AutoHapticsSettingsScreen(
                                         type = AutoHapticsType.ALARM,
                                         isEnabled = settings.alarmHapticAuto,
@@ -427,49 +422,47 @@ class MainActivity : ComponentActivity() {
                                         onEnabledChange = viewModel::setAlarmHapticAuto,
                                         onSensitivityCommit = viewModel::commitAlarmAutoSensitivity,
                                         onStrengthCommit = viewModel::commitAlarmAutoStrength,
-                                        onBack = { route = Route.NOTIFICATION_HAPTICS },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.REVIEWS_WEBVIEW -> {
-                                    BackHandler { route = Route.SETTINGS }
                                     ReviewsWebViewScreen(
-                                        onBack = { route = Route.SETTINGS },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.EXPLORE_APPS_WEBVIEW -> {
-                                    BackHandler { route = Route.SETTINGS }
                                     ExploreAppsWebViewScreen(
-                                        onBack = { route = Route.SETTINGS },
+                                        onBack = { pop() },
                                     )
                                 }
 
                                 Route.CUSTOM_HAPTIC_EDITOR -> {
-                                    val origin = previousRoute
-                                    BackHandler { route = origin }
                                     CustomHapticEditorScreen(
                                         label = customEditorLabel,
                                         initialSequence = customEditorSequence,
                                         onSave = { seq -> customEditorOnSave(seq) },
-                                        onBack = { route = origin },
+                                        onBack = { pop() },
                                     )
                                 }
                             }
                         }
 
                         AnimatedVisibility(
-                            visible = route == Route.HOME || route == Route.SETTINGS,
+                            visible = currentRoute == Route.HOME || currentRoute == Route.SETTINGS,
                             enter = fadeIn(tween(200)) + slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it / 2 },
                             exit = fadeOut(tween(160)) + slideOutVertically(tween(200)) { it / 2 },
                             modifier = Modifier.align(Alignment.BottomCenter),
                         ) {
                             FloatingBottomBar(
-                                selectedTab = if (route == Route.HOME) BottomTab.HOME else BottomTab.SETTINGS,
-                                onTabSelected = { tab -> route = if (tab == BottomTab.HOME) Route.HOME else Route.SETTINGS },
+                                selectedTab = if (currentRoute == Route.SETTINGS) BottomTab.SETTINGS else BottomTab.HOME,
+                                onTabSelected = { tab -> selectTab(tab) },
                             )
                         }
                     }
+                }
+                }
                 }
             }
         }

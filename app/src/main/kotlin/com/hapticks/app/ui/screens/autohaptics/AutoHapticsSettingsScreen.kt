@@ -1,6 +1,10 @@
 package com.hapticks.app.ui.screens.autohaptics
 
+import com.hapticks.app.ui.theme.PetalIcons
+import com.hapticks.app.ui.components.PetalFeatureScreen
 import androidx.compose.foundation.layout.*
+import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
+import com.hapticks.app.ui.components.PetalSlider
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -54,31 +58,7 @@ fun AutoHapticsSettingsScreen(
         "Vibrates in sync with your alarm sound beats in real time using audio analysis."
     val featureColor = MaterialTheme.colorScheme.tertiary
 
-    Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            LargeTopAppBar(
-                title = { Text(title, style = MaterialTheme.typography.displaySmall) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background,
-                ),
-            )
-        },
-    ) { padding ->
-        LazyColumn(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+    PetalFeatureScreen(title = title, onBack = onBack, modifier = modifier) {
             item("header") {
                 ScreenIconHeader(
                     icon = Icons.Rounded.GraphicEq,
@@ -154,11 +134,11 @@ fun AutoHapticsSettingsScreen(
             item("info") {
                 Surface(
                     color = featureColor.copy(alpha = 0.12f),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = com.hapticks.app.ui.components.PetalContainmentDefaults.shape,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-                        Icon(Icons.Rounded.Info, null, tint = featureColor, modifier = Modifier.size(20.dp).padding(top = 2.dp))
+                        Icon(PetalIcons.Info, null, tint = featureColor, modifier = Modifier.size(20.dp).padding(top = 2.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("How Auto Beat Haptics works", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                             Text(
@@ -170,7 +150,6 @@ fun AutoHapticsSettingsScreen(
                     }
                 }
             }
-        }
     }
 }
 
@@ -203,7 +182,7 @@ private fun AutoSlider(
                 )
             }
         }
-        Slider(
+        PetalSlider(
             value = value, onValueChange = onValueChange, onValueChangeFinished = onValueChangeFinished,
             valueRange = 0f..1f, steps = SliderTickStepsDefault, enabled = enabled,
             colors = SliderDefaults.colors(

@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.hapticks.app.ui.theme.ExpressiveShapeHolder
+import com.hapticks.app.ui.theme.PetalMaterialShapes
 
 // ── Per-feature brand colours ──────────────────────────────────────────────
 object FeatureColors {
@@ -31,9 +33,20 @@ object FeatureColors {
     val StatusBar         = Color(0xFF0EA5E9)   // sky blue
 }
 
+private val FeatureShapes = listOf(
+    PetalMaterialShapes.Cookie6Sided, PetalMaterialShapes.Sunny, PetalMaterialShapes.Clover4Leaf,
+    PetalMaterialShapes.Flower, PetalMaterialShapes.Cookie9Sided, PetalMaterialShapes.Pentagon,
+    PetalMaterialShapes.Cookie12Sided, PetalMaterialShapes.Gem, PetalMaterialShapes.SoftBurst,
+    PetalMaterialShapes.Cookie7Sided, PetalMaterialShapes.Clover8Leaf, PetalMaterialShapes.Puffy,
+)
+
+/** Every feature colour maps to its own stable Material 3 Expressive shape. */
+fun featureShape(tint: Color): ExpressiveShapeHolder =
+    FeatureShapes[(tint.value.toLong().toInt().let { if (it < 0) -it else it }) % FeatureShapes.size]
+
 /**
- * Circular/rounded icon with a translucent tinted background.
- * Used on home cards and inside each feature screen header.
+ * Feature icon in an expressive shape (cookie, sunny, clover...) with a translucent tinted fill.
+ * Used on home cards, section headers and inside each feature screen header.
  */
 @Composable
 fun FeatureIcon(
@@ -42,13 +55,14 @@ fun FeatureIcon(
     modifier: Modifier = Modifier,
     size: Dp = 56.dp,
     iconSize: Dp = 28.dp,
-    cornerRadius: Dp = 18.dp,
+    @Suppress("UNUSED_PARAMETER") cornerRadius: Dp = 18.dp,
     backgroundAlpha: Float = 0.15f,
+    shape: ExpressiveShapeHolder = featureShape(tint),
 ) {
     Box(
         modifier = modifier
             .size(size)
-            .clip(RoundedCornerShape(cornerRadius))
+            .clip(shape.toShape())
             .background(tint.copy(alpha = backgroundAlpha)),
         contentAlignment = Alignment.Center,
     ) {

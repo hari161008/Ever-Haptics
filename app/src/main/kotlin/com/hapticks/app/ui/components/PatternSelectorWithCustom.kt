@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.components
 
+import com.hapticks.app.ui.theme.PetalIcons
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -46,6 +47,7 @@ fun PatternSelectorWithCustom(
     accentColor: Color = MaterialTheme.colorScheme.primary,
     accentContainer: Color = MaterialTheme.colorScheme.primaryContainer,
     accentOnContainer: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    showIntensity: Boolean = true,
 ) {
     val isCustomActive = !customSequence.isEmpty
     Column(modifier = modifier.fillMaxWidth()) {
@@ -83,8 +85,10 @@ fun PatternSelectorWithCustom(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
-        IntensityRow(intensity, onIntensityCommit, accentColor, accentContainer, accentOnContainer)
+        if (showIntensity) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
+            IntensityRow(intensity, onIntensityCommit, accentColor, accentContainer, accentOnContainer)
+        }
     }
 }
 
@@ -99,7 +103,7 @@ private fun PatternCard(
     modifier: Modifier = Modifier,
 ) {
     val containerColor by animateColorAsState(
-        if (isSelected) accentContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+        if (isSelected) accentContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
         spring(stiffness = 300f), label = "pc",
     )
     val borderColor by animateColorAsState(
@@ -110,6 +114,7 @@ private fun PatternCard(
     val titleColor = if (isSelected) accentOnContainer else MaterialTheme.colorScheme.onSurface
     val descColor = if (isSelected) accentOnContainer.copy(alpha = 0.75f) else MaterialTheme.colorScheme.onSurfaceVariant
     val interactionSource = remember { MutableInteractionSource() }
+    val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
 
     Surface(
         modifier = modifier
@@ -122,8 +127,8 @@ private fun PatternCard(
                 indication = ripple(bounded = true),
             ),
         color = containerColor,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(borderWidth, borderColor),
+        shape = RoundedCornerShape(corner),
+        
     ) {
         Column(
             Modifier
@@ -141,8 +146,8 @@ private fun PatternCard(
                     modifier = Modifier
                         .size(40.dp)
                         .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape(),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -173,7 +178,7 @@ private fun CustomPatternCard(
     modifier: Modifier = Modifier,
 ) {
     val containerColor by animateColorAsState(
-        if (isSelected) accentContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+        if (isSelected) accentContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
         spring(stiffness = 300f), label = "cc",
     )
     val borderColor by animateColorAsState(
@@ -182,6 +187,7 @@ private fun CustomPatternCard(
     )
     val borderWidth by animateDpAsState(if (isSelected) 1.5.dp else 1.dp, label = "cbw")
     val interactionSource = remember { MutableInteractionSource() }
+    val corner by animateDpAsState(if (isSelected) 32.dp else 20.dp, spring(dampingRatio = 0.6f, stiffness = 380f), label = "pattern_corner")
 
     Surface(
         modifier = modifier.selectable(
@@ -192,8 +198,8 @@ private fun CustomPatternCard(
             indication = ripple(bounded = true),
         ),
         color = containerColor,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(borderWidth, borderColor),
+        shape = RoundedCornerShape(corner),
+        
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -204,8 +210,8 @@ private fun CustomPatternCard(
                 modifier = Modifier
                     .size(40.dp)
                     .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape(),
                     ),
                 contentAlignment = Alignment.Center,
             ) {
@@ -243,7 +249,7 @@ private fun SelectionDot(isSelected: Boolean, accentColor: Color) {
         modifier = Modifier.size(22.dp).scale(scale).background(accentColor, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (isSelected) Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(14.dp))
+        if (isSelected) Icon(PetalIcons.Check, null, tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(14.dp))
     }
 }
 
@@ -270,7 +276,7 @@ private fun IntensityRow(
                 )
             }
         }
-        Slider(
+        PetalSlider(
             value = draft,
             onValueChange = {
                 draft = it

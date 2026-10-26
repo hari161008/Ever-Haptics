@@ -118,11 +118,13 @@ object UpdateChecker {
     }
 
     private fun installApk(context: Context, apkFile: File) {
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", apkFile)
-        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-        })
+        runCatching {
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", apkFile)
+            context.startActivity(Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+            })
+        }
     }
 
     private fun isNewerVersion(remote: String, current: String): Boolean {

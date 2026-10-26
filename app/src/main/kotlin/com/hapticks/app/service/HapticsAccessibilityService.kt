@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.onEach
 
 class HapticsAccessibilityService : AccessibilityService() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, t -> android.util.Log.w("Hapticks", "Coroutine failed", t) })
     private var settingsJob: Job? = null
 
     @Volatile private var current: HapticsSettings = HapticsSettings.Default
@@ -91,14 +91,14 @@ class HapticsAccessibilityService : AccessibilityService() {
 
     private suspend fun playCustomSequence(seq: CustomHapticSequence) {
         val sorted = seq.beats.sortedBy { it.offsetMs }
-        val touchAttrs = VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH)
+        val alarmAttrs = VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM)
         val startMs = System.currentTimeMillis()
         for (beat in sorted) {
             val now = System.currentTimeMillis() - startMs
             val waitMs = beat.offsetMs - now
             if (waitMs > 0) delay(waitMs)
             withContext(Dispatchers.Main) {
-                try { vibrator.vibrate(VibrationEffect.createOneShot(60L, beat.amplitude.coerceIn(1, 255)), touchAttrs) }
+                try { vibrator.vibrate(VibrationEffect.createOneShot(60L, beat.amplitude.coerceIn(1, 255)), alarmAttrs) }
                 catch (_: Exception) { engine.playOneShot(60L, beat.amplitude) }
             }
         }
@@ -262,8 +262,8 @@ class HapticsAccessibilityService : AccessibilityService() {
                     val now = System.currentTimeMillis()
                     val sourceClass = ev.className?.toString() ?: ""
                     val isKeyboardEvent = isKeyboardPackage(pkg) ||
-                            sourceClass.contains("Key", ignoreCase = true) ||
-                            sourceClass.contains("Button", ignoreCase = true)
+                            sourceClass.contains("Keyboard", ignoreCase = true) ||
+                            sourceClass.endsWith("Key", ignoreCase = true)
                     if (isKeyboardEvent && now - lastKeyboardHapticMs >= keyboardDebounceMs) {
                         lastKeyboardHapticMs = now
                         playCustomOrPattern(s.keyboardHapticCustomSequence) { engine.play(s.keyboardHapticPattern, s.keyboardHapticIntensity, 0L) }

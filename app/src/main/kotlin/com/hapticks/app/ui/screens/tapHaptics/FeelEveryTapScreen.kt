@@ -1,27 +1,29 @@
 package com.hapticks.app.ui.screens.tapHaptics
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.hapticks.app.R
 import com.hapticks.app.data.HapticsSettings
 import com.hapticks.app.haptics.CustomHapticSequence
 import com.hapticks.app.haptics.HapticPattern
 import com.hapticks.app.ui.components.FeatureColors
-import com.hapticks.app.ui.components.HapticTestButton
-import com.hapticks.app.ui.components.ScreenIconHeader
+import com.hapticks.app.ui.components.PatternSelectorWithCustom
+import com.hapticks.app.ui.components.PetalBadgeVariant
+import com.hapticks.app.ui.components.PetalContentRow
+import com.hapticks.app.ui.components.PetalExclusionsRow
+import com.hapticks.app.ui.components.PetalFeatureHero
+import com.hapticks.app.ui.components.PetalFeatureScreen
+import com.hapticks.app.ui.components.PetalGroupToggleRow
+import com.hapticks.app.ui.components.PetalIntensityRow
+import com.hapticks.app.ui.components.PetalResetFooter
+import com.hapticks.app.ui.components.PetalSection
+import com.hapticks.app.ui.components.PetalTestRow
+import com.hapticks.app.ui.components.entrance
+import com.hapticks.app.ui.theme.PetalMaterialShapes
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeelEveryTapScreen(
     settings: HapticsSettings,
@@ -36,43 +38,76 @@ fun FeelEveryTapScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-    Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            LargeTopAppBar(
-                title = { Text(stringResource(R.string.screen_title), style = MaterialTheme.typography.displaySmall) },
-                navigationIcon = { FeelEveryTapBackPill(onBack = onBack) },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(containerColor = MaterialTheme.colorScheme.background, scrolledContainerColor = MaterialTheme.colorScheme.background),
+    PetalFeatureScreen(title = stringResource(R.string.screen_title), onBack = onBack, modifier = modifier) {
+        item("hero") {
+            PetalFeatureHero(
+                icon = Icons.Rounded.TouchApp,
+                tint = FeatureColors.FeelEveryTap,
+                subtitle = "Tap-accurate haptic feedback on every interaction across the system.",
+                modifier = Modifier.entrance(0),
             )
-        },
-    ) { padding ->
-        LazyColumn(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item("icon_header") {
-                ScreenIconHeader(icon = Icons.Rounded.TouchApp, featureColor = FeatureColors.FeelEveryTap, subtitle = "Tap-accurate haptic feedback on every interaction across the system.")
-            }
-            item("interaction") {
-                FeelEveryTapInteractionSection(settings = settings, onTapEnabledChange = onTapEnabledChange, onIntensityCommit = onIntensityCommit, onOpenAppExclusions = onOpenAppExclusions)
-            }
-            item("reset") {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onResetToDefaults) {
-                        Icon(Icons.Rounded.RestartAlt, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.size(4.dp))
-                        Text(stringResource(R.string.reset_to_defaults), style = MaterialTheme.typography.labelLarge)
-                    }
+        }
+        item("interaction") {
+            PetalSection(title = "Tap feedback", modifier = Modifier.entrance(1)) {
+                row { position ->
+                    PetalGroupToggleRow(
+                        icon = Icons.Rounded.TouchApp,
+                        title = stringResource(R.string.toggle_tap_title),
+                        subtitle = stringResource(R.string.toggle_tap_subtitle),
+                        checked = settings.tapEnabled,
+                        onCheckedChange = onTapEnabledChange,
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Cookie12Sided,
+                    )
+                }
+                row { position ->
+                    PetalIntensityRow(
+                        intensity = settings.intensity,
+                        onIntensityCommit = onIntensityCommit,
+                        position = position,
+                        title = stringResource(R.string.intensity_label),
+                        enabled = settings.tapEnabled,
+                    )
+                }
+                row { position ->
+                    PetalExclusionsRow(
+                        excludedCount = settings.tapExcludedPackages.size,
+                        onClick = onOpenAppExclusions,
+                        position = position,
+                        title = stringResource(R.string.app_exclusions_row_title),
+                        subtitleNone = stringResource(R.string.app_exclusions_row_subtitle_none),
+                        subtitleSome = stringResource(R.string.app_exclusions_row_subtitle_some, settings.tapExcludedPackages.size),
+                    )
                 }
             }
-            item("pattern") {
-                FeelEveryTapPatternSection(settings = settings, onPatternSelected = onPatternSelected, onOpenCustomEditor = { onOpenCustomEditor("tap", settings.tapHapticCustomSequence, onTapCustomSequenceSave) }, onClearCustomSequence = { onTapCustomSequenceSave(CustomHapticSequence()) })
+        }
+        item("pattern") {
+            PetalSection(
+                title = "Pattern",
+                description = "Pick a built-in feel or record your own rhythm",
+                modifier = Modifier.entrance(2),
+            ) {
+                row { position ->
+                    PetalContentRow(position = position, enabled = settings.tapEnabled) {
+                        PatternSelectorWithCustom(
+                            selectedPattern = settings.pattern,
+                            intensity = settings.intensity,
+                            customSequence = settings.tapHapticCustomSequence,
+                            onPatternSelected = onPatternSelected,
+                            onIntensityCommit = {},
+                            onOpenCustomEditor = { onOpenCustomEditor("tap", settings.tapHapticCustomSequence, onTapCustomSequenceSave) },
+                            onClearCustomSequence = { onTapCustomSequenceSave(CustomHapticSequence()) },
+                            showIntensity = false,
+                        )
+                    }
+                }
+                row { position ->
+                    PetalTestRow(label = stringResource(R.string.test_haptic), onClick = onTestHaptic, position = position, enabled = settings.tapEnabled)
+                }
             }
-            item("test") { HapticTestButton(stringResource(R.string.test_haptic), onTestHaptic) }
+        }
+        item("reset") {
+            PetalResetFooter(onReset = onResetToDefaults, label = stringResource(R.string.reset_to_defaults), modifier = Modifier.entrance(3))
         }
     }
 }

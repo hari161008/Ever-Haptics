@@ -1,6 +1,12 @@
 package com.hapticks.app.ui.screens.notificationhaptics
 
+import com.hapticks.app.ui.theme.PetalIcons
 import android.os.Build
+import com.hapticks.app.ui.components.PetalButtonStyle
+import com.hapticks.app.ui.components.PetalContainmentDefaults
+import com.hapticks.app.ui.components.PetalButton
+import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
+import com.hapticks.app.ui.components.PetalSlider
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -88,25 +94,17 @@ fun CustomHapticEditorScreen(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            LargeTopAppBar(
-                title = { Text("Edit ${label.replaceFirstChar { it.uppercaseChar() }} Haptic", style = MaterialTheme.typography.displaySmall) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
+            PetalCollapsingTopAppBar(
+                title = "Edit ${label.replaceFirstChar { it.uppercaseChar() }} Haptic",
+                scrollBehavior = scrollBehavior,
+                onNavigateBack = onBack,
                 actions = {
                     if (hasChanges) {
-                        TextButton(onClick = { onSave(CustomHapticSequence(beats)); onBack() }) {
+                        PetalButton(onClick = { onSave(CustomHapticSequence(beats)); onBack() }, style = PetalButtonStyle.TONAL, height = 40.dp, modifier = Modifier.padding(end = 8.dp)) {
                             Text("Save", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         }
                     }
                 },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background,
-                ),
             )
         },
         bottomBar = {
@@ -119,7 +117,7 @@ fun CustomHapticEditorScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    OutlinedButton(
+                    PetalButton(
                         onClick = {
                             if (!isPlaying && beats.isNotEmpty()) {
                                 isPlaying = true
@@ -130,19 +128,15 @@ fun CustomHapticEditorScreen(
                             }
                         },
                         enabled = !isPlaying && !isRecording && beats.isNotEmpty(),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Icon(if (isPlaying) Icons.Rounded.Vibration else Icons.Rounded.PlayArrow, null, modifier = Modifier.size(18.dp))
+                        modifier = Modifier.weight(1f), style = PetalButtonStyle.OUTLINED) {
+                        Icon(if (isPlaying) PetalIcons.Vibration else Icons.Rounded.PlayArrow, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(4.dp))
                         Text(if (isPlaying) "Playing…" else "Preview")
                     }
-                    Button(
+                    PetalButton(
                         onClick = { onSave(CustomHapticSequence(beats)); onBack() },
                         enabled = beats.isNotEmpty() && !isRecording,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
+                        modifier = Modifier.weight(1f)) {
                         Icon(Icons.Rounded.Save, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(4.dp))
                         Text("Save")
@@ -258,17 +252,14 @@ fun CustomHapticEditorScreen(
                 }
 
                 item("add_beat") {
-                    OutlinedButton(
+                    PetalButton(
                         onClick = {
                             val lastOffset = beats.lastOrNull()?.offsetMs ?: 0L
                             val amp = (recordStrength * 255f).roundToInt().coerceIn(1, 255)
                             beats = beats + HapticBeat(lastOffset + 300L, amp)
                             vibrator.vibrate(VibrationEffect.createOneShot(60, amp))
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    ) {
+                        modifier = Modifier.fillMaxWidth(), style = PetalButtonStyle.OUTLINED) {
                         Icon(Icons.Rounded.Add, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(6.dp))
                         Text("Add beat at end")
@@ -291,14 +282,13 @@ private fun TimelineVisualizer(
     val totalMs = maxOf(elapsedMs, beats.maxOfOrNull { it.offsetMs }?.plus(500L) ?: 3000L)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, if (isRecording) MaterialTheme.colorScheme.error.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outlineVariant),
+        shape = PetalContainmentDefaults.shape,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Rounded.Timeline, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    Icon(PetalIcons.Timeline, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                     Text("Timeline", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                 }
                 Text("${(totalMs / 1000f).let { "%.1f".format(it) }}s · tap to add", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -370,8 +360,7 @@ private fun RecordingControls(
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(if (isRecording || isCountingDown) 2.dp else 1.dp, borderColor),
+        shape = PetalContainmentDefaults.shape,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -443,9 +432,9 @@ private fun RecordingControls(
 
             // Strength slider
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Rounded.Vibration, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                Icon(PetalIcons.Vibration, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 Text("Strength", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(56.dp))
-                Slider(value = strength, onValueChange = onStrengthChange, valueRange = 0.1f..1f, steps = 17, modifier = Modifier.weight(1f), colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest))
+                PetalSlider(value = strength, onValueChange = onStrengthChange, valueRange = 0.1f..1f, steps = 17, modifier = Modifier.weight(1f), colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest))
                 Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
                     Text("${(strength * 100f).roundToInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
                 }
@@ -470,21 +459,18 @@ private fun RecordingControls(
                     }
                 }
 
-                Button(
+                PetalButton(
                     onClick = {
                         if (!isPressed) onTapBeat()
                     },
                     enabled = isRecording,
-                    interactionSource = tapBeatInteraction,
                     modifier = Modifier.weight(1f).height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = if (isRecording) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onSurfaceVariant,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
-                ) {
+                    )) {
                     Icon(Icons.Rounded.TouchApp, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(6.dp))
                     Text(if (isRecording) "TAP BEAT" else "Tap beat", style = MaterialTheme.typography.labelLarge)
@@ -503,7 +489,7 @@ private fun RecordingControls(
                     Icon(
                         imageVector = when {
                             isRecording -> Icons.Rounded.Stop
-                            isCountingDown -> Icons.Rounded.Close
+                            isCountingDown -> PetalIcons.Close
                             else -> Icons.Rounded.FiberManualRecord
                         },
                         contentDescription = when {
@@ -549,10 +535,10 @@ private fun BeatEditorRow(
     val borderColor by animateColorAsState(if (isExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, spring(stiffness = 300f), label = "bb")
     val barColor = amplitudeToColor(beat.amplitude, MaterialTheme.colorScheme)
 
-    Surface(color = containerColor, shape = RoundedCornerShape(16.dp), border = BorderStroke(if (isExpanded) 1.5.dp else 1.dp, borderColor), modifier = Modifier.fillMaxWidth()) {
+    Surface(color = containerColor, shape = PetalContainmentDefaults.shape, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(modifier = Modifier.size(36.dp).background(barColor.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).border(1.dp, barColor.copy(alpha = 0.4f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.size(36.dp).background(barColor.copy(alpha = 0.15f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
                     Text("${index + 1}", style = MaterialTheme.typography.labelLarge, color = barColor, fontWeight = FontWeight.Bold)
                 }
                 Column(Modifier.weight(1f)) {
@@ -562,9 +548,9 @@ private fun BeatEditorRow(
                 Box(modifier = Modifier.width(4.dp).height(32.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.BottomCenter) {
                     Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(beat.amplitude / 255f).clip(RoundedCornerShape(2.dp)).background(barColor))
                 }
-                IconButton(onClick = onPreview, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.Vibration, "Preview", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }
+                IconButton(onClick = onPreview, modifier = Modifier.size(34.dp)) { Icon(PetalIcons.Vibration, "Preview", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }
                 IconButton(onClick = onToggleExpand, modifier = Modifier.size(34.dp)) { Icon(if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) }
-                IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.Close, "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp)) }
+                IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) { Icon(PetalIcons.Close, "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp)) }
             }
 
             AnimatedVisibility(visible = isExpanded, enter = expandVertically(), exit = shrinkVertically()) {
@@ -586,7 +572,7 @@ private fun BeatEditorRow(
                                 Text("${offsetDraft}ms", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp))
                             }
                         }
-                        Slider(
+                        PetalSlider(
                             value = offsetDraft.toFloat(),
                             onValueChange = { offsetDraft = it.toLong(); val t = (it / 100).toInt(); if (t != offsetTick) { offsetTick = t; ctx.performHapticSliderTick() } },
                             onValueChangeFinished = { onOffsetChange(offsetDraft) },
@@ -605,14 +591,14 @@ private fun BeatEditorRow(
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Icon(Icons.Rounded.Vibration, null, tint = amplitudeToColor(ampDraft, MaterialTheme.colorScheme), modifier = Modifier.size(16.dp))
+                                Icon(PetalIcons.Vibration, null, tint = amplitudeToColor(ampDraft, MaterialTheme.colorScheme), modifier = Modifier.size(16.dp))
                                 Text("Strength", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                             }
                             Surface(color = amplitudeToColor(ampDraft, MaterialTheme.colorScheme).copy(alpha = 0.15f), shape = CircleShape) {
                                 Text("${(ampDraft / 255f * 100f).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = amplitudeToColor(ampDraft, MaterialTheme.colorScheme), modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp), fontWeight = FontWeight.Bold)
                             }
                         }
-                        Slider(
+                        PetalSlider(
                             value = ampDraft.toFloat(),
                             onValueChange = { ampDraft = it.roundToInt().coerceIn(1, 255); val t = it.toInt() / 10; if (t != ampTick) { ampTick = t; ctx.performHapticSliderTick() } },
                             onValueChangeFinished = { onAmplitudeChange(ampDraft) },

@@ -28,13 +28,7 @@ fun SectionCard(
         if (title != null) {
             SectionHeader(title = title, subtitle = subtitle, icon = icon, iconTint = iconTint)
         }
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            shape = RoundedCornerShape(28.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.hapticClickable(onClick = onClick) else Modifier),
-        ) {
+        PetalGroupItem(position = PetalGroupPosition.SINGLE, onClick = onClick) {
             Column(
                 modifier = Modifier.padding(contentPadding),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
@@ -61,14 +55,13 @@ private fun SectionHeader(
             FeatureIcon(
                 icon = icon,
                 tint = tint,
-                size = 34.dp,
-                iconSize = 18.dp,
-                cornerRadius = 11.dp,
-                backgroundAlpha = 0.14f,
+                size = 40.dp,
+                iconSize = 20.dp,
+                backgroundAlpha = 0.16f,
             )
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

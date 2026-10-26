@@ -1,6 +1,10 @@
 package com.hapticks.app.ui.screens.musichaptics
 
+import com.hapticks.app.ui.theme.PetalIcons
+import com.hapticks.app.ui.components.PetalFeatureScreen
 import android.Manifest
+import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
+import com.hapticks.app.ui.components.PetalSlider
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.os.Build
@@ -32,6 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.hapticks.app.R
+import com.hapticks.app.ui.components.PetalButton
+import com.hapticks.app.ui.components.PetalButtonGroupItem
+import com.hapticks.app.ui.components.PetalChoiceButtonGroup
 import com.hapticks.app.data.HapticsSettings
 import com.hapticks.app.data.MusicHapticsSource
 import com.hapticks.app.service.MusicHapticsService
@@ -59,29 +66,50 @@ fun MusicHapticsScreen(
     val ctx = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
-    // Mic permission needed only for SURROUNDINGS and BOTH
+    // RECORD_AUDIO is needed for every source: the microphone foreground service type and the
+    // device-audio Visualizer both require it.
     val hasMicPermission = remember {
-        mutableStateOf(ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
+        mutableStateOf(MusicHapticsService.hasRecordAudioPermission(ctx))
     }
-    val micPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+    val latestSettings by rememberUpdatedState(settings)
+    var pendingEnable by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                hasMicPermission.value = MusicHapticsService.hasRecordAudioPermission(ctx)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        val granted = result[Manifest.permission.RECORD_AUDIO] == true ||
+            MusicHapticsService.hasRecordAudioPermission(ctx)
         hasMicPermission.value = granted
-        if (granted && settings.musicHapticsEnabled) {
-            MusicHapticsService.start(ctx, settings.musicHapticsSource)
+        if (granted && pendingEnable) {
+            onMusicHapticsEnabledChange(true)
+            MusicHapticsService.start(ctx, latestSettings.musicHapticsSource)
         }
+        pendingEnable = false
     }
 
-    fun needsMic(source: MusicHapticsSource) = source == MusicHapticsSource.SURROUNDINGS || source == MusicHapticsSource.BOTH
+    fun requestPermissions() {
+        permissionLauncher.launch(
+            arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.POST_NOTIFICATIONS),
+        )
+    }
 
-    fun tryStartService(source: MusicHapticsSource) {
-        if (needsMic(source) && !hasMicPermission.value) {
-            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+    // Keep saved state and reality in sync: no permission means the feature cannot be on.
+    LaunchedEffect(settings.musicHapticsEnabled, hasMicPermission.value) {
+        if (settings.musicHapticsEnabled) {
+            if (hasMicPermission.value) MusicHapticsService.start(ctx, settings.musicHapticsSource)
+            else onMusicHapticsEnabledChange(false)
         } else {
-            MusicHapticsService.start(ctx, source)
+            MusicHapticsService.stop(ctx)
         }
-    }
-
-    LaunchedEffect(settings.musicHapticsEnabled) {
-        if (!settings.musicHapticsEnabled) MusicHapticsService.stop(ctx)
     }
 
     val infiniteTransition = rememberInfiniteTransition(label = "music_pulse")
@@ -96,27 +124,7 @@ fun MusicHapticsScreen(
     var strengthDraft by remember(settings.musicHapticsStrength) { mutableFloatStateOf(settings.musicHapticsStrength) }
     var strengthTick by remember { mutableIntStateOf(slider01ToTickIndex(settings.musicHapticsStrength)) }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            LargeTopAppBar(
-                title = { Text(stringResource(R.string.music_haptics_screen_title), style = MaterialTheme.typography.displaySmall) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background,
-                ),
-            )
-        },
-    ) { padding ->
-        LazyColumn(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+    PetalFeatureScreen(title = stringResource(R.string.music_haptics_screen_title), onBack = onBack, modifier = modifier) {
             item("icon_header") {
                 ScreenIconHeader(
                     icon = Icons.Rounded.MusicNote,
@@ -172,11 +180,11 @@ fun MusicHapticsScreen(
             }
 
             // Mic permission card — only when source needs mic
-            if (needsMic(settings.musicHapticsSource) && !hasMicPermission.value) {
+            if (!hasMicPermission.value) {
                 item("mic_permission") {
                     Surface(
                         color = MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = RoundedCornerShape(20.dp),
+                        shape = RoundedCornerShape(28.dp),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -184,8 +192,8 @@ fun MusicHapticsScreen(
                                 Icon(Icons.Rounded.Mic, null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(20.dp))
                                 Text("Microphone Permission Required", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onTertiaryContainer, fontWeight = FontWeight.SemiBold)
                             }
-                            Text("The selected source needs microphone access to capture sounds from your surroundings.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
-                            Button(onClick = { micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                            Text("Music & Sound Haptics needs microphone access to analyse audio. Nothing is recorded or stored.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                            PetalButton(onClick = { requestPermissions() }, modifier = Modifier.fillMaxWidth()) {
                                 Icon(Icons.Rounded.MicNone, null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.size(6.dp))
                                 Text("Grant Microphone Access")
@@ -204,8 +212,13 @@ fun MusicHapticsScreen(
                         checked = settings.musicHapticsEnabled,
                         onCheckedChange = { enabled ->
                             if (enabled) {
-                                onMusicHapticsEnabledChange(true)
-                                tryStartService(settings.musicHapticsSource)
+                                if (hasMicPermission.value) {
+                                    onMusicHapticsEnabledChange(true)
+                                    MusicHapticsService.start(ctx, settings.musicHapticsSource)
+                                } else {
+                                    pendingEnable = true
+                                    requestPermissions()
+                                }
                             } else {
                                 onMusicHapticsEnabledChange(false)
                                 MusicHapticsService.stop(ctx)
@@ -222,45 +235,28 @@ fun MusicHapticsScreen(
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text("Audio Source", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                         Text("Choose where Ever Haptics listens for beats.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(Modifier.height(2.dp))
-                        SourceOption(
-                            icon = Icons.Rounded.PhoneAndroid,
-                            title = "In-Device Sounds",
-                            subtitle = "Detect beats from audio playing on this device — music, videos, games. No extra permissions needed.",
-                            selected = settings.musicHapticsSource == MusicHapticsSource.DEVICE,
-                            onClick = {
-                                onMusicHapticsSourceChange(MusicHapticsSource.DEVICE)
-                                if (settings.musicHapticsEnabled) {
-                                    MusicHapticsService.stop(ctx)
-                                    MusicHapticsService.start(ctx, MusicHapticsSource.DEVICE)
+                        PetalChoiceButtonGroup(
+                            options = listOf(
+                                PetalButtonGroupItem(MusicHapticsSource.DEVICE, "Device", Icons.Rounded.PhoneAndroid),
+                                PetalButtonGroupItem(MusicHapticsSource.SURROUNDINGS, "Mic", Icons.Rounded.Mic),
+                                PetalButtonGroupItem(MusicHapticsSource.BOTH, "Both", Icons.Rounded.GraphicEq),
+                            ),
+                            selected = settings.musicHapticsSource,
+                            onSelect = { source ->
+                                onMusicHapticsSourceChange(source)
+                                if (settings.musicHapticsEnabled && hasMicPermission.value) {
+                                    MusicHapticsService.start(ctx, source)
                                 }
                             },
                         )
-                        SourceOption(
-                            icon = Icons.Rounded.Mic,
-                            title = "Surroundings",
-                            subtitle = "Detect beats from sounds around you using the microphone.",
-                            selected = settings.musicHapticsSource == MusicHapticsSource.SURROUNDINGS,
-                            onClick = {
-                                onMusicHapticsSourceChange(MusicHapticsSource.SURROUNDINGS)
-                                if (settings.musicHapticsEnabled) {
-                                    MusicHapticsService.stop(ctx)
-                                    tryStartService(MusicHapticsSource.SURROUNDINGS)
-                                }
+                        Text(
+                            text = when (settings.musicHapticsSource) {
+                                MusicHapticsSource.DEVICE -> "Detect beats from audio playing on this device: music, videos, games."
+                                MusicHapticsSource.SURROUNDINGS -> "Detect beats from sounds around you using the microphone."
+                                MusicHapticsSource.BOTH -> "Combine in-device audio and microphone for the most responsive experience."
                             },
-                        )
-                        SourceOption(
-                            icon = Icons.Rounded.GraphicEq,
-                            title = "Both",
-                            subtitle = "Combine in-device audio and microphone for the most responsive experience.",
-                            selected = settings.musicHapticsSource == MusicHapticsSource.BOTH,
-                            onClick = {
-                                onMusicHapticsSourceChange(MusicHapticsSource.BOTH)
-                                if (settings.musicHapticsEnabled) {
-                                    MusicHapticsService.stop(ctx)
-                                    tryStartService(MusicHapticsSource.BOTH)
-                                }
-                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -308,9 +304,9 @@ fun MusicHapticsScreen(
             }
 
             item("info") {
-                Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = com.hapticks.app.ui.components.PetalContainmentDefaults.shape, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-                        Icon(Icons.Rounded.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp).padding(top = 2.dp))
+                        Icon(PetalIcons.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp).padding(top = 2.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("How it works", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                             Text(
@@ -322,7 +318,6 @@ fun MusicHapticsScreen(
                     }
                 }
             }
-        }
     }
 }
 
@@ -381,43 +376,6 @@ private fun QuickSettingsTileCard() {
 }
 
 @Composable
-private fun SourceOption(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-    val bgColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceContainerHigh
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(bgColor)
-            .border(width = if (selected) 1.5.dp else 1.dp, color = borderColor, shape = RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(
-            modifier = Modifier.size(38.dp).clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, null, tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-        }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        RadioButton(selected = selected, onClick = onClick, colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary))
-    }
-}
-
-@Composable
 private fun HapticSlider(
     title: String,
     subtitle: String,
@@ -439,7 +397,7 @@ private fun HapticSlider(
                 Text("${(value * 100f).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
             }
         }
-        Slider(
+        PetalSlider(
             value = value, onValueChange = onValueChange, onValueChangeFinished = onValueChangeFinished,
             valueRange = 0f..1f, steps = SliderTickStepsDefault, enabled = enabled,
             colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
