@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.screens.notificationhaptics
 
+import com.hapticks.app.ui.theme.PetalIcons
 import android.os.Build
 import com.hapticks.app.ui.components.PetalButtonStyle
 import com.hapticks.app.ui.components.PetalContainmentDefaults
@@ -128,7 +129,7 @@ fun CustomHapticEditorScreen(
                         },
                         enabled = !isPlaying && !isRecording && beats.isNotEmpty(),
                         modifier = Modifier.weight(1f), style = PetalButtonStyle.OUTLINED) {
-                        Icon(if (isPlaying) Icons.Rounded.Vibration else Icons.Rounded.PlayArrow, null, modifier = Modifier.size(18.dp))
+                        Icon(if (isPlaying) PetalIcons.Vibration else Icons.Rounded.PlayArrow, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.size(4.dp))
                         Text(if (isPlaying) "Playing…" else "Preview")
                     }
@@ -287,7 +288,7 @@ private fun TimelineVisualizer(
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Rounded.Timeline, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    Icon(PetalIcons.Timeline, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                     Text("Timeline", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                 }
                 Text("${(totalMs / 1000f).let { "%.1f".format(it) }}s · tap to add", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -431,7 +432,7 @@ private fun RecordingControls(
 
             // Strength slider
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Rounded.Vibration, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                Icon(PetalIcons.Vibration, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 Text("Strength", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(56.dp))
                 PetalSlider(value = strength, onValueChange = onStrengthChange, valueRange = 0.1f..1f, steps = 17, modifier = Modifier.weight(1f), colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest))
                 Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
@@ -488,7 +489,7 @@ private fun RecordingControls(
                     Icon(
                         imageVector = when {
                             isRecording -> Icons.Rounded.Stop
-                            isCountingDown -> Icons.Rounded.Close
+                            isCountingDown -> PetalIcons.Close
                             else -> Icons.Rounded.FiberManualRecord
                         },
                         contentDescription = when {
@@ -547,9 +548,9 @@ private fun BeatEditorRow(
                 Box(modifier = Modifier.width(4.dp).height(32.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.BottomCenter) {
                     Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(beat.amplitude / 255f).clip(RoundedCornerShape(2.dp)).background(barColor))
                 }
-                IconButton(onClick = onPreview, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.Vibration, "Preview", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }
+                IconButton(onClick = onPreview, modifier = Modifier.size(34.dp)) { Icon(PetalIcons.Vibration, "Preview", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }
                 IconButton(onClick = onToggleExpand, modifier = Modifier.size(34.dp)) { Icon(if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) }
-                IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) { Icon(Icons.Rounded.Close, "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp)) }
+                IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) { Icon(PetalIcons.Close, "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp)) }
             }
 
             AnimatedVisibility(visible = isExpanded, enter = expandVertically(), exit = shrinkVertically()) {
@@ -590,7 +591,7 @@ private fun BeatEditorRow(
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Icon(Icons.Rounded.Vibration, null, tint = amplitudeToColor(ampDraft, MaterialTheme.colorScheme), modifier = Modifier.size(16.dp))
+                                Icon(PetalIcons.Vibration, null, tint = amplitudeToColor(ampDraft, MaterialTheme.colorScheme), modifier = Modifier.size(16.dp))
                                 Text("Strength", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                             }
                             Surface(color = amplitudeToColor(ampDraft, MaterialTheme.colorScheme).copy(alpha = 0.15f), shape = CircleShape) {

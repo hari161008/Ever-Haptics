@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.screens
 
+import com.hapticks.app.ui.theme.PetalIcons
 import android.content.Intent
 import com.hapticks.app.util.AppVersion
 import androidx.compose.animation.Crossfade
@@ -157,7 +158,7 @@ fun SettingsScreen(
                 }
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = Icons.Rounded.Update,
+                        icon = PetalIcons.Update,
                         title = "Auto-check on launch",
                         subtitle = "Get notified when a new version is available",
                         checked = settings.autoCheckUpdatesEnabled,
@@ -216,16 +217,16 @@ fun SettingsScreen(
             PetalSection(title = stringResource(R.string.settings_section_appearance), modifier = Modifier.entrance(2)) {
                 row { position ->
                     PetalGroupControlRow(
-                        icon = Icons.Rounded.Brightness6,
+                        icon = PetalIcons.Brightness,
                         title = stringResource(R.string.settings_theme_mode_title),
                         position = position,
                         badgeShape = PetalMaterialShapes.Sunny,
                     ) {
                         PetalChoiceButtonGroup(
                             options = listOf(
-                                PetalButtonGroupItem(ThemeMode.SYSTEM, stringResource(R.string.settings_theme_mode_system), Icons.Rounded.Brightness6),
-                                PetalButtonGroupItem(ThemeMode.LIGHT, stringResource(R.string.settings_theme_mode_light), Icons.Rounded.LightMode),
-                                PetalButtonGroupItem(ThemeMode.DARK, stringResource(R.string.settings_theme_mode_dark), Icons.Rounded.DarkMode),
+                                PetalButtonGroupItem(ThemeMode.SYSTEM, stringResource(R.string.settings_theme_mode_system), PetalIcons.Brightness),
+                                PetalButtonGroupItem(ThemeMode.LIGHT, stringResource(R.string.settings_theme_mode_light), PetalIcons.LightMode),
+                                PetalButtonGroupItem(ThemeMode.DARK, stringResource(R.string.settings_theme_mode_dark), PetalIcons.DarkMode),
                             ),
                             selected = settings.themeMode,
                             onSelect = onThemeModeChange,
@@ -258,7 +259,7 @@ fun SettingsScreen(
                 }
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = Icons.Rounded.Contrast,
+                        icon = PetalIcons.Brightness,
                         title = stringResource(R.string.settings_amoled_title),
                         subtitle = if (appInDarkTheme) stringResource(R.string.settings_amoled_subtitle) else stringResource(R.string.settings_amoled_subtitle_light),
                         checked = settings.amoledBlack,
@@ -305,7 +306,7 @@ fun SettingsScreen(
             PetalSection(title = stringResource(R.string.settings_battery_saver_section), modifier = Modifier.entrance(4)) {
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = Icons.Rounded.BatterySaver,
+                        icon = PetalIcons.BatterySaver,
                         title = stringResource(R.string.settings_battery_saver_title),
                         subtitle = stringResource(R.string.settings_battery_saver_subtitle),
                         checked = settings.batterySaverDetectionEnabled,
@@ -321,7 +322,7 @@ fun SettingsScreen(
             PetalSection(title = "About", modifier = Modifier.entrance(5)) {
                 row { position ->
                     PetalGroupRow(
-                        icon = Icons.Rounded.Vibration,
+                        icon = PetalIcons.Vibration,
                         title = "Ever Haptics",
                         subtitle = "Version $appVersion  |  by SVHP",
                         position = position,
@@ -442,7 +443,7 @@ private fun UpdateCard(
                                 UpdateCheckState.UpdateAvailable::class -> Icons.Rounded.NewReleases
                                 UpdateCheckState.UpToDate::class, UpdateCheckState.Downloaded::class -> Icons.Rounded.CheckCircle
                                 UpdateCheckState.Error::class -> Icons.Rounded.ErrorOutline
-                                else -> Icons.Rounded.SystemUpdate
+                                else -> PetalIcons.InstallApk
                             }
                             FeatureIcon(
                                 icon = icon,
@@ -502,12 +503,12 @@ private fun UpdateCard(
 
             when {
                 isUpdateAvailable -> PetalButton(onClick = onDownloadClick, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Rounded.Download, null, modifier = Modifier.size(18.dp))
+                    Icon(PetalIcons.Download, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("Download & Install")
                 }
                 isDownloaded -> PetalButton(onClick = onDownloadClick, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Rounded.InstallMobile, null, modifier = Modifier.size(18.dp))
+                    Icon(PetalIcons.InstallApk, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("Install Now")
                 }
@@ -547,7 +548,7 @@ private fun ColorSwatches(selectedColor: Color, onColorSelected: (Color) -> Unit
                     ) {
                         if (isSelected) {
                             Icon(
-                                Icons.Rounded.Check,
+                                PetalIcons.Check,
                                 contentDescription = null,
                                 tint = if (color.luminance() > 0.5f) Color.Black else Color.White,
                                 modifier = Modifier.size(22.dp),
@@ -580,7 +581,7 @@ private fun CollabCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
             ) {
                 Icon(Icons.Rounded.LocalFlorist, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(26.dp))
             }
-            Icon(Icons.Rounded.Close, null, modifier = Modifier.size(16.dp))
+            Icon(PetalIcons.Close, null, modifier = Modifier.size(16.dp))
             Box(
                 modifier = Modifier
                     .size(52.dp)
@@ -588,7 +589,7 @@ private fun CollabCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
                     .background(MaterialTheme.colorScheme.tertiary),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Rounded.Vibration, null, tint = MaterialTheme.colorScheme.onTertiary, modifier = Modifier.size(26.dp))
+                Icon(PetalIcons.Vibration, null, tint = MaterialTheme.colorScheme.onTertiary, modifier = Modifier.size(26.dp))
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

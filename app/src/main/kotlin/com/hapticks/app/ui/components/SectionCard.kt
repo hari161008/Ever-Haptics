@@ -28,13 +28,7 @@ fun SectionCard(
         if (title != null) {
             SectionHeader(title = title, subtitle = subtitle, icon = icon, iconTint = iconTint)
         }
-        Surface(
-            color = petalGroupColor(),
-            shape = PetalContainmentDefaults.shape,
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.hapticClickable(onClick = onClick) else Modifier),
-        ) {
+        PetalGroupItem(position = PetalGroupPosition.SINGLE, onClick = onClick) {
             Column(
                 modifier = Modifier.padding(contentPadding),
                 verticalArrangement = Arrangement.spacedBy(0.dp),

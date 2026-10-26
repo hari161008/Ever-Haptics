@@ -1,5 +1,7 @@
 package com.hapticks.app.ui.screens.autohaptics
 
+import com.hapticks.app.ui.theme.PetalIcons
+import com.hapticks.app.ui.components.PetalFeatureScreen
 import androidx.compose.foundation.layout.*
 import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
 import com.hapticks.app.ui.components.PetalSlider
@@ -56,23 +58,7 @@ fun AutoHapticsSettingsScreen(
         "Vibrates in sync with your alarm sound beats in real time using audio analysis."
     val featureColor = MaterialTheme.colorScheme.tertiary
 
-    Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            PetalCollapsingTopAppBar(
-                title = title,
-                scrollBehavior = scrollBehavior,
-                onNavigateBack = onBack,
-            )
-        },
-    ) { padding ->
-        LazyColumn(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+    PetalFeatureScreen(title = title, onBack = onBack, modifier = modifier) {
             item("header") {
                 ScreenIconHeader(
                     icon = Icons.Rounded.GraphicEq,
@@ -152,7 +138,7 @@ fun AutoHapticsSettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-                        Icon(Icons.Rounded.Info, null, tint = featureColor, modifier = Modifier.size(20.dp).padding(top = 2.dp))
+                        Icon(PetalIcons.Info, null, tint = featureColor, modifier = Modifier.size(20.dp).padding(top = 2.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("How Auto Beat Haptics works", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                             Text(
@@ -164,7 +150,6 @@ fun AutoHapticsSettingsScreen(
                     }
                 }
             }
-        }
     }
 }
 

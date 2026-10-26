@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.screens
 
+import com.hapticks.app.ui.theme.PetalIcons
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -104,7 +105,7 @@ fun WelcomeDialog(onDismiss: () -> Unit) {
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                Icons.Rounded.Vibration,
+                                PetalIcons.Vibration,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(46.dp),

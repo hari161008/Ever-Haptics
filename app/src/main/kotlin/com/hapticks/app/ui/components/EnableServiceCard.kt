@@ -35,7 +35,7 @@ fun EnableServiceCard(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
-        shape = PetalContainmentDefaults.shape,
+        shape = petalGroupShape(PetalGroupPosition.SINGLE),
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(

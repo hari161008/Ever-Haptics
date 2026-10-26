@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.components
 
+import com.hapticks.app.ui.theme.PetalIcons
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -98,7 +99,7 @@ private fun PatternCard(
         targetValue = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
+            MaterialTheme.colorScheme.surfaceContainerHighest
         },
         animationSpec = spring(stiffness = 300f),
         label = "pattern-container",
@@ -186,7 +187,7 @@ private fun PatternIconBadge(icon: ImageVector, isSelected: Boolean) {
         targetValue = if (isSelected) {
             MaterialTheme.colorScheme.primary
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHighest
+            MaterialTheme.colorScheme.surfaceContainerLow
         },
         animationSpec = spring(stiffness = 300f),
         label = "badge-bg",
@@ -234,7 +235,7 @@ private fun SelectionDot(isSelected: Boolean) {
     ) {
         if (isSelected) {
             Icon(
-                imageVector = Icons.Rounded.Check,
+                imageVector = PetalIcons.Check,
                 contentDescription = stringResource(id = R.string.pattern_selected),
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(14.dp),

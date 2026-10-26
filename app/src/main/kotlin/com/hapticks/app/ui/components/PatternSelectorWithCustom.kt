@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.components
 
+import com.hapticks.app.ui.theme.PetalIcons
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -46,6 +47,7 @@ fun PatternSelectorWithCustom(
     accentColor: Color = MaterialTheme.colorScheme.primary,
     accentContainer: Color = MaterialTheme.colorScheme.primaryContainer,
     accentOnContainer: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    showIntensity: Boolean = true,
 ) {
     val isCustomActive = !customSequence.isEmpty
     Column(modifier = modifier.fillMaxWidth()) {
@@ -83,8 +85,10 @@ fun PatternSelectorWithCustom(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
-        IntensityRow(intensity, onIntensityCommit, accentColor, accentContainer, accentOnContainer)
+        if (showIntensity) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
+            IntensityRow(intensity, onIntensityCommit, accentColor, accentContainer, accentOnContainer)
+        }
     }
 }
 
@@ -99,7 +103,7 @@ private fun PatternCard(
     modifier: Modifier = Modifier,
 ) {
     val containerColor by animateColorAsState(
-        if (isSelected) accentContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+        if (isSelected) accentContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
         spring(stiffness = 300f), label = "pc",
     )
     val borderColor by animateColorAsState(
@@ -142,7 +146,7 @@ private fun PatternCard(
                     modifier = Modifier
                         .size(40.dp)
                         .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
                             shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape(),
                         ),
                     contentAlignment = Alignment.Center,
@@ -174,7 +178,7 @@ private fun CustomPatternCard(
     modifier: Modifier = Modifier,
 ) {
     val containerColor by animateColorAsState(
-        if (isSelected) accentContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+        if (isSelected) accentContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
         spring(stiffness = 300f), label = "cc",
     )
     val borderColor by animateColorAsState(
@@ -206,7 +210,7 @@ private fun CustomPatternCard(
                 modifier = Modifier
                     .size(40.dp)
                     .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
                         shape = com.hapticks.app.ui.theme.PetalMaterialShapes.Cookie6Sided.toShape(),
                     ),
                 contentAlignment = Alignment.Center,
@@ -245,7 +249,7 @@ private fun SelectionDot(isSelected: Boolean, accentColor: Color) {
         modifier = Modifier.size(22.dp).scale(scale).background(accentColor, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (isSelected) Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(14.dp))
+        if (isSelected) Icon(PetalIcons.Check, null, tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(14.dp))
     }
 }
 

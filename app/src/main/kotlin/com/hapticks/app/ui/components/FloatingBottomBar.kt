@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.components
 
+import com.hapticks.app.ui.theme.PetalIcons
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -52,8 +53,8 @@ import androidx.compose.ui.unit.sp
 import com.hapticks.app.ui.haptics.performHapticClick
 
 enum class BottomTab(val label: String, val icon: ImageVector, val selectedRotation: Float) {
-    HOME("Home", Icons.Rounded.Home, 0f),
-    SETTINGS("Settings", Icons.Rounded.Settings, 90f),
+    HOME("Home", PetalIcons.Home, 0f),
+    SETTINGS("Settings", PetalIcons.Settings, 90f),
 }
 
 /**

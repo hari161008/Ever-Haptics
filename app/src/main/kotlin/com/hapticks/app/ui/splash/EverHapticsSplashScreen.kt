@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.splash
 
+import com.hapticks.app.ui.theme.PetalIcons
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -78,7 +79,7 @@ private data class HapticGlyph(
 
 // Haptics themed glyphs: touch, scroll, keys, charging, unlock, music, alerts.
 private val hapticGlyphIcons = listOf(
-    Icons.Rounded.Vibration,
+    PetalIcons.Vibration,
     Icons.Rounded.TouchApp,
     Icons.Rounded.Fingerprint,
     Icons.Rounded.GraphicEq,
@@ -86,11 +87,11 @@ private val hapticGlyphIcons = listOf(
     Icons.Rounded.MusicNote,
     Icons.Rounded.Notifications,
     Icons.Rounded.Keyboard,
-    Icons.Rounded.BatteryChargingFull,
+    PetalIcons.Charging,
     Icons.Rounded.LockOpen,
     Icons.Rounded.Smartphone,
     Icons.Rounded.Sensors,
-    Icons.Rounded.Bolt,
+    PetalIcons.Bolt,
     Icons.Rounded.Tune,
     Icons.Rounded.AutoAwesome,
 )
@@ -308,7 +309,7 @@ private fun EverHapticsSplashContent(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Vibration,
+                            imageVector = PetalIcons.Vibration,
                             contentDescription = "Ever Haptics icon",
                             tint = colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(54.dp),

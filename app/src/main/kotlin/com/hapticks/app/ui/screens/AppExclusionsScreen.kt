@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.screens
 
+import com.hapticks.app.ui.theme.PetalIcons
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -165,7 +166,7 @@ fun AppExclusionsScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         PetalShapedIcon(
-                            icon = Icons.Rounded.Android,
+                            icon = PetalIcons.Android,
                             shape = PetalMaterialShapes.Clover4Leaf,
                             variant = PetalBadgeVariant.SURFACE_TONAL,
                             size = 88.dp,
@@ -250,7 +251,7 @@ private fun AppExclusionItem(
                 thumbContent = if (isExcluded) {
                     {
                         Icon(
-                            imageVector = Icons.Rounded.Check,
+                            imageVector = PetalIcons.Check,
                             contentDescription = null,
                             modifier = Modifier.size(SwitchDefaults.IconSize),
                         )
@@ -267,7 +268,7 @@ private fun AppExclusionItem(
 private fun AppIconImage(drawable: Drawable?, modifier: Modifier = Modifier) {
     if (drawable == null) {
         Icon(
-            imageVector = Icons.Rounded.Android,
+            imageVector = PetalIcons.Android,
             contentDescription = null,
             modifier = modifier,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.components
 
+import com.hapticks.app.ui.theme.PetalIcons
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -49,7 +50,7 @@ fun HapticToggleRow(
     )
 
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+        modifier = modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -62,7 +63,7 @@ fun HapticToggleRow(
                     modifier = Modifier
                         .size(44.dp)
                         .scale(iconScale)
-                        .background(color = iconBgColor, shape = PetalMaterialShapes.Cookie6Sided.toShape()),
+                        .background(color = iconBgColor, shape = (if (checked) PetalMaterialShapes.Cookie12Sided else PetalMaterialShapes.Cookie6Sided).toShape()),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(leadingIcon, null, tint = iconTint, modifier = Modifier.size(22.dp))
@@ -72,8 +73,8 @@ fun HapticToggleRow(
                 modifier = Modifier.padding(start = if (leadingIcon != null) 14.dp else 0.dp, end = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Switch(
@@ -82,7 +83,7 @@ fun HapticToggleRow(
             thumbContent = if (checked) {
                 {
                     Icon(
-                        imageVector = Icons.Rounded.Check,
+                        imageVector = PetalIcons.Check,
                         contentDescription = null,
                         modifier = Modifier.size(SwitchDefaults.IconSize),
                     )

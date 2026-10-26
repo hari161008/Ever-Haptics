@@ -1,5 +1,6 @@
 package com.hapticks.app.ui.components
 
+import com.hapticks.app.ui.theme.PetalIcons
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -348,7 +349,7 @@ fun PetalGroupToggleRow(
                 thumbContent = if (checked) {
                     {
                         Icon(
-                            imageVector = Icons.Rounded.Check,
+                            imageVector = PetalIcons.Check,
                             contentDescription = null,
                             modifier = Modifier.size(SwitchDefaults.IconSize),
                         )

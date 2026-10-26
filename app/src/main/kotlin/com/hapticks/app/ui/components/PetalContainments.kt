@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.sp
  * Standardizes borderless surfaces, grouped-corners, and expressive spacing.
  */
 object PetalContainmentDefaults {
-    val shape = RoundedCornerShape(24.dp)
+    val shape = RoundedCornerShape(28.dp)
     val groupedMiddleShape = RoundedCornerShape(8.dp)
     val contentPaddingHorizontal = 18.dp
     val contentPaddingVertical = 18.dp

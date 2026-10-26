@@ -1,5 +1,7 @@
 package com.hapticks.app.ui.screens.musichaptics
 
+import com.hapticks.app.ui.theme.PetalIcons
+import com.hapticks.app.ui.components.PetalFeatureScreen
 import android.Manifest
 import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
 import com.hapticks.app.ui.components.PetalSlider
@@ -122,23 +124,7 @@ fun MusicHapticsScreen(
     var strengthDraft by remember(settings.musicHapticsStrength) { mutableFloatStateOf(settings.musicHapticsStrength) }
     var strengthTick by remember { mutableIntStateOf(slider01ToTickIndex(settings.musicHapticsStrength)) }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            PetalCollapsingTopAppBar(
-                title = stringResource(R.string.music_haptics_screen_title),
-                scrollBehavior = scrollBehavior,
-                onNavigateBack = onBack,
-            )
-        },
-    ) { padding ->
-        LazyColumn(
-            state = rememberLazyListState(),
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+    PetalFeatureScreen(title = stringResource(R.string.music_haptics_screen_title), onBack = onBack, modifier = modifier) {
             item("icon_header") {
                 ScreenIconHeader(
                     icon = Icons.Rounded.MusicNote,
@@ -320,7 +306,7 @@ fun MusicHapticsScreen(
             item("info") {
                 Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = com.hapticks.app.ui.components.PetalContainmentDefaults.shape, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-                        Icon(Icons.Rounded.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp).padding(top = 2.dp))
+                        Icon(PetalIcons.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp).padding(top = 2.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("How it works", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                             Text(
@@ -332,7 +318,6 @@ fun MusicHapticsScreen(
                     }
                 }
             }
-        }
     }
 }
 
