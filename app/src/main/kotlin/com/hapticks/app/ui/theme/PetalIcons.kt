@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Petal's Material Symbols (rounded, filled) icon set, lifted straight from the Petal Browser
- * drawables (`res/drawable/*_filled.xml`, 960x960 viewport). Built as [ImageVector]s so they are a
+ * drawables (`res/drawable/star_filled.xml`, 960x960 viewport). Built as [ImageVector]s so they are a
  * drop-in replacement for `Icons.Rounded.*` everywhere the app already takes an ImageVector.
  * Glyphs Petal does not ship (tap, swipe, keyboard, music...) keep using `Icons.Rounded`, exactly
  * like Petal itself does.
