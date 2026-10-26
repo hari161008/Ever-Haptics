@@ -5,11 +5,11 @@ plugins {
 }
 
 fun getVersionName(): String {
-    return System.getenv("GITHUB_REF_NAME") ?: "6.0.0"
+    return (System.getenv("GITHUB_REF_NAME") ?: "6.0.0").removePrefix("v")
 }
 
 fun getVersionCode(): Int {
-    return System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 5
+    return System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 6
 }
 
 android {
@@ -34,23 +34,6 @@ android {
             val storePass = System.getenv("KEYSTORE_PASSWORD") ?: "everhapticspass"
             val alias = System.getenv("KEY_ALIAS") ?: "everhaptics"
             val keyPass = System.getenv("KEY_PASSWORD") ?: storePass
-
-            if (!ksFile.exists()) {
-                ksFile.parentFile?.mkdirs()
-                runCatching {
-                    ProcessBuilder(
-                        "keytool", "-genkeypair", "-v",
-                        "-keystore", ksFile.absolutePath,
-                        "-alias", alias,
-                        "-keyalg", "RSA",
-                        "-keysize", "2048",
-                        "-validity", "10000",
-                        "-storepass", storePass,
-                        "-keypass", keyPass,
-                        "-dname", "CN=EverHaptics, OU=Mobile, O=OpenSource, L=City, ST=State, C=US"
-                    ).start().waitFor()
-                }
-            }
 
             if (ksFile.exists()) {
                 storeFile = ksFile
