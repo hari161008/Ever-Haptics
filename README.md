@@ -1,167 +1,174 @@
-# Ever Haptics
-<br>
-
-<img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Assets/Ever%20Haptics%20Banner.png" width="100%" />
-Ever Haptics is an Android app that adds haptic feedback across apps and system UI to make your phone feel more responsive and premium while tapping the screen, scrolling through the apps, clicking buttons, connecting charger, receiving calls, notifications, ringing alarm, playing musics and more.
-
-<br>
-<br>
-<center>
-  <b>Think Different :)</b>
-</center>
-<br>
-
-<br>
-
-# ⭐ Rate and Review
-Everyone's Ratings: [Click Here](https://hari161008.github.io/Website-For-Everlasting-Android-Tweak/Ratings%20Reviews/Ever%20Haptics/Ever_Haptics.html)
-
-If you would like to write a Review, you must install the app, then go to App's settings > Rate and Review
-
-<br>
-
-# 📦 Latest Releases
-GitHub: [Download](https://github.com/hari161008/Ever-Haptics/releases) ⬇️
-
-<br>
-
-# 🚀 Telegram Links
-
-🌐 Cool Apps Recommending Channel:
-<a href="https://t.me/CoolAppStore">Join Now</a>
-<br>
-📢 Everlasting Support Group:
-<a href="https://t.me/EverlastingAndroidTweak">Join Now</a>
-<br>
-🔭 To contact me through Telegram: <a href="https://t.me/hariprabhu1008">@hariprabhu1008</a>
-
-<br>
-
-# 📱 Screenshots:
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/1.png" width="32%"/>
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/2.png" width="32%"/>
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/3.png" width="32%"/>
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Assets/Ever%20Haptics%20Banner.png" alt="Ever Haptics Banner" width="100%">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/4.png" width="32%"/>
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/5.png" width="32%"/>
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/6.png" width="32%"/>
+  <a href="https://github.com/hari161008/Ever-Haptics/stargazers"><img src="https://img.shields.io/github/stars/hari161008/Ever-Haptics?style=for-the-badge&logo=github&color=7478F8&labelColor=1F1F38" alt="Stars"></a>
+  <a href="https://github.com/hari161008/Ever-Haptics/network/members"><img src="https://img.shields.io/github/forks/hari161008/Ever-Haptics?style=for-the-badge&logo=github&color=A3E635&labelColor=1F1F38" alt="Forks"></a>
+  <a href="https://github.com/hari161008/Ever-Haptics/releases"><img src="https://img.shields.io/github/v/release/hari161008/Ever-Haptics?style=for-the-badge&logo=android&label=Version&color=EC4899&labelColor=1F1F38" alt="Version"></a>
+  <a href="https://github.com/hari161008/Ever-Haptics/releases"><img src="https://img.shields.io/github/downloads/hari161008/Ever-Haptics/total?style=for-the-badge&logo=cloud&label=Downloads&color=38BDF8&labelColor=1F1F38" alt="Downloads"></a>
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/7.png" width="32%"/>
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/8.png" width="32%"/>
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/9.png" width="32%"/>
+  System-wide tactile feedback across taps, scrolling, buttons, charging, alerts, and live sound beats.<br>
+  <strong>Now reimagined with Material 3 Expressive UI & dynamic containment.</strong>
 </p>
 
-<p align="left">
-  &nbsp;
-  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/10.png" width="32%"/>
+<p align="center">
+  <img src="https://img.shields.io/badge/Kotlin-Compose-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin Compose">
+  <img src="https://img.shields.io/badge/Material_3-Expressive-FF7043?style=flat-square&logo=materialdesign&logoColor=white" alt="Material 3 Expressive">
+  <img src="https://img.shields.io/badge/Android-13%2B_(API_33%2B)-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 13+">
+  <img src="https://img.shields.io/badge/Root-Not_Required-22C55E?style=flat-square" alt="No Root Needed">
+</p>
+
+<br>
+
+<p align="center">
+  <!-- Petal Collaboration Badge Button -->
+  <a href="https://petal-browser.runs-on.dev/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/🤝%20In%20Collaboration%20With-Petal%20Browser-EC4899?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=31102A" alt="In Collaboration With Petal Browser" height="38">
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/hari161008/Ever-Haptics/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Latest%20APK-7478F8?style=for-the-badge&logo=github&logoColor=white&labelColor=1F1F38" alt="Download Latest APK" height="38">
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://t.me/EverlastingAndroidTweak" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/Telegram-Community-26A5E4?style=for-the-badge&logo=telegram&logoColor=white&labelColor=0F2B3B" alt="Join Telegram" height="38">
+  </a>
 </p>
 
 <br>
 
 ---
 
-# Features of Ever Haptics .✦ ݁˖
+## ✦ What's Inside
 
-┈➤ Feel Every Tap<br><br>
+<table>
+  <tr>
+    <td width="50%">
+      <h3>👆 Feel Every Tap</h3>
+      <p>Brings crisp, responsive haptic sensations to taps, cards, switches, and toggles across apps and Android system UI.</p>
+      <ul>
+        <li><strong>6 Preset Patterns</strong>: Click, Tick, Heavy, Double, Soft Bump, Double Tick</li>
+        <li><strong>Waveform Intensity</strong>: Independent vibration strength slider</li>
+        <li><strong>Custom Beat Recording</strong>: Tap your own live rhythm customizer</li>
+        <li><strong>App Exclusions</strong>: Blacklist apps from tap haptics</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>🌀 Tactile Scrolling</h3>
+      <p>Subtle, rhythmic feedback as your finger glides through lists, pagers, and feeds.</p>
+      <ul>
+        <li><strong>Vertical & Horizontal</strong>: Works on carousels, lists, and pagers</li>
+        <li><strong>Interval Density</strong>: Tune pulse distance from 0.2 cm to 10 cm</li>
+        <li><strong>Independent Pulse Strength</strong>: Tailor intensity specifically for scrolls</li>
+        <li><strong>Per-App Whitelist / Blacklist</strong>: Flexible exclusion management</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>⚡ Charging & Power Haptics</h3>
+      <p>Satisfying tactile confirmations for essential device events.</p>
+      <ul>
+        <li><strong>Connect & Disconnect</strong>: Distinct feedback when plugging or unplugging</li>
+        <li><strong>Hardware Buttons</strong>: Volume up/down and power key haptics</li>
+        <li><strong>Brightness Slider</strong>: Subtle tick for fine display adjustments</li>
+        <li><strong>Unlock Haptics</strong>: Signature confirmation when opening your phone</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>🎶 Live Sound & Alert Haptics</h3>
+      <p>Synchronize vibrations with audio beats and incoming notifications.</p>
+      <ul>
+        <li><strong>Audio Beat Detection</strong>: In-device audio, microphone, or combined</li>
+        <li><strong>Ringtone & Alarm Sync</strong>: Vibrate to your ringtones and alarm audio</li>
+        <li><strong>Notification Haptics</strong>: Dedicated pulses for incoming app alerts</li>
+        <li><strong>Quick Settings Tile</strong>: Toggle Music Haptics with one tap</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
-• 👆 Custom Tap Haptics – Adds responsive haptic feedback to taps, switches, and toggles across apps and system UI<br>
-• 🎚️ Haptic Intensity – Adjustable vibration strength slider for precise tap feedback control<br>
-• 🎨 Haptic Patterns – Choose from 6 preset patterns: Click, Tick, Heavy, Double, Soft Bump, Double Tick<br>
-• 🎵 Custom Pattern Recording – Record your own haptic rhythm with a beat-tap editor<br>
-• 🚫 App Exclusions – Exclude specific installed apps from receiving tap haptics<br><br>
+<br>
 
-┈➤ Tactile Scrolling<br><br>
+---
 
-• 🌀 Tactile Scrolling – Adds a subtle, rhythmic haptic click as you scroll through lists and pages<br>
-• ↔️ Horizontal Scroll Haptics – Also fires haptics when scrolling horizontally in carousels and pagers<br>
-• 📏 Haptic Interval Control – Set the distance scrolled between each haptic pulse (0.2 cm to 10 cm)<br>
-• 💪 Pulse Strength – Adjust how strong each scroll pulse feels independently<br>
-• 🚫 App Exclusions – Exclude specific apps from scroll haptic feedback<br><br>
+## 📱 Screenshots
 
-┈➤ Charging Vibration<br><br>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/1.png" width="31%"/>
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/2.png" width="31%"/>
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/3.png" width="31%"/>
+</p>
 
-• ⚡ Charging Vibration – Feel a satisfying buzz when you plug in or unplug your charger<br>
-• 🔌 On Connect Vibration – Toggle vibration specifically when charger is plugged in<br>
-• 🔋 On Disconnect Vibration – Toggle vibration specifically when charger is unplugged<br>
-• 🎛️ Pattern & Intensity – Customize the pattern and strength of charging haptics<br><br>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/4.png" width="31%"/>
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/5.png" width="31%"/>
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/6.png" width="31%"/>
+</p>
 
-┈➤ Button Haptics<br><br>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/7.png" width="31%"/>
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/8.png" width="31%"/>
+  &nbsp;
+  <img src="https://raw.githubusercontent.com/hari161008/Website-For-Everlasting-Android-Tweak/main/Ever%20Haptics/Screenshots/9.png" width="31%"/>
+</p>
 
-• 🔊 Volume Button Haptics – Custom haptic feedback when volume up or down is pressed<br>
-• ⏻ Power Button Haptics – Haptic feedback when the power button is pressed<br>
-• ☀️ Brightness Slider Haptics – Haptic tick for every adjustment of the brightness slider<br><br>
+<br>
 
-┈➤ Navigation Bar Haptics<br><br>
+---
 
-• 🏠 Navigation Bar Haptics – Feel a haptic when the home button on the navigation bar is triggered<br>
-• 🎛️ Custom Nav Pattern – Choose pattern and intensity for navigation bar gestures<br><br>
+## 🎨 Material 3 Expressive Architecture
 
-┈➤ Unlock Haptics<br><br>
+Ever Haptics is crafted using modern Android development practices and the latest Material 3 Expressive guidelines:
 
-• 🔓 Unlock Haptics – Satisfying vibration every time you unlock your device<br>
-• 🎛️ Custom Unlock Pattern – Choose pattern and intensity for the unlock haptic<br><br>
+- **Connected Group Containment**: Feature items belong to contextual shape groups with smooth rounded boundaries (`PetalContainments`, `PetalGroups`).
+- **Interactive Morphing Controls**: Tactile sliders with dynamic spring physics and live feedback on interaction.
+- **Predictive Back Navigation**: Seamless Android 14+ predictive back transitions and expressive screen dismiss animations.
+- **Expressive Splash**: Fluid vector ripples and glyph morphs celebrating tactile feedback at launch.
+- **Dynamic Theming**: Adapts to Material You wallpaper tones with 12 handcrafted color seeds and pure AMOLED dark mode.
 
-┈➤ Keyboard Haptics<br><br>
+<br>
 
-• ⌨️ Keyboard Haptics – Custom haptic feedback on every keystroke for a premium typing feel<br>
-• 🎛️ Custom Keyboard Pattern – Choose pattern and intensity per keystroke independently<br><br>
+---
 
-┈➤ Calls, Alerts & Alarms<br><br>
+## ⚙️ Building from Source
 
-• 📞 Call Haptic – Repeating custom haptic pattern when an incoming call arrives<br>
-• 🎵 Auto Call Haptics – Vibrate in real-time sync with your ringtone's audio beats<br>
-• 🔔 Notification Haptic – Play a custom haptic pattern when any notification arrives<br>
-• ⏰ Alarm Haptic – Custom haptic pattern that fires when an alarm goes off<br>
-• 🎵 Auto Alarm Haptics – Vibrate in real-time sync with your alarm sound's audio beats<br>
-• ✏️ Custom Haptic Pattern – Record a custom haptic rhythm for each alert type separately<br>
-• 🔒 Notification Listener Integration – System-level notification access for reliable haptic triggering<br><br>
+You will need **JDK 17** and the Android SDK (API 36).
 
-┈➤ Music & Sound Haptics<br><br>
+```bash
+# Clone the repository
+git clone https://github.com/hari161008/Ever-Haptics.git
+cd Ever-Haptics
 
-• 🎶 Music & Sound Haptics – Vibrate in sync with the beat of music and surrounding sounds<br>
-• 📱 In-Device Audio Source – Detect beats from audio playing directly on the device<br>
-• 🎙️ Surroundings Source – Detect beats from the environment using the microphone<br>
-• 🔀 Both Source – Combine in-device audio and microphone for maximum responsiveness<br>
-• 🎚️ Beat Sensitivity – Control how aggressively beats are detected from the audio<br>
-• 💪 Haptic Strength – Adjust the intensity of each vibration pulse per beat<br>
-• ⚡ Quick Settings Tile – Add a tile to toggle Music Haptics directly from notification panel<br><br>
+# Build Debug APK
+./gradlew assembleDebug
 
-┈➤ Settings & Appearance<br><br>
+# Build Release APK
+./gradlew assembleRelease
+```
 
-• 🎨 Dynamic Color – Material You dynamic colors that adapt from your wallpaper<br>
-• 🖌️ Color Palette – Choose from 12 preset seed colors for the app theme<br>
-• 🌗 Theme Mode – Switch between System default, Light, and Dark modes<br>
-• ⬛ AMOLED Mode – Pure black background for AMOLED screens to save battery<br>
-• 🔋 Battery Saver Detection – Automatically pause all haptics when Battery Saver is active<br>
-• 🔄 In-App Update Checker – Check for new releases from inside the app<br>
-• 🔔 Auto Update Check – Automatically check for updates on every launch<br>
-• 💻 GitHub Repository – Quick link to the open source repository<br><br>
+<br>
 
-┈➤ Global Controls<br><br>
+---
 
-• 🌐 Global Master Toggle – Enable or disable all haptic features with a single switch<br>
-• ♿ Accessibility Service – Powers the haptic engine system-wide without root access<br><br>
+## 🤝 Community & Collaboration
 
-# Why This App ??
-Some phones especially Pixel devices have really good haptics, but they’re underutilized. A lot of apps and even parts of Android don’t give haptic feedback when you interact with them. That makes the experience feel a bit flat.
+- **Petal Browser Collaboration**: Integrated with Petal's Material 3 Expressive design tokens. Visit [petal-browser.runs-on.dev](https://petal-browser.runs-on.dev/).
+- **Support Group**: Join the discussion at [Telegram @EverlastingAndroidTweak](https://t.me/EverlastingAndroidTweak).
+- **Cool Apps Channel**: [t.me/CoolAppStore](https://t.me/CoolAppStore).
+- **Ratings & Reviews**: [Community Reviews](https://hari161008.github.io/Website-For-Everlasting-Android-Tweak/Ratings%20Reviews/Ever%20Haptics/Ever_Haptics.html).
+- **Developer Contact**: Telegram [@hariprabhu1008](https://t.me/hariprabhu1008).
 
-So Ever Haptics is there to fix that and make interactions feel more alive and satisfying. <br><br>
+<br>
 
-# For those who are wondering how Rate and Review work
-
-1. Create a Google form (with sign in required - to prevent multiple reviews and easily editable)
-2. Link the Google form with sheets (Name it as Original form)
-3. Create another Google form and name it as Website and link all the columns except the gmail column with the Original form (This is because the original form contains G-mail, which is not supposed to be exposed)
-4. Linking is easy, just make the original form to be visible to everyone temperorarly, share the link to AI and ask AI to give the code to link it in the another sheet (This will make the Website form to be automatically updated based on the changes in the original form)
-5. It will give you the code, and paste it there
-6. Then in the website form, click file > share > publish it on web > publish it as CSV > Publish.
-7. Now the Link form the website works a backend raw data
-8. If you want to have replies to your website, create a new column in the Website form as replies and type your replies to the respective people who you wanted to.
-<br><br>
-The source code of Rate and Review are open, Check it out: [Click Here](https://github.com/hari161008/Website-For-Everlasting-Android-Tweak)
+<p align="center">
+  <b>Think Different :)</b>
+</p>
