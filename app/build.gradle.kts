@@ -5,11 +5,11 @@ plugins {
 }
 
 fun getVersionName(): String {
-    return System.getenv("GITHUB_REF_NAME") ?: "5.0.0"
+    return System.getenv("GITHUB_REF_NAME") ?: "6.0.0"
 }
 
 fun getVersionCode(): Int {
-    return System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 4
+    return System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 5
 }
 
 android {
