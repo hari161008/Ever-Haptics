@@ -50,6 +50,10 @@ import com.hapticks.app.ui.theme.SeedYellow
 import com.hapticks.app.ui.theme.SeedPurple
 import com.hapticks.app.util.UpdateChecker
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import androidx.compose.foundation.text.selection.SelectionContainer
+import com.hapticks.app.HapticksApp
+import com.hapticks.app.haptics.HapticPattern
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -88,6 +92,9 @@ fun SettingsScreen(
 
     var updateCheckState by remember { mutableStateOf<UpdateCheckState>(UpdateCheckState.Idle) }
     var updateInfo by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
+    var showHapticCheck by remember { mutableStateOf(false) }
+    var hapticCheckTick by remember { mutableIntStateOf(0) }
+    val hapticEngine = remember { (context.applicationContext as? HapticksApp)?.hapticEngine }
     val scrollBehavior = rememberPetalHeaderScrollBehavior()
     val scrollState = rememberScrollState()
 
@@ -342,6 +349,18 @@ fun SettingsScreen(
                 }
                 row { position ->
                     PetalGroupRow(
+                        icon = PetalIcons.Vibration,
+                        title = "Haptics check",
+                        subtitle = "Test vibration on this phone and see what the engine is using",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Sunny,
+                        variant = PetalBadgeVariant.SECONDARY,
+                        enabled = hapticEngine != null,
+                        onClick = { showHapticCheck = true },
+                    )
+                }
+                row { position ->
+                    PetalGroupRow(
                         icon = Icons.Rounded.Code,
                         title = "GitHub",
                         subtitle = "Source code | Releases | Issue tracker",
@@ -372,6 +391,34 @@ fun SettingsScreen(
                         onClick = { openUrl("https://t.me/CoolAppStore") },
                     )
                 }
+            }
+
+            if (showHapticCheck && hapticEngine != null) {
+                val report = remember(hapticCheckTick) { hapticEngine.diagnostics() }
+                PetalAlertDialog(
+                    onDismissRequest = { showHapticCheck = false },
+                    title = "Haptics check",
+                    icon = PetalIcons.Vibration,
+                    message = "Tap Run test and feel for a vibration. If nothing happens, run it a few times so the engine can try other delivery methods, then share this report.",
+                    confirmText = "Run test",
+                    onConfirm = {
+                        hapticEngine.playStrong(HapticPattern.CLICK)
+                        scope.launch {
+                            delay(900L)
+                            hapticCheckTick++
+                        }
+                    },
+                    dismissText = "Close",
+                    content = {
+                        SelectionContainer {
+                            Text(
+                                text = report,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    },
+                )
             }
         }
     }

@@ -555,7 +555,6 @@ private fun BeatEditorRow(
 
             AnimatedVisibility(visible = isExpanded, enter = expandVertically(), exit = shrinkVertically()) {
                 Column(Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                     var offsetDraft by remember(beat.offsetMs) { mutableLongStateOf(beat.offsetMs) }
                     var offsetTick by remember { mutableIntStateOf(0) }

@@ -1,6 +1,7 @@
 package com.hapticks.app.ui.screens.musichaptics
 
 import com.hapticks.app.ui.theme.PetalIcons
+import com.hapticks.app.ui.theme.PetalMaterialShapes
 import com.hapticks.app.ui.components.PetalFeatureScreen
 import android.Manifest
 import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
@@ -43,7 +44,11 @@ import com.hapticks.app.data.HapticsSettings
 import com.hapticks.app.data.MusicHapticsSource
 import com.hapticks.app.service.MusicHapticsService
 import com.hapticks.app.service.MusicHapticsTileService
-import com.hapticks.app.ui.components.HapticToggleRow
+import com.hapticks.app.ui.components.PetalBadgeVariant
+import com.hapticks.app.ui.components.PetalGroup
+import com.hapticks.app.ui.components.PetalGroupRow
+import com.hapticks.app.ui.components.PetalGroupToggleRow
+import com.hapticks.app.ui.components.PetalSliderRow
 import com.hapticks.app.ui.components.SectionCard
 import com.hapticks.app.ui.components.ScreenIconHeader
 import com.hapticks.app.ui.components.FeatureColors
@@ -205,27 +210,31 @@ fun MusicHapticsScreen(
 
             // Master toggle
             item("toggle") {
-                SectionCard {
-                    HapticToggleRow(
-                        title = stringResource(R.string.music_haptics_toggle_title),
-                        subtitle = stringResource(R.string.music_haptics_toggle_subtitle),
-                        checked = settings.musicHapticsEnabled,
-                        onCheckedChange = { enabled ->
-                            if (enabled) {
-                                if (hasMicPermission.value) {
-                                    onMusicHapticsEnabledChange(true)
-                                    MusicHapticsService.start(ctx, settings.musicHapticsSource)
+                PetalGroup {
+                    row { position ->
+                        PetalGroupToggleRow(
+                            icon = Icons.Rounded.MusicNote,
+                            title = stringResource(R.string.music_haptics_toggle_title),
+                            subtitle = stringResource(R.string.music_haptics_toggle_subtitle),
+                            checked = settings.musicHapticsEnabled,
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    if (hasMicPermission.value) {
+                                        onMusicHapticsEnabledChange(true)
+                                        MusicHapticsService.start(ctx, settings.musicHapticsSource)
+                                    } else {
+                                        pendingEnable = true
+                                        requestPermissions()
+                                    }
                                 } else {
-                                    pendingEnable = true
-                                    requestPermissions()
+                                    onMusicHapticsEnabledChange(false)
+                                    MusicHapticsService.stop(ctx)
                                 }
-                            } else {
-                                onMusicHapticsEnabledChange(false)
-                                MusicHapticsService.stop(ctx)
-                            }
-                        },
-                        leadingIcon = Icons.Rounded.MusicNote,
-                    )
+                            },
+                            position = position,
+                            badgeShape = PetalMaterialShapes.Cookie12Sided,
+                        )
+                    }
                 }
             }
 
@@ -264,36 +273,46 @@ fun MusicHapticsScreen(
 
             // Sliders
             item("sliders") {
-                SectionCard {
-                    Column {
-                        HapticSlider(
+                PetalGroup {
+                    row { position ->
+                        PetalSliderRow(
+                            icon = PetalIcons.Speed,
                             title = stringResource(R.string.music_haptics_sensitivity_title),
                             subtitle = stringResource(R.string.music_haptics_sensitivity_subtitle),
+                            valueLabel = "${(sensitivityDraft * 100f).roundToInt()}%",
                             value = sensitivityDraft,
-                            enabled = settings.musicHapticsEnabled,
-                            startLabel = "Less sensitive",
-                            endLabel = "More sensitive",
                             onValueChange = { v ->
                                 sensitivityDraft = v
                                 val t = slider01ToTickIndex(v)
                                 if (t != sensitivityTick) { sensitivityTick = t; ctx.performHapticSliderTick() }
                             },
                             onValueChangeFinished = { onSensitivityCommit(sensitivityDraft) },
+                            position = position,
+                            steps = SliderTickStepsDefault,
+                            enabled = settings.musicHapticsEnabled,
+                            badgeShape = PetalMaterialShapes.Sunny,
+                            footer = { SliderEndLabels("Less sensitive", "More sensitive") },
                         )
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                        HapticSlider(
+                    }
+                    row { position ->
+                        PetalSliderRow(
+                            icon = PetalIcons.Bolt,
                             title = stringResource(R.string.music_haptics_strength_title),
                             subtitle = stringResource(R.string.music_haptics_strength_subtitle),
+                            valueLabel = "${(strengthDraft * 100f).roundToInt()}%",
                             value = strengthDraft,
-                            enabled = settings.musicHapticsEnabled,
-                            startLabel = "Gentle",
-                            endLabel = "Strong",
                             onValueChange = { v ->
                                 strengthDraft = v
                                 val t = slider01ToTickIndex(v)
                                 if (t != strengthTick) { strengthTick = t; ctx.performHapticSliderTick() }
                             },
                             onValueChangeFinished = { onStrengthCommit(strengthDraft) },
+                            position = position,
+                            steps = SliderTickStepsDefault,
+                            enabled = settings.musicHapticsEnabled,
+                            badgeShape = PetalMaterialShapes.Cookie9Sided,
+                            variant = PetalBadgeVariant.TERTIARY,
+                            footer = { SliderEndLabels("Gentle", "Strong") },
                         )
                     }
                 }
@@ -324,37 +343,29 @@ fun MusicHapticsScreen(
 @Composable
 private fun QuickSettingsTileCard() {
     val ctx = LocalContext.current
-    SectionCard {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Box(
-                modifier = Modifier.size(42.dp).clip(RoundedCornerShape(13.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Rounded.GridView, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Quick Settings Shortcut", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                Text(
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                        "Add a tile to your notification panel to toggle Music Haptics quickly."
-                    else
-                        "Open Quick Settings, tap Edit, then drag the Music Haptics tile into place.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+    val canAddTile = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+    PetalGroup {
+        row { position ->
+            PetalGroupRow(
+                icon = Icons.Rounded.GridView,
+                title = "Quick Settings Shortcut",
+                subtitle = if (canAddTile)
+                    "Add a tile to your notification panel to toggle Music Haptics quickly."
+                else
+                    "Open Quick Settings, tap Edit, then drag the Music Haptics tile into place.",
+                position = position,
+                badgeShape = PetalMaterialShapes.Clover4Leaf,
+                variant = PetalBadgeVariant.SECONDARY,
+            )
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Row(
-                Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
-                    .clickable {
+        if (canAddTile) {
+            row { position ->
+                PetalGroupRow(
+                    icon = Icons.Rounded.Add,
+                    title = "Add tile",
+                    position = position,
+                    badgeShape = PetalMaterialShapes.Cookie6Sided,
+                    onClick = {
                         val statusBarManager = ctx.getSystemService(android.app.StatusBarManager::class.java)
                         statusBarManager?.requestAddTileService(
                             ComponentName(ctx, MusicHapticsTileService::class.java),
@@ -363,48 +374,17 @@ private fun QuickSettingsTileCard() {
                             {},
                             {},
                         )
-                    }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Add Tile", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                Icon(Icons.Rounded.Add, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun HapticSlider(
-    title: String,
-    subtitle: String,
-    value: Float,
-    enabled: Boolean,
-    startLabel: String,
-    endLabel: String,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
-) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(Modifier.width(8.dp))
-            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-                Text("${(value * 100f).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
-            }
-        }
-        PetalSlider(
-            value = value, onValueChange = onValueChange, onValueChangeFinished = onValueChangeFinished,
-            valueRange = 0f..1f, steps = SliderTickStepsDefault, enabled = enabled,
-            colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary, inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(startLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(endLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+private fun SliderEndLabels(startLabel: String, endLabel: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(startLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(endLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

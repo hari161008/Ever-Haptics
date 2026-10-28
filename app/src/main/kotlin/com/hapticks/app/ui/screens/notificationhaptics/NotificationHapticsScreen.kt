@@ -69,7 +69,6 @@ import com.hapticks.app.ui.components.FeatureColors
 import com.hapticks.app.ui.components.FeatureIcon
 import com.hapticks.app.ui.components.HapticTestButton
 import com.hapticks.app.ui.components.ScreenIconHeader
-import com.hapticks.app.ui.components.HapticToggleRow
 import com.hapticks.app.ui.components.SectionCard
 import com.hapticks.app.ui.haptics.SliderTickStepsDefault
 import com.hapticks.app.ui.haptics.performHapticSliderTick
@@ -432,7 +431,7 @@ private fun PatternSelectorWithCustom(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
+        Spacer(Modifier.height(4.dp))
         IntensitySlider(intensity = intensity, onIntensityCommit = onIntensityCommit)
     }
 }

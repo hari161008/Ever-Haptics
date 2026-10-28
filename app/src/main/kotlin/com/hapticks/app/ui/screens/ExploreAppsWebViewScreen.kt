@@ -13,13 +13,13 @@ import android.webkit.URLUtil
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.*
@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import com.hapticks.app.ui.components.PetalContainedLoadingIndicator
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.launch
 
 private const val EXPLORE_APPS_URL = "https://hariprabhu.vercel.app/"
 
@@ -42,6 +43,14 @@ fun ExploreAppsWebViewScreen(
 ) {
     var isLoading by remember { mutableStateOf(true) }
     val bgColor = MaterialTheme.colorScheme.background
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val showMessage: (String) -> Unit = { message ->
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize().background(bgColor)) {
         AndroidView(
@@ -96,9 +105,9 @@ fun ExploreAppsWebViewScreen(
                             }
                             val dm = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
                             dm.enqueue(request)
-                            Toast.makeText(ctx, "Downloading $fileName…", Toast.LENGTH_SHORT).show()
+                            showMessage("Downloading $fileName…")
                         } catch (e: Exception) {
-                            Toast.makeText(ctx, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                            showMessage("Download failed: ${e.message}")
                         }
                     })
                     loadUrl(EXPLORE_APPS_URL)
@@ -113,7 +122,22 @@ fun ExploreAppsWebViewScreen(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.Center),
         ) {
-            PetalContainedLoadingIndicator(size = 64.dp)
+            PetalContainedLoadingIndicator(size = 72.dp)
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        ) { data ->
+            Snackbar(
+                snackbarData = data,
+                shape = RoundedCornerShape(20.dp),
+                containerColor = MaterialTheme.colorScheme.inverseSurface,
+                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+            )
         }
 
         Box(

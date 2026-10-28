@@ -91,16 +91,12 @@ class HapticsAccessibilityService : AccessibilityService() {
 
     private suspend fun playCustomSequence(seq: CustomHapticSequence) {
         val sorted = seq.beats.sortedBy { it.offsetMs }
-        val alarmAttrs = VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM)
         val startMs = System.currentTimeMillis()
         for (beat in sorted) {
             val now = System.currentTimeMillis() - startMs
             val waitMs = beat.offsetMs - now
             if (waitMs > 0) delay(waitMs)
-            withContext(Dispatchers.Main) {
-                try { vibrator.vibrate(VibrationEffect.createOneShot(60L, beat.amplitude.coerceIn(1, 255)), alarmAttrs) }
-                catch (_: Exception) { engine.playOneShot(60L, beat.amplitude) }
-            }
+            engine.playOneShot(60L, beat.amplitude)
         }
     }
 
