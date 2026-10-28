@@ -119,7 +119,7 @@ fun NotificationHapticsScreen(
     PetalFeatureScreen(title = "Calls, Alerts & Alarms", onBack = onBack, modifier = modifier) {
         item("hero") {
             PetalFeatureHero(
-                icon = Icons.Rounded.NotificationsActive,
+                icon = PetalIcons.Notifications,
                 tint = FeatureColors.Notifications,
                 subtitle = "Custom haptic patterns for incoming calls, notifications, and alarms.",
                 modifier = Modifier.entrance(0),
@@ -158,7 +158,7 @@ fun NotificationHapticsScreen(
         item("notif") {
             AlertSection(
                 title = "Notifications",
-                icon = Icons.Rounded.Notifications,
+                icon = PetalIcons.Notifications,
                 toggleTitle = "Notification Haptic",
                 toggleSubtitle = "Play a haptic pattern when a notification arrives",
                 enabled = notifHapticEnabled,

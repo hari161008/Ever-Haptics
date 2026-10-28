@@ -132,7 +132,7 @@ fun MusicHapticsScreen(
     PetalFeatureScreen(title = stringResource(R.string.music_haptics_screen_title), onBack = onBack, modifier = modifier) {
             item("icon_header") {
                 ScreenIconHeader(
-                    icon = Icons.Rounded.MusicNote,
+                    icon = PetalIcons.Music,
                     featureColor = FeatureColors.MusicHaptics,
                     subtitle = "Vibrate in sync with music beats and sounds. Choose where Ever Haptics listens.",
                 )

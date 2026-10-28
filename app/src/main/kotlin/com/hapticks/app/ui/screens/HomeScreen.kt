@@ -9,9 +9,6 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -89,19 +86,19 @@ fun HomeScreen(
             title = "Touch & typing",
             description = "How taps, scrolls and keystrokes feel",
             items = listOf(
-                FeatureEntry(R.string.home_feel_every_tap_title, R.string.home_feel_every_tap_subtitle, Icons.Rounded.TouchApp, FeatureColors.FeelEveryTap, onOpenFeelEveryTap),
-                FeatureEntry(R.string.home_tactile_scrolling_title, R.string.home_tactile_scrolling_subtitle, Icons.Rounded.SwipeUp, FeatureColors.TactileScrolling, onOpenTactileScrolling),
-                FeatureEntry(R.string.home_keyboard_haptics_title, R.string.home_keyboard_haptics_subtitle, Icons.Rounded.Keyboard, FeatureColors.Keyboard, onOpenKeyboardHaptics),
+                FeatureEntry(R.string.home_feel_every_tap_title, R.string.home_feel_every_tap_subtitle, PetalIcons.TouchApp, FeatureColors.FeelEveryTap, onOpenFeelEveryTap),
+                FeatureEntry(R.string.home_tactile_scrolling_title, R.string.home_tactile_scrolling_subtitle, PetalIcons.Motion, FeatureColors.TactileScrolling, onOpenTactileScrolling),
+                FeatureEntry(R.string.home_keyboard_haptics_title, R.string.home_keyboard_haptics_subtitle, PetalIcons.Keyboard, FeatureColors.Keyboard, onOpenKeyboardHaptics),
             ),
         ),
         FeatureGroup(
             title = "System & hardware",
             description = "Buttons, navigation, lock screen and power",
             items = listOf(
-                FeatureEntry(R.string.home_button_haptics_title, R.string.home_button_haptics_subtitle, Icons.Rounded.RadioButtonChecked, FeatureColors.ButtonHaptics, onOpenButtonHaptics),
+                FeatureEntry(R.string.home_button_haptics_title, R.string.home_button_haptics_subtitle, PetalIcons.RadioButtonChecked, FeatureColors.ButtonHaptics, onOpenButtonHaptics),
                 FeatureEntry(R.string.home_navbar_haptics_title, R.string.home_navbar_haptics_subtitle, PetalIcons.NavBar, FeatureColors.NavBar, onOpenNavBarHaptics),
                 FeatureEntry(R.string.home_status_bar_haptics_title, R.string.home_status_bar_haptics_subtitle, PetalIcons.StatusBar, FeatureColors.StatusBar, onOpenStatusBarHaptics),
-                FeatureEntry(R.string.home_unlock_haptics_title, R.string.home_unlock_haptics_subtitle, Icons.Rounded.LockOpen, FeatureColors.Unlock, onOpenUnlockHaptics),
+                FeatureEntry(R.string.home_unlock_haptics_title, R.string.home_unlock_haptics_subtitle, PetalIcons.Unlock, FeatureColors.Unlock, onOpenUnlockHaptics),
                 FeatureEntry(R.string.home_charging_haptics_title, R.string.home_charging_haptics_subtitle, PetalIcons.Charging, FeatureColors.Charging, onOpenChargingHaptics),
             ),
         ),
@@ -109,8 +106,8 @@ fun HomeScreen(
             title = "Alerts & media",
             description = "Calls, notifications, alarms and music",
             items = listOf(
-                FeatureEntry(R.string.home_notification_haptics_title, R.string.home_notification_haptics_subtitle, Icons.Rounded.NotificationsActive, FeatureColors.Notifications, onOpenNotificationHaptics),
-                FeatureEntry(R.string.home_music_haptics_title, R.string.home_music_haptics_subtitle, Icons.Rounded.MusicNote, FeatureColors.MusicHaptics, onOpenMusicHaptics),
+                FeatureEntry(R.string.home_notification_haptics_title, R.string.home_notification_haptics_subtitle, PetalIcons.Notifications, FeatureColors.Notifications, onOpenNotificationHaptics),
+                FeatureEntry(R.string.home_music_haptics_title, R.string.home_music_haptics_subtitle, PetalIcons.Music, FeatureColors.MusicHaptics, onOpenMusicHaptics),
             ),
         ),
     )
@@ -183,9 +180,9 @@ fun HomeScreen(
 private fun HomeStatusChip(globalEnabled: Boolean, isServiceEnabled: Boolean, paused: Boolean) {
     val (label, icon, container, content) = when {
         paused -> StatusStyle("Paused", PetalIcons.BatterySaver, MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
-        !isServiceEnabled -> StatusStyle("Setup", Icons.Rounded.AccessibilityNew, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+        !isServiceEnabled -> StatusStyle("Setup", PetalIcons.Accessibility, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
         globalEnabled -> StatusStyle("Active", PetalIcons.Vibration, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-        else -> StatusStyle("Off", Icons.Rounded.PowerSettingsNew, MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant)
+        else -> StatusStyle("Off", PetalIcons.Power, MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant)
     }
     Surface(color = container, shape = CircleShape, modifier = Modifier.padding(end = 12.dp)) {
         Row(
@@ -348,7 +345,7 @@ private fun FeatureRow(
                     modifier = Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
+                    Icon(PetalIcons.Forward, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
                 }
             }
         }

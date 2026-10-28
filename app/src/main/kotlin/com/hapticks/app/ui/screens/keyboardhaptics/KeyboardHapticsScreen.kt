@@ -39,7 +39,7 @@ fun KeyboardHapticsScreen(
     PetalFeatureScreen(title = "Keyboard Haptics", onBack = onBack, modifier = modifier) {
         item("hero") {
             PetalFeatureHero(
-                icon = Icons.Rounded.Keyboard,
+                icon = PetalIcons.Keyboard,
                 tint = FeatureColors.Keyboard,
                 subtitle = "Custom haptic feedback on every keystroke for a premium typing feel.",
                 modifier = Modifier.entrance(0),
@@ -79,7 +79,7 @@ fun KeyboardHapticsScreen(
             PetalSection(title = "Typing", modifier = Modifier.entrance(2)) {
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = Icons.Rounded.Keyboard,
+                        icon = PetalIcons.Keyboard,
                         title = "Keyboard Haptics",
                         subtitle = "Play a haptic pattern on every keystroke",
                         checked = settings.keyboardHapticEnabled,

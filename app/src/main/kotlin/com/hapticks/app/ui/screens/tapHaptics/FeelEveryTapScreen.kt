@@ -1,7 +1,5 @@
 package com.hapticks.app.ui.screens.tapHaptics
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,6 +20,7 @@ import com.hapticks.app.ui.components.PetalResetFooter
 import com.hapticks.app.ui.components.PetalSection
 import com.hapticks.app.ui.components.PetalTestRow
 import com.hapticks.app.ui.components.entrance
+import com.hapticks.app.ui.theme.PetalIcons
 import com.hapticks.app.ui.theme.PetalMaterialShapes
 
 @Composable
@@ -41,7 +40,7 @@ fun FeelEveryTapScreen(
     PetalFeatureScreen(title = stringResource(R.string.screen_title), onBack = onBack, modifier = modifier) {
         item("hero") {
             PetalFeatureHero(
-                icon = Icons.Rounded.TouchApp,
+                icon = PetalIcons.TouchApp,
                 tint = FeatureColors.FeelEveryTap,
                 subtitle = "Tap-accurate haptic feedback on every interaction across the system.",
                 modifier = Modifier.entrance(0),
@@ -51,7 +50,7 @@ fun FeelEveryTapScreen(
             PetalSection(title = "Tap feedback", modifier = Modifier.entrance(1)) {
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = Icons.Rounded.TouchApp,
+                        icon = PetalIcons.TouchApp,
                         title = stringResource(R.string.toggle_tap_title),
                         subtitle = stringResource(R.string.toggle_tap_subtitle),
                         checked = settings.tapEnabled,
