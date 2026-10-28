@@ -5,11 +5,13 @@ plugins {
 }
 
 fun getVersionName(): String {
-    return (System.getenv("GITHUB_REF_NAME") ?: "6.0.0").removePrefix("v")
+fun getVersionName(): String {
+    return (System.getenv("GITHUB_REF_NAME") ?: "6.0.1").removePrefix("v")
 }
 
 fun getVersionCode(): Int {
-    return System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 6
+    return System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 7
+}
 }
 
 android {
@@ -25,6 +27,12 @@ android {
 
         vectorDrawables {
             useSupportLibrary = true
+        }
+
+        // Pure Kotlin/Compose app (no native code of its own): ship every ABI so one APK installs on
+        // 32-bit (armeabi-v7a, x86) and 64-bit (arm64-v8a, x86_64) devices alike.
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
     }
 

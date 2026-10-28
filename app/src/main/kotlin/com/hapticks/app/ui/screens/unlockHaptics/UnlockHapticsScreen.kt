@@ -39,7 +39,7 @@ fun UnlockHapticsScreen(
     PetalFeatureScreen(title = stringResource(R.string.unlock_haptics_title), onBack = onBack, modifier = modifier) {
         item("hero") {
             PetalFeatureHero(
-                icon = Icons.Rounded.LockOpen,
+                icon = PetalIcons.Unlock,
                 tint = FeatureColors.Unlock,
                 subtitle = "Play a satisfying haptic pattern every time the device is unlocked.",
                 modifier = Modifier.entrance(0),
@@ -49,7 +49,7 @@ fun UnlockHapticsScreen(
             PetalSection(title = stringResource(R.string.unlock_haptics_section), modifier = Modifier.entrance(1)) {
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = Icons.Rounded.LockOpen,
+                        icon = PetalIcons.Unlock,
                         title = stringResource(R.string.unlock_haptics_toggle_title),
                         subtitle = stringResource(R.string.unlock_haptics_toggle_subtitle),
                         checked = settings.unlockHapticEnabled,

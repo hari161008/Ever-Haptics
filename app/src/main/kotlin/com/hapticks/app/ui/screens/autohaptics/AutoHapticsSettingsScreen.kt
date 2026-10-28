@@ -21,6 +21,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.hapticks.app.ui.components.PetalBadgeVariant
+import com.hapticks.app.ui.components.PetalGroup
+import com.hapticks.app.ui.components.PetalGroupToggleRow
+import com.hapticks.app.ui.components.PetalSliderRow
+import com.hapticks.app.ui.theme.PetalMaterialShapes
 import com.hapticks.app.ui.components.SectionCard
 import com.hapticks.app.ui.components.ScreenIconHeader
 import com.hapticks.app.ui.haptics.SliderTickStepsDefault
@@ -68,64 +73,65 @@ fun AutoHapticsSettingsScreen(
             }
 
             item("toggle") {
-                SectionCard {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text("Enable Auto Beat Haptics", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                            Text(
-                                if (type == AutoHapticsType.CALL) "Vibrate with ringtone audio regardless of ring mode"
-                                else "Vibrate with alarm audio beats in real time",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Switch(
+                PetalGroup {
+                    row { position ->
+                        PetalGroupToggleRow(
+                            icon = Icons.Rounded.GraphicEq,
+                            title = "Enable Auto Beat Haptics",
+                            subtitle = if (type == AutoHapticsType.CALL) "Vibrate with ringtone audio regardless of ring mode"
+                            else "Vibrate with alarm audio beats in real time",
                             checked = isEnabled,
                             onCheckedChange = onEnabledChange,
-                            colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.onTertiary, checkedTrackColor = featureColor),
+                            position = position,
+                            badgeShape = PetalMaterialShapes.Cookie12Sided,
+                            variant = PetalBadgeVariant.TERTIARY,
                         )
                     }
                 }
             }
 
             item("sliders") {
-                SectionCard {
-                    Column {
-                        AutoSlider(
+                PetalGroup {
+                    row { position ->
+                        PetalSliderRow(
+                            icon = PetalIcons.Speed,
                             title = "Beat Sensitivity",
                             subtitle = "How aggressively beats are detected",
+                            valueLabel = "${(sensitivityDraft * 100f).roundToInt()}%",
                             value = sensitivityDraft,
-                            enabled = isEnabled,
-                            startLabel = "Subtle",
-                            endLabel = "Reactive",
-                            featureColor = featureColor,
                             onValueChange = { v ->
                                 sensitivityDraft = v
                                 val t = slider01ToTickIndex(v)
                                 if (t != sensitivityTick) { sensitivityTick = t; ctx.performHapticSliderTick() }
                             },
                             onValueChangeFinished = { onSensitivityCommit(sensitivityDraft) },
+                            position = position,
+                            steps = SliderTickStepsDefault,
+                            enabled = isEnabled,
+                            badgeShape = PetalMaterialShapes.Sunny,
+                            variant = PetalBadgeVariant.TERTIARY,
+                            footer = { SliderEndLabels("Subtle", "Reactive") },
                         )
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                        AutoSlider(
+                    }
+                    row { position ->
+                        PetalSliderRow(
+                            icon = PetalIcons.Bolt,
                             title = "Haptic Strength",
                             subtitle = "Intensity of each vibration pulse",
+                            valueLabel = "${(strengthDraft * 100f).roundToInt()}%",
                             value = strengthDraft,
-                            enabled = isEnabled,
-                            startLabel = "Gentle",
-                            endLabel = "Strong",
-                            featureColor = featureColor,
                             onValueChange = { v ->
                                 strengthDraft = v
                                 val t = slider01ToTickIndex(v)
                                 if (t != strengthTick) { strengthTick = t; ctx.performHapticSliderTick() }
                             },
                             onValueChangeFinished = { onStrengthCommit(strengthDraft) },
+                            position = position,
+                            steps = SliderTickStepsDefault,
+                            enabled = isEnabled,
+                            badgeShape = PetalMaterialShapes.Cookie9Sided,
+                            variant = PetalBadgeVariant.TERTIARY,
+                            footer = { SliderEndLabels("Gentle", "Strong") },
                         )
                     }
                 }
@@ -154,46 +160,9 @@ fun AutoHapticsSettingsScreen(
 }
 
 @Composable
-private fun AutoSlider(
-    title: String,
-    subtitle: String,
-    value: Float,
-    enabled: Boolean,
-    startLabel: String,
-    endLabel: String,
-    featureColor: androidx.compose.ui.graphics.Color,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
-) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(Modifier.width(8.dp))
-            Surface(color = featureColor.copy(alpha = 0.18f), shape = CircleShape) {
-                Text(
-                    "${(value * 100f).roundToInt()}%",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = featureColor,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-            }
-        }
-        PetalSlider(
-            value = value, onValueChange = onValueChange, onValueChangeFinished = onValueChangeFinished,
-            valueRange = 0f..1f, steps = SliderTickStepsDefault, enabled = enabled,
-            colors = SliderDefaults.colors(
-                thumbColor = featureColor,
-                activeTrackColor = featureColor,
-                inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            ),
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(startLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(endLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+private fun SliderEndLabels(startLabel: String, endLabel: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(startLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(endLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

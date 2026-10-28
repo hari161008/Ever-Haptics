@@ -84,7 +84,7 @@ fun ScrollHapticsScreen(
         }
         item("hero") {
             PetalFeatureHero(
-                icon = Icons.Rounded.SwipeUp,
+                icon = PetalIcons.Motion,
                 tint = FeatureColors.TactileScrolling,
                 subtitle = "Feel every scroll tick - tune how often and how strong.",
                 modifier = Modifier.entrance(0),
@@ -94,7 +94,7 @@ fun ScrollHapticsScreen(
             PetalSection(title = "Scrolling", modifier = Modifier.entrance(1)) {
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = Icons.Rounded.SwipeUp,
+                        icon = PetalIcons.Motion,
                         title = stringResource(R.string.scroll_toggle_title),
                         subtitle = stringResource(R.string.scroll_toggle_subtitle),
                         checked = settings.scrollEnabled,

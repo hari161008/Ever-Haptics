@@ -55,6 +55,10 @@ class MusicHapticsService : Service() {
     @Volatile private var currentStrength = 0.7f
     @Volatile private var currentEnabled = true
 
+    private val hapticEngine: com.hapticks.app.haptics.HapticEngine by lazy {
+        (application as com.hapticks.app.HapticksApp).hapticEngine
+    }
+
     private val vibrator: Vibrator by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
@@ -209,7 +213,7 @@ class MusicHapticsService : Service() {
                             val amplitude = (currentStrength * (0.35f + 0.65f * beatStrength) * 255f)
                                 .toInt().coerceIn(30, 255)
                             val durationMs = (35L + (beatStrength * 55f).toLong()).coerceIn(30L, 90L)
-                            runCatching { vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude)) }
+                            runCatching { hapticEngine.playOneShot(durationMs, amplitude) }
                         }
                     }
                 }
@@ -279,7 +283,7 @@ class MusicHapticsService : Service() {
                 val norm = ((rms / beatThreshold).coerceIn(1f, 3f) - 1f) / 2f
                 val amplitude = (currentStrength * norm * 255f).toInt().coerceIn(20, 255)
                 val durationMs = (40 + norm * 60f).toLong().coerceIn(30L, 100L)
-                runCatching { vibrator.vibrate(VibrationEffect.createOneShot(durationMs, amplitude)) }
+                runCatching { hapticEngine.playOneShot(durationMs, amplitude) }
             }
         }
     }
