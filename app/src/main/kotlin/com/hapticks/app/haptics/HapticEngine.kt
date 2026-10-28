@@ -61,9 +61,23 @@ class HapticEngine(context: Context) {
 
     init {
         stateCallbackWorks = hasVibrator && runCatching {
-            vibrator.addVibratorStateListener(appContext.mainExecutor) { vibrating ->
-                if (vibrating) startSignals.incrementAndGet()
+            val listenerClass = Class.forName("android.os.Vibrator\$OnVibratorStateChangedListener")
+            val method = vibrator.javaClass.getMethod(
+                "addVibratorStateListener",
+                java.util.concurrent.Executor::class.java,
+                listenerClass
+            )
+            val proxy = java.lang.reflect.Proxy.newProxyInstance(
+                listenerClass.classLoader,
+                arrayOf(listenerClass)
+            ) { _, m, args ->
+                if (m.name == "onVibratorStateChanged") {
+                    val vibrating = args?.getOrNull(0) as? Boolean ?: false
+                    if (vibrating) startSignals.incrementAndGet()
+                }
+                null
             }
+            method.invoke(vibrator, appContext.mainExecutor, proxy)
         }.isSuccess
     }
 
@@ -142,7 +156,10 @@ class HapticEngine(context: Context) {
         while (attempts < candidates.size) {
             val candidate = candidates[index]
             val effect = if (candidate.tier == Tier.RICH) rich else simple
-            val wasVibrating = safe(false) { vibrator.isVibrating }
+            val wasVibrating = safe(false) {
+                val method = vibrator.javaClass.getMethod("isVibrating")
+                method.invoke(vibrator) as? Boolean ?: false
+            }
             val sent = try {
                 submit(candidate.route, effect)
                 true
