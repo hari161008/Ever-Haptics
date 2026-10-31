@@ -55,14 +55,14 @@ import kotlinx.coroutines.withContext
  * clearing as the gesture completes.
  */
 
-// Material 3 "emphasized" easing - cubic-bezier(0.2, 0, 0, 1.0).
-val PetalM3EmphasizedEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+// Material 3 smooth decelerating emphasized easing.
+val PetalM3EmphasizedEasing = CubicBezierEasing(0.08f, 0.82f, 0.17f, 1.0f)
 
-// Pop exit slide easing (cubic), as in Petal.
-private val PetalPopExitSlideEasing = Easing { f -> f * f * f }
+// Pop exit slide easing.
+private val PetalPopExitSlideEasing = CubicBezierEasing(0.2f, 0f, 0.15f, 1.0f)
 
-const val PETAL_TRANSITION_DURATION = 350
-private const val POP_EXIT_MAX_SCALE_DELTA = 0.15f
+const val PETAL_TRANSITION_DURATION = 620
+private const val POP_EXIT_MAX_SCALE_DELTA = 0.10f
 private const val MAX_DEPTH_BLUR_DP = 24f
 private const val CORNER_RADIUS_DP = 32f
 
@@ -146,7 +146,7 @@ fun PetalScreenHost(
                     progressAnim.animateTo(
                         targetValue = 1f,
                         animationSpec = spring(
-                            stiffness = Spring.StiffnessMedium,
+                            stiffness = Spring.StiffnessLow,
                             dampingRatio = Spring.DampingRatioNoBouncy,
                         ),
                     ) {
@@ -167,7 +167,7 @@ fun PetalScreenHost(
                         progressAnim.animateTo(
                             targetValue = 0f,
                             animationSpec = spring(
-                                stiffness = Spring.StiffnessMedium,
+                                stiffness = Spring.StiffnessLow,
                                 dampingRatio = Spring.DampingRatioLowBouncy,
                             ),
                         ) {

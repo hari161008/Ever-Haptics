@@ -22,19 +22,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.BatteryChargingFull
-import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.Keyboard
-import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Sensors
-import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material.icons.rounded.Waves
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -77,22 +69,24 @@ private data class HapticGlyph(
     val alpha: Float,
 )
 
-// Haptics themed glyphs: touch, scroll, keys, charging, unlock, music, alerts.
+// Haptics themed expressive glyphs
 private val hapticGlyphIcons = listOf(
     PetalIcons.Vibration,
+    PetalIcons.Charging,
+    PetalIcons.Bolt,
+    PetalIcons.Brightness,
+    PetalIcons.NavBar,
+    PetalIcons.StatusBar,
+    PetalIcons.Phone,
+    PetalIcons.Settings,
+    PetalIcons.BoltBoost,
     Icons.Rounded.TouchApp,
     Icons.Rounded.Fingerprint,
     Icons.Rounded.GraphicEq,
     Icons.Rounded.Waves,
     Icons.Rounded.MusicNote,
     Icons.Rounded.Notifications,
-    Icons.Rounded.Keyboard,
-    PetalIcons.Charging,
-    Icons.Rounded.LockOpen,
-    Icons.Rounded.Smartphone,
     Icons.Rounded.Sensors,
-    PetalIcons.Bolt,
-    Icons.Rounded.Tune,
     Icons.Rounded.AutoAwesome,
 )
 
@@ -222,8 +216,8 @@ private fun EverHapticsSplashContent(
 
     val infiniteTransition = rememberInfiniteTransition(label = "ever_haptics_splash")
     val pulse by infiniteTransition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0.90f,
+        initialValue = 0.94f,
+        targetValue = 1.06f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
@@ -238,6 +232,14 @@ private fun EverHapticsSplashContent(
         ),
         label = "badge_rotation",
     )
+    val counterRotation by infiniteTransition.animateFloat(
+        initialValue = 360f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 36000, easing = LinearEasing),
+        ),
+        label = "counter_rotation",
+    )
     // The badge "buzzes" a little, like a motor spinning up.
     val buzz by infiniteTransition.animateFloat(
         initialValue = -2.5f,
@@ -249,37 +251,14 @@ private fun EverHapticsSplashContent(
         label = "icon_buzz",
     )
 
-    val isDark = (colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue) < 1.5f
-
+    // Solid theme background (no gradient)
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        if (isDark) colorScheme.background else colorScheme.surface,
-                        accentColor.copy(alpha = if (isDark) 0.12f else 0.08f),
-                        if (isDark) colorScheme.surfaceContainerLowest else colorScheme.surfaceContainerLow,
-                    ),
-                ),
-            ),
+            .background(colorScheme.background),
     ) {
+        // Expressive glyph field with PetalIcons
         HapticGlyphField(modifier = Modifier.fillMaxSize(), accentColor = accentColor)
-
-        // Soft tonal backdrop behind the badge (a flat tint, not a glow).
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            accentColor.copy(alpha = (if (isDark) 0.18f else 0.10f) * pulse),
-                            Color.Transparent,
-                        ),
-                        radius = 800f,
-                    ),
-                ),
-        )
 
         Column(
             modifier = Modifier
@@ -293,7 +272,36 @@ private fun EverHapticsSplashContent(
             verticalArrangement = Arrangement.Center,
         ) {
             Box(contentAlignment = Alignment.Center) {
-                VibrationRings(modifier = Modifier.size(220.dp), color = accentColor)
+                // Vibration rings
+                VibrationRings(modifier = Modifier.size(240.dp), color = accentColor)
+
+                // Expressive background layer 1 (outer expressive shape behind icon)
+                Box(
+                    modifier = Modifier
+                        .size(152.dp)
+                        .graphicsLayer {
+                            scaleX = pulse
+                            scaleY = pulse
+                            rotationZ = counterRotation
+                        }
+                        .clip(PetalMaterialShapes.SoftBurst.toShape())
+                        .background(colorScheme.secondaryContainer.copy(alpha = 0.50f)),
+                )
+
+                // Expressive background layer 2 (middle expressive flower shape behind icon)
+                Box(
+                    modifier = Modifier
+                        .size(132.dp)
+                        .graphicsLayer {
+                            scaleX = 1f / pulse
+                            scaleY = 1f / pulse
+                            rotationZ = badgeRotation * 0.75f
+                        }
+                        .clip(PetalMaterialShapes.Sunny.toShape())
+                        .background(colorScheme.tertiaryContainer.copy(alpha = 0.60f)),
+                )
+
+                // Central icon badge with Cookie12Sided shape
                 Box(
                     modifier = Modifier
                         .size(112.dp)
@@ -318,7 +326,7 @@ private fun EverHapticsSplashContent(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(28.dp))
 
             Text(
                 text = "Ever Haptics",

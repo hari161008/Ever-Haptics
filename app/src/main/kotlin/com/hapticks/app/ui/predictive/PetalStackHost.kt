@@ -49,13 +49,13 @@ import kotlinx.coroutines.withContext
  * hand-off after a committed gesture is seamless.
  */
 
-val PetalEmphasizedEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-private val PetalExitSlideEasing = Easing { f -> f * f * f }
+val PetalEmphasizedEasing = CubicBezierEasing(0.08f, 0.82f, 0.17f, 1.0f)
+private val PetalExitSlideEasing = CubicBezierEasing(0.2f, 0f, 0.15f, 1.0f)
 
-private const val TRANSITION_MS = 380
+private const val TRANSITION_MS = 620
 private const val MAX_BLUR_DP = 24f
 private const val CORNER_DP = 32f
-private const val MAX_FOREGROUND_SHRINK = 0.15f
+private const val MAX_FOREGROUND_SHRINK = 0.10f
 
 @Composable
 fun <R : Any> PetalStackHost(
@@ -105,7 +105,7 @@ fun <R : Any> PetalStackHost(
     // Safety net: never leave the committed flag stuck if the stack did not actually change.
     LaunchedEffect(committed) {
         if (committed) {
-            delay(700)
+            delay(1000)
             if (committed) {
                 committed = false
                 gestureProgress = 0f
@@ -123,11 +123,11 @@ fun <R : Any> PetalStackHost(
                         gestureActive = true
                         gestureProgress = event.progress
                     }
-                    // Committed: finish the departure, then actually pop.
+                    // Committed: finish the departure with a velvety low-stiffness glide, then actually pop.
                     animate(
                         initialValue = gestureProgress,
                         targetValue = 1f,
-                        animationSpec = spring(stiffness = Spring.StiffnessMedium, dampingRatio = Spring.DampingRatioNoBouncy),
+                        animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy),
                     ) { value, _ -> gestureProgress = value }
                     gestureProgress = 1f
                     committed = true
@@ -137,7 +137,7 @@ fun <R : Any> PetalStackHost(
                         animate(
                             initialValue = gestureProgress,
                             targetValue = 0f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMedium, dampingRatio = Spring.DampingRatioLowBouncy),
+                            animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioLowBouncy),
                         ) { value, _ -> gestureProgress = value }
                         gestureProgress = 0f
                         gestureActive = false
@@ -227,6 +227,7 @@ private fun StackLayer(
                         scaleY = scale
                         translationX = sign * size.width * slide
                         val corner = CORNER_DP * eased
+                        alpha = 1f - 0.20f * eased
                         if (corner > 0.5f) {
                             shape = RoundedCornerShape(corner.dp)
                             clip = true

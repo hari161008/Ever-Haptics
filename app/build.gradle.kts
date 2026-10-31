@@ -5,13 +5,11 @@ plugins {
 }
 
 fun getVersionName(): String {
-fun getVersionName(): String {
-    return (System.getenv("GITHUB_REF_NAME") ?: "6.0.1").removePrefix("v")
+    return (System.getenv("GITHUB_REF_NAME") ?: "7.0.0").removePrefix("v")
 }
 
 fun getVersionCode(): Int {
-    return System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 7
-}
+    return System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 8
 }
 
 android {
@@ -62,11 +60,19 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            val ksFile = rootProject.file("app/keystore.jks")
+            if (ksFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            val ksFile = rootProject.file("app/keystore.jks")
+            if (ksFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 

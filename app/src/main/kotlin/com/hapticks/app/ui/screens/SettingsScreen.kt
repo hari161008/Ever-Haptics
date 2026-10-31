@@ -2,6 +2,7 @@ package com.hapticks.app.ui.screens
 
 import com.hapticks.app.ui.theme.PetalIcons
 import android.content.Intent
+import android.net.Uri
 import com.hapticks.app.util.AppVersion
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.AnimatedVisibility
@@ -80,6 +81,7 @@ fun SettingsScreen(
     onAutoCheckUpdatesChange: (Boolean) -> Unit = {},
     onPredictiveBackChange: (Boolean) -> Unit = {},
     onDepthBlurChange: (Boolean) -> Unit = {},
+    onOpenRateReview: () -> Unit = {},
     onOpenReviews: () -> Unit = {},
     onOpenExploreApps: () -> Unit = {},
 ) {
@@ -99,7 +101,26 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
 
     fun openUrl(url: String) {
-        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            runCatching {
+                val chooser = Intent.createChooser(
+                    Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    },
+                    "Open with",
+                ).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(chooser)
+            }.onFailure {
+                android.widget.Toast.makeText(context, "Could not open link: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     Scaffold(
@@ -192,8 +213,7 @@ fun SettingsScreen(
                         subtitle = "Share your experience with Ever Haptics",
                         position = position,
                         badgeShape = PetalMaterialShapes.Flower,
-                        onClick = { openUrl("https://docs.google.com/forms/d/e/1FAIpQLSci14N7YdirM32f2I7bT6GBv_sQ3KJ4hjM6qDKTVZfsCuIPtw/viewform?usp=header") },
-                        trailing = { Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        onClick = onOpenRateReview,
                     )
                 }
                 row { position ->

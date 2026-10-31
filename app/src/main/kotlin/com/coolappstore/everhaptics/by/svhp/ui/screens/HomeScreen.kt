@@ -212,7 +212,7 @@ private fun HomeHeader() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = "v6.0.0",
+            text = "v7.0.0",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
         )

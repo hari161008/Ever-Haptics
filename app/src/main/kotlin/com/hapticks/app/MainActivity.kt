@@ -31,6 +31,7 @@ import com.hapticks.app.ui.haptics.ProvideHapticksEdgeOverscrollHaptics
 import com.hapticks.app.ui.screens.AppExclusionsScreen
 import com.hapticks.app.ui.screens.HomeScreen
 import com.hapticks.app.ui.screens.ExploreAppsWebViewScreen
+import com.hapticks.app.ui.screens.RateReviewWebViewScreen
 import com.hapticks.app.ui.screens.ReviewsWebViewScreen
 import com.hapticks.app.ui.screens.SettingsScreen
 import com.hapticks.app.ui.screens.WelcomeDialog
@@ -179,6 +180,7 @@ class MainActivity : ComponentActivity() {
                                                 onAutoCheckUpdatesChange = viewModel::setAutoCheckUpdatesEnabled,
                                                 onPredictiveBackChange = viewModel::setPredictiveBackEnabled,
                                                 onDepthBlurChange = viewModel::setDepthBlurEnabled,
+                                                onOpenRateReview = { push(Route.RATE_REVIEW_WEBVIEW) },
                                                 onOpenReviews = { push(Route.REVIEWS_WEBVIEW) },
                                                 onOpenExploreApps = { push(Route.EXPLORE_APPS_WEBVIEW) },
                                             )
@@ -425,6 +427,12 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
+                                Route.RATE_REVIEW_WEBVIEW -> {
+                                    RateReviewWebViewScreen(
+                                        onBack = { pop() },
+                                    )
+                                }
+
                                 Route.REVIEWS_WEBVIEW -> {
                                     ReviewsWebViewScreen(
                                         onBack = { pop() },
@@ -480,6 +488,7 @@ class MainActivity : ComponentActivity() {
         MUSIC_HAPTICS,
         SETTINGS, NOTIFICATION_HAPTICS, CUSTOM_HAPTIC_EDITOR,
         CALL_AUTO_HAPTICS, ALARM_AUTO_HAPTICS,
+        RATE_REVIEW_WEBVIEW,
         REVIEWS_WEBVIEW,
         EXPLORE_APPS_WEBVIEW
     }
