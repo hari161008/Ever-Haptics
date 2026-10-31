@@ -9,9 +9,6 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,21 +29,19 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.hapticks.app.ui.components.featureShape
 import com.hapticks.app.ui.components.petalGroupColor
-import com.hapticks.app.ui.components.PetalSectionLabel
 import com.hapticks.app.ui.theme.PetalIcons
 import com.hapticks.app.ui.components.EnableServiceCard
-import com.hapticks.app.ui.components.FeatureColors
-import com.hapticks.app.ui.components.FeatureIcon
 import com.hapticks.app.ui.components.PetalBadgeVariant
 import com.hapticks.app.ui.components.PetalCollapsingTopAppBar
 import com.hapticks.app.ui.components.PetalGroupItem
 import com.hapticks.app.ui.components.PetalGroupPosition
+import com.hapticks.app.ui.components.PetalGroupRow
+import com.hapticks.app.ui.components.PetalSection
 import com.hapticks.app.ui.components.PetalShapedIcon
 import com.hapticks.app.ui.components.entrance
-import com.hapticks.app.ui.components.petalGroupPositionFor
 import com.hapticks.app.ui.components.rememberPetalHeaderScrollBehavior
+import com.hapticks.app.ui.theme.ExpressiveShapeHolder
 import com.hapticks.app.ui.theme.PetalMaterialShapes
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.hapticks.app.ui.haptics.hapticClickable
@@ -56,7 +51,8 @@ private data class FeatureEntry(
     val titleRes: Int,
     val subtitleRes: Int,
     val icon: ImageVector,
-    val color: Color,
+    val badgeShape: ExpressiveShapeHolder,
+    val variant: PetalBadgeVariant,
     val onClick: () -> Unit,
 )
 
@@ -89,28 +85,98 @@ fun HomeScreen(
             title = "Touch & typing",
             description = "How taps, scrolls and keystrokes feel",
             items = listOf(
-                FeatureEntry(R.string.home_feel_every_tap_title, R.string.home_feel_every_tap_subtitle, Icons.Rounded.TouchApp, FeatureColors.FeelEveryTap, onOpenFeelEveryTap),
-                FeatureEntry(R.string.home_tactile_scrolling_title, R.string.home_tactile_scrolling_subtitle, Icons.Rounded.SwipeUp, FeatureColors.TactileScrolling, onOpenTactileScrolling),
-                FeatureEntry(R.string.home_keyboard_haptics_title, R.string.home_keyboard_haptics_subtitle, Icons.Rounded.Keyboard, FeatureColors.Keyboard, onOpenKeyboardHaptics),
+                FeatureEntry(
+                    titleRes = R.string.home_feel_every_tap_title,
+                    subtitleRes = R.string.home_feel_every_tap_subtitle,
+                    icon = PetalIcons.TouchApp,
+                    badgeShape = PetalMaterialShapes.Cookie12Sided,
+                    variant = PetalBadgeVariant.PRIMARY,
+                    onClick = onOpenFeelEveryTap,
+                ),
+                FeatureEntry(
+                    titleRes = R.string.home_tactile_scrolling_title,
+                    subtitleRes = R.string.home_tactile_scrolling_subtitle,
+                    icon = PetalIcons.Motion,
+                    badgeShape = PetalMaterialShapes.Sunny,
+                    variant = PetalBadgeVariant.SECONDARY,
+                    onClick = onOpenTactileScrolling,
+                ),
+                FeatureEntry(
+                    titleRes = R.string.home_keyboard_haptics_title,
+                    subtitleRes = R.string.home_keyboard_haptics_subtitle,
+                    icon = PetalIcons.Keyboard,
+                    badgeShape = PetalMaterialShapes.Clover8Leaf,
+                    variant = PetalBadgeVariant.TERTIARY,
+                    onClick = onOpenKeyboardHaptics,
+                ),
             ),
         ),
         FeatureGroup(
             title = "System & hardware",
             description = "Buttons, navigation, lock screen and power",
             items = listOf(
-                FeatureEntry(R.string.home_button_haptics_title, R.string.home_button_haptics_subtitle, Icons.Rounded.RadioButtonChecked, FeatureColors.ButtonHaptics, onOpenButtonHaptics),
-                FeatureEntry(R.string.home_navbar_haptics_title, R.string.home_navbar_haptics_subtitle, PetalIcons.NavBar, FeatureColors.NavBar, onOpenNavBarHaptics),
-                FeatureEntry(R.string.home_status_bar_haptics_title, R.string.home_status_bar_haptics_subtitle, PetalIcons.StatusBar, FeatureColors.StatusBar, onOpenStatusBarHaptics),
-                FeatureEntry(R.string.home_unlock_haptics_title, R.string.home_unlock_haptics_subtitle, Icons.Rounded.LockOpen, FeatureColors.Unlock, onOpenUnlockHaptics),
-                FeatureEntry(R.string.home_charging_haptics_title, R.string.home_charging_haptics_subtitle, PetalIcons.Charging, FeatureColors.Charging, onOpenChargingHaptics),
+                FeatureEntry(
+                    titleRes = R.string.home_button_haptics_title,
+                    subtitleRes = R.string.home_button_haptics_subtitle,
+                    icon = PetalIcons.RadioButtonChecked,
+                    badgeShape = PetalMaterialShapes.Cookie6Sided,
+                    variant = PetalBadgeVariant.PRIMARY,
+                    onClick = onOpenButtonHaptics,
+                ),
+                FeatureEntry(
+                    titleRes = R.string.home_navbar_haptics_title,
+                    subtitleRes = R.string.home_navbar_haptics_subtitle,
+                    icon = PetalIcons.NavBar,
+                    badgeShape = PetalMaterialShapes.Clover4Leaf,
+                    variant = PetalBadgeVariant.SECONDARY,
+                    onClick = onOpenNavBarHaptics,
+                ),
+                FeatureEntry(
+                    titleRes = R.string.home_status_bar_haptics_title,
+                    subtitleRes = R.string.home_status_bar_haptics_subtitle,
+                    icon = PetalIcons.StatusBar,
+                    badgeShape = PetalMaterialShapes.Pill,
+                    variant = PetalBadgeVariant.TERTIARY,
+                    onClick = onOpenStatusBarHaptics,
+                ),
+                FeatureEntry(
+                    titleRes = R.string.home_unlock_haptics_title,
+                    subtitleRes = R.string.home_unlock_haptics_subtitle,
+                    icon = PetalIcons.Unlock,
+                    badgeShape = PetalMaterialShapes.Gem,
+                    variant = PetalBadgeVariant.PRIMARY,
+                    onClick = onOpenUnlockHaptics,
+                ),
+                FeatureEntry(
+                    titleRes = R.string.home_charging_haptics_title,
+                    subtitleRes = R.string.home_charging_haptics_subtitle,
+                    icon = PetalIcons.Charging,
+                    badgeShape = PetalMaterialShapes.SoftBurst,
+                    variant = PetalBadgeVariant.SECONDARY,
+                    onClick = onOpenChargingHaptics,
+                ),
             ),
         ),
         FeatureGroup(
             title = "Alerts & media",
             description = "Calls, notifications, alarms and music",
             items = listOf(
-                FeatureEntry(R.string.home_notification_haptics_title, R.string.home_notification_haptics_subtitle, Icons.Rounded.NotificationsActive, FeatureColors.Notifications, onOpenNotificationHaptics),
-                FeatureEntry(R.string.home_music_haptics_title, R.string.home_music_haptics_subtitle, Icons.Rounded.MusicNote, FeatureColors.MusicHaptics, onOpenMusicHaptics),
+                FeatureEntry(
+                    titleRes = R.string.home_notification_haptics_title,
+                    subtitleRes = R.string.home_notification_haptics_subtitle,
+                    icon = PetalIcons.Notifications,
+                    badgeShape = PetalMaterialShapes.Flower,
+                    variant = PetalBadgeVariant.PRIMARY,
+                    onClick = onOpenNotificationHaptics,
+                ),
+                FeatureEntry(
+                    titleRes = R.string.home_music_haptics_title,
+                    subtitleRes = R.string.home_music_haptics_subtitle,
+                    icon = PetalIcons.Music,
+                    badgeShape = PetalMaterialShapes.Cookie7Sided,
+                    variant = PetalBadgeVariant.TERTIARY,
+                    onClick = onOpenMusicHaptics,
+                ),
             ),
         ),
     )
@@ -158,16 +224,20 @@ fun HomeScreen(
             var entranceIndex = 2
             groups.forEach { group ->
                 val groupIndex = entranceIndex++
-                Column(modifier = Modifier.fillMaxWidth().entrance(groupIndex)) {
-                    PetalSectionLabel(text = group.title, description = group.description)
-                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        group.items.forEachIndexed { index, feature ->
-                            FeatureRow(
+                PetalSection(
+                    title = group.title,
+                    description = group.description,
+                    modifier = Modifier.entrance(groupIndex),
+                ) {
+                    group.items.forEach { feature ->
+                        row { position ->
+                            PetalGroupRow(
+                                icon = feature.icon,
                                 title = stringResource(feature.titleRes),
                                 subtitle = stringResource(feature.subtitleRes),
-                                icon = feature.icon,
-                                featureColor = feature.color,
-                                position = petalGroupPositionFor(index, group.items.size),
+                                position = position,
+                                badgeShape = feature.badgeShape,
+                                variant = feature.variant,
                                 onClick = feature.onClick,
                                 enabled = featuresEnabled,
                             )
@@ -183,9 +253,9 @@ fun HomeScreen(
 private fun HomeStatusChip(globalEnabled: Boolean, isServiceEnabled: Boolean, paused: Boolean) {
     val (label, icon, container, content) = when {
         paused -> StatusStyle("Paused", PetalIcons.BatterySaver, MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
-        !isServiceEnabled -> StatusStyle("Setup", Icons.Rounded.AccessibilityNew, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+        !isServiceEnabled -> StatusStyle("Setup", PetalIcons.Accessibility, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
         globalEnabled -> StatusStyle("Active", PetalIcons.Vibration, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-        else -> StatusStyle("Off", Icons.Rounded.PowerSettingsNew, MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant)
+        else -> StatusStyle("Off", PetalIcons.Power, MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant)
     }
     Surface(color = container, shape = CircleShape, modifier = Modifier.padding(end = 12.dp)) {
         Row(
@@ -296,61 +366,4 @@ private fun GlobalToggleCard(enabled: Boolean, onEnabledChange: (Boolean) -> Uni
     }
 }
 
-@Composable
-private fun FeatureRow(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    featureColor: Color,
-    position: PetalGroupPosition,
-    onClick: () -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val dim = if (enabled) 1f else 0.45f
-    PetalGroupItem(
-        position = position,
-        modifier = modifier,
-        onClick = if (enabled) onClick else null,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            FeatureIcon(
-                icon = icon,
-                tint = featureColor.copy(alpha = dim),
-                size = 54.dp,
-                iconSize = 26.dp,
-                backgroundAlpha = if (enabled) 0.18f else 0.08f,
-                shape = featureShape(featureColor),
-            )
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = dim),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dim),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            if (enabled) {
-                Box(
-                    modifier = Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
-                }
-            }
-        }
-    }
-}
+

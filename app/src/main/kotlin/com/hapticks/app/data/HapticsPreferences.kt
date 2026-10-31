@@ -19,9 +19,75 @@ import com.hapticks.app.haptics.HapticPattern
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import androidx.datastore.core.DataMigration
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.preferencesDataStoreFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
 import java.io.IOException
 
-private val Context.hapticsDataStore: DataStore<Preferences> by preferencesDataStore(name = "hapticks")
+private val Context.hapticsDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "hapticks",
+    produceMigrations = { ctx -> listOf(LegacyEverHapticsMigration(ctx)) },
+)
+
+/**
+ * v5.x stored every setting in a DataStore file named "ever_haptics"; v6.0.0 switched to "hapticks"
+ * without carrying anything over, so upgrading silently reset all toggles to their (mostly off)
+ * defaults. This copies the old file into the current store once. Values the user already set in
+ * the new store always win; only keys that are still absent are filled in from the old file.
+ */
+private class LegacyEverHapticsMigration(private val context: Context) : DataMigration<Preferences> {
+
+    private fun legacyFile(): File = context.preferencesDataStoreFile(LEGACY_NAME)
+
+    override suspend fun shouldMigrate(currentData: Preferences): Boolean =
+        !currentData.contains(MIGRATED_FLAG) && legacyFile().let { it.exists() && it.length() > 0L }
+
+    override suspend fun migrate(currentData: Preferences): Preferences {
+        val merged = currentData.toMutablePreferences()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        try {
+            val legacy = PreferenceDataStoreFactory.create(scope = scope, produceFile = { legacyFile() })
+            val old = withTimeoutOrNull(5_000L) { legacy.data.first() }
+            old?.asMap()?.forEach { (key, value) -> merged.copyIfAbsent(key.name, value) }
+        } catch (t: Throwable) {
+            Log.w("HapticsPrefs", "Legacy settings migration skipped", t)
+        } finally {
+            scope.cancel()
+        }
+        merged[MIGRATED_FLAG] = true
+        return merged
+    }
+
+    override suspend fun cleanUp() = Unit
+
+    private fun MutablePreferences.copyIfAbsent(name: String, value: Any) {
+        when (value) {
+            is Boolean -> booleanPreferencesKey(name).let { if (!contains(it)) this[it] = value }
+            is Int -> intPreferencesKey(name).let { if (!contains(it)) this[it] = value }
+            is Long -> longPreferencesKey(name).let { if (!contains(it)) this[it] = value }
+            is Float -> floatPreferencesKey(name).let { if (!contains(it)) this[it] = value }
+            is Double -> doublePreferencesKey(name).let { if (!contains(it)) this[it] = value }
+            is String -> stringPreferencesKey(name).let { if (!contains(it)) this[it] = value }
+            is Set<*> -> stringSetPreferencesKey(name).let {
+                if (!contains(it)) this[it] = value.filterIsInstance<String>().toSet()
+            }
+        }
+    }
+
+    private companion object {
+        const val LEGACY_NAME = "ever_haptics"
+        val MIGRATED_FLAG = booleanPreferencesKey("legacy_v5_migrated")
+    }
+}
 
 class HapticsPreferences(context: Context) {
     private val dataStore = context.applicationContext.hapticsDataStore

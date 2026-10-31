@@ -51,7 +51,7 @@ fun ButtonHapticsScreen(
     PetalFeatureScreen(title = stringResource(R.string.button_haptics_title), onBack = onBack, modifier = modifier) {
         item("hero") {
             PetalFeatureHero(
-                icon = Icons.Rounded.RadioButtonChecked,
+                icon = PetalIcons.RadioButtonChecked,
                 tint = FeatureColors.ButtonHaptics,
                 subtitle = "Custom haptic patterns for volume, power button, and brightness slider interactions.",
                 modifier = Modifier.entrance(0),
@@ -89,7 +89,7 @@ fun ButtonHapticsScreen(
             PetalSection(title = stringResource(R.string.button_haptics_power_section), modifier = Modifier.entrance(2)) {
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = Icons.Rounded.Power,
+                        icon = PetalIcons.Power,
                         title = stringResource(R.string.button_haptics_power_toggle_title),
                         subtitle = stringResource(R.string.button_haptics_power_toggle_subtitle),
                         checked = settings.powerHapticEnabled,

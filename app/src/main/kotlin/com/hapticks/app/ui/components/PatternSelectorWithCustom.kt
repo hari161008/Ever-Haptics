@@ -86,7 +86,7 @@ fun PatternSelectorWithCustom(
             )
         }
         if (showIntensity) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
+            Spacer(Modifier.height(4.dp))
             IntensityRow(intensity, onIntensityCommit, accentColor, accentContainer, accentOnContainer)
         }
     }
