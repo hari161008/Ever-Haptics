@@ -34,6 +34,7 @@ import com.hapticks.app.ui.screens.ExploreAppsWebViewScreen
 import com.hapticks.app.ui.screens.RateReviewWebViewScreen
 import com.hapticks.app.ui.screens.ReviewsWebViewScreen
 import com.hapticks.app.ui.screens.SettingsScreen
+import com.hapticks.app.ui.screens.UpdatesScreen
 import com.hapticks.app.ui.screens.WelcomeDialog
 import com.hapticks.app.ui.screens.autohaptics.AutoHapticsSettingsScreen
 import com.hapticks.app.ui.screens.autohaptics.AutoHapticsType
@@ -183,6 +184,8 @@ class MainActivity : ComponentActivity() {
                                                 onOpenRateReview = { push(Route.RATE_REVIEW_WEBVIEW) },
                                                 onOpenReviews = { push(Route.REVIEWS_WEBVIEW) },
                                                 onOpenExploreApps = { push(Route.EXPLORE_APPS_WEBVIEW) },
+                                                onOpenUpdates = { push(Route.UPDATES) },
+                                                onRestoreAllSettings = viewModel::restoreAllSettings,
                                             )
 
                                 Route.FEEL_EVERY_TAP -> {
@@ -445,6 +448,15 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
 
+                                Route.UPDATES -> {
+                                    UpdatesScreen(
+                                        currentVersion = AppVersion.get(this@MainActivity),
+                                        autoCheckUpdatesEnabled = settings.autoCheckUpdatesEnabled,
+                                        onAutoCheckUpdatesChange = viewModel::setAutoCheckUpdatesEnabled,
+                                        onBack = { pop() },
+                                    )
+                                }
+
                                 Route.CUSTOM_HAPTIC_EDITOR -> {
                                     CustomHapticEditorScreen(
                                         label = customEditorLabel,
@@ -458,8 +470,10 @@ class MainActivity : ComponentActivity() {
 
                         AnimatedVisibility(
                             visible = currentRoute == Route.HOME || currentRoute == Route.SETTINGS,
-                            enter = fadeIn(tween(200)) + slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it / 2 },
-                            exit = fadeOut(tween(160)) + slideOutVertically(tween(200)) { it / 2 },
+                            enter = fadeIn(tween(450, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f))) +
+                                    slideInVertically(tween(550, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f))) { it / 2 },
+                            exit = fadeOut(tween(300, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f))) +
+                                    slideOutVertically(tween(400, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f))) { it / 2 },
                             modifier = Modifier.align(Alignment.BottomCenter),
                         ) {
                             FloatingBottomBar(
@@ -490,7 +504,8 @@ class MainActivity : ComponentActivity() {
         CALL_AUTO_HAPTICS, ALARM_AUTO_HAPTICS,
         RATE_REVIEW_WEBVIEW,
         REVIEWS_WEBVIEW,
-        EXPLORE_APPS_WEBVIEW
+        EXPLORE_APPS_WEBVIEW,
+        UPDATES
     }
 
     private fun openAccessibilitySettings() {

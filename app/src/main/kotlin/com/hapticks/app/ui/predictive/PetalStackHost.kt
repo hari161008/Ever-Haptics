@@ -49,13 +49,16 @@ import kotlinx.coroutines.withContext
  * hand-off after a committed gesture is seamless.
  */
 
-val PetalEmphasizedEasing = CubicBezierEasing(0.08f, 0.82f, 0.17f, 1.0f)
-private val PetalExitSlideEasing = CubicBezierEasing(0.2f, 0f, 0.15f, 1.0f)
+val PetalPopSmoothEasing = CubicBezierEasing(0.2f, 0.0f, 0.2f, 1.0f)
+val PetalPopSlideEasing = CubicBezierEasing(0.2f, 0.0f, 0.2f, 1.0f)
+val PetalEmphasizedEasing = PetalPopSmoothEasing
 
-private const val TRANSITION_MS = 620
+private const val PUSH_TRANSITION_MS = 780
+private const val POP_TRANSITION_MS = 700
 private const val MAX_BLUR_DP = 24f
 private const val CORNER_DP = 32f
-private const val MAX_FOREGROUND_SHRINK = 0.10f
+private const val MAX_FOREGROUND_SHRINK = 0.09f
+private const val GESTURE_PEEK_MAX = 0.20f
 
 @Composable
 fun <R : Any> PetalStackHost(
@@ -90,15 +93,15 @@ fun <R : Any> PetalStackHost(
             }
             stack == previous -> Unit
             stack.size < previous.size && previous.take(stack.size) == stack -> {
-                // Pop: keep the leaving screen composed while the depth animates down.
-                depth.animateTo(target, tween(TRANSITION_MS, easing = PetalEmphasizedEasing))
+                // Pop: keep the leaving screen composed while the depth animates down smoothly.
+                depth.animateTo(target, tween(POP_TRANSITION_MS, easing = PetalPopSlideEasing))
                 displayed = stack
             }
             else -> {
-                // Push (or replace): the new top starts fully off-screen and slides in.
+                // Push (or replace): the new top starts fully off-screen and slides in slightly slower.
                 displayed = stack
                 if (stack.size == previous.size) depth.snapTo(target)
-                else depth.animateTo(target, tween(TRANSITION_MS, easing = PetalEmphasizedEasing))
+                else depth.animateTo(target, tween(PUSH_TRANSITION_MS, easing = PetalPopSlideEasing))
             }
         }
     }
@@ -121,23 +124,29 @@ fun <R : Any> PetalStackHost(
                     progressFlow.collect { event ->
                         gestureEdge = event.swipeEdge
                         gestureActive = true
-                        gestureProgress = event.progress
+                        // Peek movement slightly increased to 20% of width for responsive tactile feedback.
+                        gestureProgress = event.progress * GESTURE_PEEK_MAX
                     }
-                    // Committed: finish the departure with a velvety low-stiffness glide, then actually pop.
+                    // Committed: finish the departure with a slightly faster, velvety glide.
+                    val startProgress = gestureProgress
+                    val remainingProgress = (1f - startProgress).coerceIn(0f, 1f)
+                    val finishDuration = (POP_TRANSITION_MS * remainingProgress).toInt().coerceAtLeast(500)
                     animate(
-                        initialValue = gestureProgress,
+                        initialValue = startProgress,
                         targetValue = 1f,
-                        animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy),
+                        animationSpec = tween(durationMillis = finishDuration, easing = PetalPopSlideEasing),
                     ) { value, _ -> gestureProgress = value }
                     gestureProgress = 1f
                     committed = true
                     onBack()
                 } catch (e: CancellationException) {
                     withContext(NonCancellable) {
+                        val startProgress = gestureProgress
+                        val returnDuration = (350 * (startProgress / GESTURE_PEEK_MAX).coerceIn(0f, 1f)).toInt().coerceAtLeast(180)
                         animate(
-                            initialValue = gestureProgress,
+                            initialValue = startProgress,
                             targetValue = 0f,
-                            animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioLowBouncy),
+                            animationSpec = tween(durationMillis = returnDuration, easing = PetalPopSmoothEasing),
                         ) { value, _ -> gestureProgress = value }
                         gestureProgress = 0f
                         gestureActive = false
@@ -149,9 +158,9 @@ fun <R : Any> PetalStackHost(
         }
     }
 
-    // Effective depth: the animated depth minus whatever the back gesture has already "popped".
+    // Effective depth: the animated depth minus whatever the back gesture has already progressed (0f to 1f).
     val depthProvider: () -> Float = {
-        depth.value - PetalEmphasizedEasing.transform(gestureProgress.coerceIn(0f, 1f))
+        depth.value - gestureProgress.coerceIn(0f, 1f)
     }
     val isGestureActive: () -> Boolean = { gestureActive }
     val foregroundSign: () -> Float = {
@@ -190,7 +199,10 @@ private fun StackLayer(
     val blurRadius by remember(index, blurEnabled) {
         derivedStateOf {
             val r = depth() - index
-            if (blurEnabled && r > 0.01f && (r < 0.995f || gestureActive()) && r <= 1f) (MAX_BLUR_DP * r.coerceIn(0f, 1f)).dp else 0.dp
+            if (blurEnabled && r > 0.01f && (r < 0.995f || gestureActive()) && r <= 1f) {
+                val b = r.coerceIn(0f, 1f)
+                (MAX_BLUR_DP * b).dp
+            } else 0.dp
         }
     }
 
@@ -205,10 +217,10 @@ private fun StackLayer(
                     r > 0f -> {
                         // Behind a newer screen: pushed back, shifted a little and hidden once covered.
                         val b = r.coerceIn(0f, 1f)
-                        val scale = 1f - 0.06f * b
+                        val scale = 1f - 0.05f * b
                         scaleX = scale
                         scaleY = scale
-                        translationX = -sign * size.width / 6f * b
+                        translationX = -sign * size.width / 8f * b
                         alpha = if (r > 1f || (r >= 0.995f && !gestureActive())) 0f else 1f
                         val corner = CORNER_DP * b
                         if (corner > 0.5f) {
@@ -218,20 +230,23 @@ private fun StackLayer(
                         compositingStrategy = CompositingStrategy.Offscreen
                     }
                     r < 0f -> {
-                        // Entering (push) or leaving (pop / back gesture): same motion in both directions.
+                        // Entering (push) or leaving (pop / back gesture).
                         val p = (-r).coerceIn(0f, 1f)
-                        val eased = PetalEmphasizedEasing.transform(p)
-                        val slide = PetalExitSlideEasing.transform(p)
-                        val scale = 1f - MAX_FOREGROUND_SHRINK * eased
+                        val scale = 1f - MAX_FOREGROUND_SHRINK * p
                         scaleX = scale
                         scaleY = scale
-                        translationX = sign * size.width * slide
-                        val corner = CORNER_DP * eased
-                        alpha = 1f - 0.20f * eased
+                        translationX = sign * size.width * p
+                        val cornerProgress = if (gestureActive()) {
+                            (p / GESTURE_PEEK_MAX).coerceIn(0f, 1f)
+                        } else {
+                            p
+                        }
+                        val corner = CORNER_DP * cornerProgress
+                        alpha = 1f - 0.15f * p
                         if (corner > 0.5f) {
                             shape = RoundedCornerShape(corner.dp)
                             clip = true
-                            shadowElevation = (16f * eased).dp.toPx()
+                            shadowElevation = (16f * cornerProgress).dp.toPx()
                         }
                         compositingStrategy = CompositingStrategy.Offscreen
                     }
@@ -250,7 +265,7 @@ private fun StackLayer(
                 .fillMaxSize()
                 .graphicsLayer {
                     val b = (depth() - index).coerceIn(0f, 1f)
-                    alpha = (if (blurEnabled) 0.40f else 0.75f) * b
+                    alpha = (if (blurEnabled) 0.35f else 0.70f) * b
                 }
                 .background(Color.Black),
         )

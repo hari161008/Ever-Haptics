@@ -363,6 +363,12 @@ class FeelEveryTapViewModel(
         }
     }
 
+    fun restoreAllSettings(newSettings: HapticsSettings) {
+        viewModelScope.launch {
+            preferences.restoreAll(newSettings)
+        }
+    }
+
     companion object {
         private fun isAccessibilityServiceEnabled(context: Context): Boolean {
             val manager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager ?: return false

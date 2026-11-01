@@ -55,13 +55,13 @@ import kotlinx.coroutines.withContext
  * clearing as the gesture completes.
  */
 
-// Material 3 smooth decelerating emphasized easing.
-val PetalM3EmphasizedEasing = CubicBezierEasing(0.08f, 0.82f, 0.17f, 1.0f)
+// Material 3 ultra-smooth decelerating easing.
+val PetalM3EmphasizedEasing = CubicBezierEasing(0.2f, 0.0f, 0.2f, 1.0f)
 
 // Pop exit slide easing.
-private val PetalPopExitSlideEasing = CubicBezierEasing(0.2f, 0f, 0.15f, 1.0f)
+private val PetalPopExitSlideEasing = CubicBezierEasing(0.2f, 0.0f, 0.2f, 1.0f)
 
-const val PETAL_TRANSITION_DURATION = 620
+const val PETAL_TRANSITION_DURATION = 850
 private const val POP_EXIT_MAX_SCALE_DELTA = 0.10f
 private const val MAX_DEPTH_BLUR_DP = 24f
 private const val CORNER_RADIUS_DP = 32f
@@ -143,11 +143,13 @@ fun PetalScreenHost(
                         )
                     }
                     // Gesture committed: finish the departure, then actually pop.
+                    val remainingProgress = (1f - progressAnim.value).coerceIn(0f, 1f)
+                    val finishDuration = (remainingProgress * 750).toInt().coerceAtLeast(450)
                     progressAnim.animateTo(
                         targetValue = 1f,
-                        animationSpec = spring(
-                            stiffness = Spring.StiffnessLow,
-                            dampingRatio = Spring.DampingRatioNoBouncy,
+                        animationSpec = tween(
+                            durationMillis = finishDuration,
+                            easing = PetalPopExitSlideEasing,
                         ),
                     ) {
                         backState = backState.copy(isActive = true, progress = value)
@@ -161,14 +163,15 @@ fun PetalScreenHost(
                         backState = PredictiveBackState.Idle
                     }
                 } catch (e: CancellationException) {
-                    // Gesture cancelled: spring the screen back into place.
+                    // Gesture cancelled: return screen smoothly back into place.
                     withContext(NonCancellable) {
+                        val returnDuration = (progressAnim.value * 550).toInt().coerceAtLeast(350)
                         progressAnim.snapTo(backState.progress)
                         progressAnim.animateTo(
                             targetValue = 0f,
-                            animationSpec = spring(
-                                stiffness = Spring.StiffnessLow,
-                                dampingRatio = Spring.DampingRatioLowBouncy,
+                            animationSpec = tween(
+                                durationMillis = returnDuration,
+                                easing = PetalM3EmphasizedEasing,
                             ),
                         ) {
                             backState = backState.copy(isActive = true, progress = value)

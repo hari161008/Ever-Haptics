@@ -141,7 +141,7 @@ Ever Haptics is crafted using modern Android development practices and the lates
 
 ## 🤝 Community & Collaboration
 
-- **Petal Browser Collaboration**: Integrated with Petal's Material 3 Expressive design tokens. Visit [petal-browser.runs-on.dev](https://petal-browser.runs-on.dev/).
+- **Petal Browser Collaboration**: Integrated with Petal's Material 3 Expressive Designs. Visit [petal-browser.runs-on.dev](https://petal-browser.runs-on.dev/).
 - **Support Group**: Join the discussion at [Telegram @EverlastingAndroidTweak](https://t.me/EverlastingAndroidTweak).
 - **Cool Apps Channel**: [t.me/CoolAppStore](https://t.me/CoolAppStore).
 - **Ratings & Reviews**: [Community Reviews](https://hari161008.github.io/Website-For-Everlasting-Android-Tweak/Ratings%20Reviews/Ever%20Haptics/Ever_Haptics.html).

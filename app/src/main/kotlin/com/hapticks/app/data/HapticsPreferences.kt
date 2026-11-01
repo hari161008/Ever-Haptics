@@ -283,6 +283,97 @@ class HapticsPreferences(context: Context) {
     suspend fun setMusicHapticsStrength(value: Float) = edit { it[Keys.MUSIC_HAPTICS_STRENGTH] = value.coerceIn(0f, 1f) }
     suspend fun setHasSeenWelcome(seen: Boolean) = edit { it[Keys.HAS_SEEN_WELCOME] = seen }
 
+    suspend fun restoreAll(settings: HapticsSettings) = edit { p ->
+        p[Keys.GLOBAL_ENABLED] = settings.globalEnabled
+        p[Keys.TAP_ENABLED] = settings.tapEnabled
+        p[Keys.INTENSITY] = settings.intensity
+        p[Keys.PATTERN] = settings.pattern.name
+        p[Keys.TAP_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.tapHapticCustomSequence)
+        p[Keys.SCROLL_ENABLED] = settings.scrollEnabled
+        p[Keys.SCROLL_HAPTIC_EVENTS_PER_CM] = settings.scrollHapticEventsPerCm
+        p[Keys.SCROLL_INTENSITY] = settings.scrollIntensity
+        p[Keys.SCROLL_INTENSITY_ENABLED] = settings.scrollIntensityEnabled
+        p[Keys.SCROLL_PATTERN] = settings.scrollPattern.name
+        p[Keys.SCROLL_VIBS_PER_EVENT] = settings.scrollVibrationsPerEvent
+        p[Keys.SCROLL_VIBS_PER_EVENT_ENABLED] = settings.scrollVibrationsPerEventEnabled
+        p[Keys.SCROLL_SPEED_VIB_SCALE] = settings.scrollSpeedVibrationScale
+        p[Keys.SCROLL_SPEED_VIB_ENABLED] = settings.scrollSpeedVibrationEnabled
+        p[Keys.SCROLL_TAIL_CUTOFF_MS] = settings.scrollTailCutoffMs
+        p[Keys.SCROLL_TAIL_CUTOFF_ENABLED] = settings.scrollTailCutoffEnabled
+        p[Keys.SCROLL_HORIZONTAL_ENABLED] = settings.scrollHorizontalEnabled
+        p[Keys.TAP_EXCLUDED_PACKAGES] = settings.tapExcludedPackages
+        p[Keys.SCROLL_EXCLUDED_PACKAGES] = settings.scrollExcludedPackages
+        p[Keys.CHARGING_VIB_ENABLED] = settings.chargingVibEnabled
+        p[Keys.CHARGING_VIB_ON_CONNECT] = settings.chargingVibOnConnect
+        p[Keys.CHARGING_VIB_ON_DISCONNECT] = settings.chargingVibOnDisconnect
+        p[Keys.CHARGING_VIB_PATTERN] = settings.chargingVibPattern.name
+        p[Keys.CHARGING_VIB_INTENSITY] = settings.chargingVibIntensity
+        p[Keys.CHARGING_VIB_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.chargingVibCustomSequence)
+        p[Keys.VOLUME_HAPTIC_ENABLED] = settings.volumeHapticEnabled
+        p[Keys.VOLUME_HAPTIC_PATTERN] = settings.volumeHapticPattern.name
+        p[Keys.VOLUME_HAPTIC_INTENSITY] = settings.volumeHapticIntensity
+        p[Keys.VOLUME_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.volumeHapticCustomSequence)
+        p[Keys.POWER_HAPTIC_ENABLED] = settings.powerHapticEnabled
+        p[Keys.POWER_HAPTIC_PATTERN] = settings.powerHapticPattern.name
+        p[Keys.POWER_HAPTIC_INTENSITY] = settings.powerHapticIntensity
+        p[Keys.POWER_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.powerHapticCustomSequence)
+        p[Keys.BRIGHTNESS_HAPTIC_ENABLED] = settings.brightnessHapticEnabled
+        p[Keys.BRIGHTNESS_HAPTIC_PATTERN] = settings.brightnessHapticPattern.name
+        p[Keys.BRIGHTNESS_HAPTIC_INTENSITY] = settings.brightnessHapticIntensity
+        p[Keys.BRIGHTNESS_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.brightnessHapticCustomSequence)
+        p[Keys.NAVBAR_HAPTIC_ENABLED] = settings.navBarHapticEnabled
+        p[Keys.NAVBAR_HAPTIC_PATTERN] = settings.navBarHapticPattern.name
+        p[Keys.NAVBAR_HAPTIC_INTENSITY] = settings.navBarHapticIntensity
+        p[Keys.NAVBAR_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.navBarHapticCustomSequence)
+        p[Keys.STATUSBAR_HAPTIC_ENABLED] = settings.statusBarHapticEnabled
+        p[Keys.STATUSBAR_EXPAND_ENABLED] = settings.statusBarExpandEnabled
+        p[Keys.STATUSBAR_EXPAND_PATTERN] = settings.statusBarExpandPattern.name
+        p[Keys.STATUSBAR_EXPAND_INTENSITY] = settings.statusBarExpandIntensity
+        p[Keys.STATUSBAR_EXPAND_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.statusBarExpandCustomSequence)
+        p[Keys.STATUSBAR_COLLAPSE_ENABLED] = settings.statusBarCollapseEnabled
+        p[Keys.STATUSBAR_COLLAPSE_PATTERN] = settings.statusBarCollapsePattern.name
+        p[Keys.STATUSBAR_COLLAPSE_INTENSITY] = settings.statusBarCollapseIntensity
+        p[Keys.STATUSBAR_COLLAPSE_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.statusBarCollapseCustomSequence)
+        p[Keys.UNLOCK_HAPTIC_ENABLED] = settings.unlockHapticEnabled
+        p[Keys.UNLOCK_HAPTIC_PATTERN] = settings.unlockHapticPattern.name
+        p[Keys.UNLOCK_HAPTIC_INTENSITY] = settings.unlockHapticIntensity
+        p[Keys.UNLOCK_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.unlockHapticCustomSequence)
+        p[Keys.USE_DYNAMIC_COLORS] = settings.useDynamicColors
+        p[Keys.THEME_MODE] = settings.themeMode.name
+        p[Keys.AMOLED_BLACK] = settings.amoledBlack
+        p[Keys.SEED_COLOR] = settings.seedColor
+        p[Keys.CALL_HAPTIC_ENABLED] = settings.callHapticEnabled
+        p[Keys.CALL_HAPTIC_PATTERN] = settings.callHapticPattern.name
+        p[Keys.CALL_HAPTIC_INTENSITY] = settings.callHapticIntensity
+        p[Keys.CALL_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.callHapticCustomSequence)
+        p[Keys.CALL_HAPTIC_AUTO] = settings.callHapticAuto
+        p[Keys.CALL_AUTO_SENSITIVITY] = settings.callAutoSensitivity
+        p[Keys.CALL_AUTO_STRENGTH] = settings.callAutoStrength
+        p[Keys.NOTIF_HAPTIC_ENABLED] = settings.notifHapticEnabled
+        p[Keys.NOTIF_HAPTIC_PATTERN] = settings.notifHapticPattern.name
+        p[Keys.NOTIF_HAPTIC_INTENSITY] = settings.notifHapticIntensity
+        p[Keys.NOTIF_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.notifHapticCustomSequence)
+        p[Keys.ALARM_HAPTIC_ENABLED] = settings.alarmHapticEnabled
+        p[Keys.ALARM_HAPTIC_PATTERN] = settings.alarmHapticPattern.name
+        p[Keys.ALARM_HAPTIC_INTENSITY] = settings.alarmHapticIntensity
+        p[Keys.ALARM_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.alarmHapticCustomSequence)
+        p[Keys.ALARM_HAPTIC_AUTO] = settings.alarmHapticAuto
+        p[Keys.ALARM_AUTO_SENSITIVITY] = settings.alarmAutoSensitivity
+        p[Keys.ALARM_AUTO_STRENGTH] = settings.alarmAutoStrength
+        p[Keys.KEYBOARD_HAPTIC_ENABLED] = settings.keyboardHapticEnabled
+        p[Keys.KEYBOARD_HAPTIC_PATTERN] = settings.keyboardHapticPattern.name
+        p[Keys.KEYBOARD_HAPTIC_INTENSITY] = settings.keyboardHapticIntensity
+        p[Keys.KEYBOARD_HAPTIC_CUSTOM_SEQUENCE] = serializeCustomSequence(settings.keyboardHapticCustomSequence)
+        p[Keys.BATTERY_SAVER_DETECTION_ENABLED] = settings.batterySaverDetectionEnabled
+        p[Keys.AUTO_CHECK_UPDATES_ENABLED] = settings.autoCheckUpdatesEnabled
+        p[Keys.PREDICTIVE_BACK_ENABLED] = settings.predictiveBackEnabled
+        p[Keys.DEPTH_BLUR_ENABLED] = settings.depthBlurEnabled
+        p[Keys.MUSIC_HAPTICS_ENABLED] = settings.musicHapticsEnabled
+        p[Keys.MUSIC_HAPTICS_SOURCE] = settings.musicHapticsSource.name
+        p[Keys.MUSIC_HAPTICS_SENSITIVITY] = settings.musicHapticsSensitivity
+        p[Keys.MUSIC_HAPTICS_STRENGTH] = settings.musicHapticsStrength
+    }
+
     private suspend inline fun edit(crossinline block: (MutablePreferences) -> Unit) {
         try { dataStore.edit { block(it) } } catch (e: IOException) { Log.w(TAG, "DataStore write failed", e) }
     }

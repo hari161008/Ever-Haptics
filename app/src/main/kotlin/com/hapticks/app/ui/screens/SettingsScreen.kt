@@ -56,6 +56,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import com.hapticks.app.HapticksApp
 import com.hapticks.app.haptics.HapticPattern
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.hapticks.app.ui.components.*
@@ -64,10 +65,39 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.luminance
 import com.hapticks.app.ui.haptics.performHapticClick
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.outlined.Colorize
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
+import com.hapticks.app.util.BackupInfo
+import com.hapticks.app.util.BackupManager
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+private const val RATE_REVIEW_URL =
+    "https://docs.google.com/forms/d/e/1FAIpQLSci14N7YdirM32f2I7bT6GBv_sQ3KJ4hjM6qDKTVZfsCuIPtw/viewform?usp=header"
+
 private val PresetColors = listOf(
+    Color(0xFF6750A4), Color(0xFF0061A4), Color(0xFF006A60), Color(0xFF436916),
+    Color(0xFF984061), Color(0xFF006874), Color(0xFF705D00), Color(0xFFBF0031),
+    Color(0xFFE91E63), Color(0xFFFF5722), Color(0xFF795548), Color(0xFF607D8B),
     Color(0xFF4F5A28), SeedPurple, SeedBlue, SeedGreen, SeedRed, SeedYellow,
-    Color(0xFFD6E09A), Color(0xFF006A60), Color(0xFF984816), Color(0xFF8B008B),
-    Color(0xFF00008B), Color(0xFF8B4513),
 )
 
 @Composable
@@ -84,6 +114,8 @@ fun SettingsScreen(
     onOpenRateReview: () -> Unit = {},
     onOpenReviews: () -> Unit = {},
     onOpenExploreApps: () -> Unit = {},
+    onOpenUpdates: () -> Unit = {},
+    onRestoreAllSettings: (HapticsSettings) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -92,8 +124,67 @@ fun SettingsScreen(
         ThemeMode.LIGHT -> false; ThemeMode.DARK -> true; ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
 
-    var updateCheckState by remember { mutableStateOf<UpdateCheckState>(UpdateCheckState.Idle) }
-    var updateInfo by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
+    var showFloatingColorPicker by remember { mutableStateOf(false) }
+    var hexInput by remember(settings.seedColor) {
+        mutableStateOf(String.format("%06X", 0xFFFFFF and settings.seedColor))
+    }
+    var hexError by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    var showBackupDialog by remember { mutableStateOf(false) }
+    var pendingRestoreInfo by remember { mutableStateOf<BackupInfo?>(null) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+
+    val saveBackupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val ok = BackupManager.writeBackupToUri(context, uri, settings)
+                android.widget.Toast.makeText(
+                    context,
+                    if (ok) "Backup saved successfully" else "Failed to save backup",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    val restoreLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val info = BackupManager.readBackupFromUri(context, uri)
+                if (info != null) {
+                    pendingRestoreInfo = info
+                    showRestoreDialog = true
+                } else {
+                    android.widget.Toast.makeText(
+                        context,
+                        "Invalid backup file format",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    fun applyHexColor(hex: String) {
+        val cleaned = hex.trimStart('#').uppercase()
+        if (cleaned.length == 6) {
+            try {
+                val colorInt = android.graphics.Color.parseColor("#$cleaned")
+                onSeedColorChange(colorInt)
+                hexError = false
+            } catch (_: Exception) {
+                hexError = true
+            }
+        } else {
+            hexError = true
+        }
+    }
+
     var showHapticCheck by remember { mutableStateOf(false) }
     var hapticCheckTick by remember { mutableIntStateOf(0) }
     val hapticEngine = remember { (context.applicationContext as? HapticksApp)?.hapticEngine }
@@ -125,6 +216,7 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             PetalCollapsingTopAppBar(
@@ -137,7 +229,7 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(top = padding.calculateTopPadding())
                 .verticalScroll(scrollState)
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp + navBarBottom),
             verticalArrangement = Arrangement.spacedBy(22.dp),
@@ -145,48 +237,18 @@ fun SettingsScreen(
             // ── Updates ──
             PetalSection(title = "Updates", modifier = Modifier.entrance(0)) {
                 row { position ->
-                    UpdateCard(
+                    PetalGroupRow(
+                        icon = Icons.Rounded.SystemUpdate,
+                        title = "Check For Updates",
+                        subtitle = "Current version: v$appVersion",
                         position = position,
-                        appVersion = appVersion,
-                        updateCheckState = updateCheckState,
-                        updateInfo = updateInfo,
-                        onCheckClick = {
-                            if (updateCheckState is UpdateCheckState.Idle ||
-                                updateCheckState is UpdateCheckState.UpToDate ||
-                                updateCheckState is UpdateCheckState.Error) {
-                                updateCheckState = UpdateCheckState.Checking
-                                scope.launch {
-                                    UpdateChecker.checkForUpdate(appVersion).fold(
-                                        onSuccess = { info ->
-                                            updateInfo = info
-                                            updateCheckState = if (info.isUpdateAvailable)
-                                                UpdateCheckState.UpdateAvailable(info.latestVersion)
-                                            else UpdateCheckState.UpToDate
-                                        },
-                                        onFailure = { e -> updateCheckState = UpdateCheckState.Error(e.message ?: "Unknown error") },
-                                    )
-                                }
-                            }
-                        },
-                        onDownloadClick = {
-                            val info = updateInfo ?: return@UpdateCard
-                            if (info.downloadUrl.isBlank()) return@UpdateCard
-                            updateCheckState = UpdateCheckState.Downloading(0)
-                            scope.launch {
-                                UpdateChecker.downloadWithProgress(context, info.downloadUrl, info.latestVersion) { state ->
-                                    when (state) {
-                                        is UpdateChecker.DownloadState.Progress -> updateCheckState = UpdateCheckState.Downloading(state.percent)
-                                        is UpdateChecker.DownloadState.Done -> updateCheckState = UpdateCheckState.Downloaded
-                                        is UpdateChecker.DownloadState.Error -> updateCheckState = UpdateCheckState.Error(state.message)
-                                    }
-                                }
-                            }
-                        },
+                        badgeShape = PetalMaterialShapes.Cookie9Sided,
+                        onClick = onOpenUpdates,
                     )
                 }
                 row { position ->
                     PetalGroupToggleRow(
-                        icon = PetalIcons.Update,
+                        icon = Icons.Rounded.Autorenew,
                         title = "Auto-check on launch",
                         subtitle = "Get notified when a new version is available",
                         checked = settings.autoCheckUpdatesEnabled,
@@ -213,7 +275,7 @@ fun SettingsScreen(
                         subtitle = "Share your experience with Ever Haptics",
                         position = position,
                         badgeShape = PetalMaterialShapes.Flower,
-                        onClick = onOpenRateReview,
+                        onClick = { openUrl(RATE_REVIEW_URL) },
                     )
                 }
                 row { position ->
@@ -280,7 +342,21 @@ fun SettingsScreen(
                             badgeShape = PetalMaterialShapes.Clover4Leaf,
                             variant = PetalBadgeVariant.SECONDARY,
                         ) {
-                            ColorSwatches(selectedColor = Color(settings.seedColor), onColorSelected = { onSeedColorChange(it.toArgb()) })
+                            CustomColorContainer(
+                                currentColor = Color(settings.seedColor),
+                                onColorSelected = { onSeedColorChange(it.toArgb()) },
+                                onPickInteractive = { showFloatingColorPicker = true },
+                                hexInput = hexInput,
+                                onHexInputChange = {
+                                    hexInput = it.trimStart('#').uppercase().take(6)
+                                    hexError = false
+                                },
+                                hexError = hexError,
+                                onApplyHex = {
+                                    applyHexColor(hexInput)
+                                    keyboardController?.hide()
+                                },
+                            )
                         }
                     }
                 }
@@ -329,8 +405,44 @@ fun SettingsScreen(
                 }
             }
 
+            // ── Backup & restore ──
+            PetalSection(
+                title = "Backup & restore",
+                description = "Backup or restore all app configurations and custom haptic sequences",
+                modifier = Modifier.entrance(4),
+            ) {
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.Backup,
+                        title = "Create backup",
+                        subtitle = "Save configurations, custom sequences & preferences",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Cookie9Sided,
+                        variant = PetalBadgeVariant.PRIMARY,
+                        onClick = { showBackupDialog = true },
+                    )
+                }
+                row { position ->
+                    PetalGroupRow(
+                        icon = Icons.Rounded.Restore,
+                        title = "Restore backup",
+                        subtitle = "Restore all configurations from a backup file",
+                        position = position,
+                        badgeShape = PetalMaterialShapes.Clover4Leaf,
+                        variant = PetalBadgeVariant.TERTIARY,
+                        onClick = {
+                            try {
+                                restoreLauncher.launch("application/json")
+                            } catch (_: Exception) {
+                                restoreLauncher.launch("*/*")
+                            }
+                        },
+                    )
+                }
+            }
+
             // ── Battery saver ──
-            PetalSection(title = stringResource(R.string.settings_battery_saver_section), modifier = Modifier.entrance(4)) {
+            PetalSection(title = stringResource(R.string.settings_battery_saver_section), modifier = Modifier.entrance(5)) {
                 row { position ->
                     PetalGroupToggleRow(
                         icon = PetalIcons.BatterySaver,
@@ -440,187 +552,557 @@ fun SettingsScreen(
                     },
                 )
             }
+
+            if (showFloatingColorPicker) {
+                FloatingColorPickerDialog(
+                    initialColor = Color(settings.seedColor),
+                    onDismiss = { showFloatingColorPicker = false },
+                    onColorSelected = { color ->
+                        onSeedColorChange(color.toArgb())
+                        hexInput = String.format("%06X", 0xFFFFFF and color.toArgb())
+                        hexError = false
+                        showFloatingColorPicker = false
+                    }
+                )
+            }
+
+            if (showBackupDialog) {
+                CreateBackupDialog(
+                    onDismiss = { showBackupDialog = false },
+                    onShare = {
+                        showBackupDialog = false
+                        scope.launch {
+                            val file = BackupManager.createBackupFile(context, settings)
+                            if (file != null) {
+                                val uri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.provider",
+                                    file
+                                )
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/json"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share Backup"))
+                            } else {
+                                android.widget.Toast.makeText(context, "Failed to create backup", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    onSave = {
+                        showBackupDialog = false
+                        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                        saveBackupLauncher.launch("EverHaptics_backup_$timestamp.json")
+                    }
+                )
+            }
+
+            if (showRestoreDialog && pendingRestoreInfo != null) {
+                val info = pendingRestoreInfo!!
+                RestoreBackupDialog(
+                    info = info,
+                    onDismiss = {
+                        showRestoreDialog = false
+                        pendingRestoreInfo = null
+                    },
+                    onRestore = {
+                        showRestoreDialog = false
+                        onRestoreAllSettings(info.settings)
+                        pendingRestoreInfo = null
+                        android.widget.Toast.makeText(
+                            context,
+                            "Configuration restored successfully!",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                )
+            }
         }
     }
 }
 
-private sealed interface UpdateCheckState {
-    data object Idle : UpdateCheckState
-    data object Checking : UpdateCheckState
-    data object UpToDate : UpdateCheckState
-    data class UpdateAvailable(val version: String) : UpdateCheckState
-    data class Downloading(val progress: Int) : UpdateCheckState
-    data object Downloaded : UpdateCheckState
-    data class Error(val message: String) : UpdateCheckState
+@Composable
+private fun CustomColorContainer(
+    currentColor: Color,
+    onColorSelected: (Color) -> Unit,
+    onPickInteractive: () -> Unit,
+    hexInput: String,
+    onHexInputChange: (String) -> Unit,
+    hexError: Boolean,
+    onApplyHex: () -> Unit,
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Text("Preset Colors", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(PresetColors) { color ->
+                val isSelected = currentColor.toArgb() == color.toArgb()
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .border(
+                            width = if (isSelected) 3.dp else 0.dp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            shape = CircleShape,
+                        )
+                        .clickable {
+                            context.performHapticClick()
+                            onColorSelected(color)
+                        },
+                )
+            }
+        }
+
+        OutlinedButton(
+            onClick = onPickInteractive,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(50.dp),
+        ) {
+            Icon(
+                Icons.Outlined.Colorize,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Pick Custom Color (Interactive)")
+            Spacer(Modifier.weight(1f))
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(currentColor)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(
+                        try {
+                            Color(android.graphics.Color.parseColor("#${hexInput.trimStart('#')}"))
+                        } catch (_: Exception) {
+                            Color.Gray
+                        }
+                    ),
+            )
+            OutlinedTextField(
+                value = hexInput,
+                onValueChange = onHexInputChange,
+                label = { Text("Hex Color") },
+                prefix = { Text("#") },
+                isError = hexError,
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    onApplyHex()
+                    keyboardController?.hide()
+                }),
+                shape = RoundedCornerShape(12.dp),
+                supportingText = if (hexError) {
+                    { Text("Enter a valid 6-digit hex code") }
+                } else null,
+            )
+            Button(
+                onClick = {
+                    onApplyHex()
+                    keyboardController?.hide()
+                },
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text("Apply")
+            }
+        }
+    }
 }
 
 @Composable
-private fun UpdateCard(
-    position: PetalGroupPosition,
-    appVersion: String,
-    updateCheckState: UpdateCheckState,
-    updateInfo: UpdateChecker.UpdateInfo?,
-    onCheckClick: () -> Unit,
-    onDownloadClick: () -> Unit,
+private fun FloatingColorPickerDialog(
+    initialColor: Color,
+    onDismiss: () -> Unit,
+    onColorSelected: (Color) -> Unit,
 ) {
-    val isUpdateAvailable = updateCheckState is UpdateCheckState.UpdateAvailable
-    val isDownloading = updateCheckState is UpdateCheckState.Downloading
-    val isDownloaded = updateCheckState is UpdateCheckState.Downloaded
-    val isChecking = updateCheckState is UpdateCheckState.Checking
-    val isPositive = isUpdateAvailable || isDownloading || isDownloaded
+    val hsv = remember(initialColor) {
+        FloatArray(3).also { android.graphics.Color.colorToHSV(initialColor.toArgb(), it) }
+    }
+    var hue by remember(initialColor) { mutableFloatStateOf(hsv[0]) }
+    var sat by remember(initialColor) { mutableFloatStateOf(hsv[1].coerceIn(0f, 1f)) }
+    var value by remember(initialColor) { mutableFloatStateOf(hsv[2].coerceIn(0f, 1f)) }
 
-    val containerColor by animateColorAsState(
-        targetValue = when {
-            isPositive -> MaterialTheme.colorScheme.primaryContainer
-            updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondaryContainer
-            updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.errorContainer
-            else -> petalGroupColor()
-        },
-        animationSpec = tween(400), label = "uc_bg",
-    )
-    val onContainer by animateColorAsState(
-        targetValue = when {
-            isPositive -> MaterialTheme.colorScheme.onPrimaryContainer
-            updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.onSecondaryContainer
-            updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.onErrorContainer
-            else -> MaterialTheme.colorScheme.onSurface
-        },
-        animationSpec = tween(400), label = "uc_fg",
-    )
-    val accent = when {
-        updateCheckState is UpdateCheckState.Error -> MaterialTheme.colorScheme.error
-        updateCheckState is UpdateCheckState.UpToDate -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.primary
+    val currentColor = remember(hue, sat, value) {
+        val rgb = android.graphics.Color.HSVToColor(floatArrayOf(hue, sat, value))
+        Color(rgb)
     }
 
-    PetalGroupItem(position = position, color = containerColor) {
-        Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                // The single loading visual: indeterminate while checking, determinate while downloading.
-                Crossfade(targetState = updateCheckState::class, label = "uc_icon") { kind ->
-                    when (kind) {
-                        UpdateCheckState.Checking::class ->
-                            PetalContainedLoadingIndicator(size = 56.dp)
-                        UpdateCheckState.Downloading::class -> {
-                            val pct = (updateCheckState as? UpdateCheckState.Downloading)?.progress ?: 0
-                            PetalContainedLoadingIndicator(size = 56.dp, progress = { pct / 100f })
-                        }
-                        else -> {
-                            val icon = when (kind) {
-                                UpdateCheckState.UpdateAvailable::class -> Icons.Rounded.NewReleases
-                                UpdateCheckState.UpToDate::class, UpdateCheckState.Downloaded::class -> Icons.Rounded.CheckCircle
-                                UpdateCheckState.Error::class -> Icons.Rounded.ErrorOutline
-                                else -> PetalIcons.InstallApk
-                            }
-                            FeatureIcon(
-                                icon = icon,
-                                tint = accent,
-                                size = 56.dp,
-                                iconSize = 28.dp,
-                                backgroundAlpha = 0.2f,
-                                shape = PetalMaterialShapes.Cookie9Sided,
-                            )
-                        }
-                    }
-                }
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .wrapContentHeight()
+                .clip(RoundedCornerShape(28.dp)),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+            shadowElevation = 12.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
                     Text(
-                        text = when {
-                            isUpdateAvailable -> "Update Available"
-                            isDownloading -> "Downloading…"
-                            isDownloaded -> "Ready to Install"
-                            updateCheckState is UpdateCheckState.UpToDate -> "Up to Date"
-                            updateCheckState is UpdateCheckState.Error -> "Check Failed"
-                            isChecking -> "Checking…"
-                            else -> "Ever Haptics"
-                        },
+                        text = "Color Picker",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = onContainer,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Crossfade(targetState = updateCheckState, label = "uc_sub") { state ->
-                        Text(
-                            text = when (state) {
-                                is UpdateCheckState.Idle -> "v$appVersion  ·  Tap to check for updates"
-                                is UpdateCheckState.Checking -> "Fetching latest release info…"
-                                is UpdateCheckState.UpToDate -> "v$appVersion is the latest release"
-                                is UpdateCheckState.UpdateAvailable -> "v${state.version} is ready  ·  current: v$appVersion"
-                                is UpdateCheckState.Downloading -> "${state.progress}%  ·  Saving to Downloads folder"
-                                is UpdateCheckState.Downloaded -> "APK saved to Downloads — tap Install"
-                                is UpdateCheckState.Error -> state.message
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = onContainer.copy(alpha = 0.72f),
+                    Box(
+                        modifier = Modifier
+                            .height(36.dp)
+                            .width(80.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(currentColor)
+                            .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp)),
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = "Shade & Brightness",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                sat = (down.position.x / size.width).coerceIn(0f, 1f)
+                                value = (1f - down.position.y / size.height).coerceIn(0f, 1f)
+                                down.consume()
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes.firstOrNull() ?: break
+                                    if (!change.pressed) break
+                                    sat = (change.position.x / size.width).coerceIn(0f, 1f)
+                                    value = (1f - change.position.y / size.height).coerceIn(0f, 1f)
+                                    change.consume()
+                                }
+                            }
+                        },
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val pureHueColor = Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, 1f, 1f)))
+                        drawRect(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(Color.White, pureHueColor),
+                            ),
+                        )
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black),
+                            ),
+                        )
+
+                        val pointerX = (sat * size.width).coerceIn(0f, size.width)
+                        val pointerY = ((1f - value) * size.height).coerceIn(0f, size.height)
+                        val pointerCenter = Offset(pointerX, pointerY)
+
+                        drawCircle(
+                            color = Color.Black.copy(alpha = 0.6f),
+                            radius = 13.dp.toPx(),
+                            center = pointerCenter,
+                            style = Stroke(width = 3.dp.toPx()),
+                        )
+                        drawCircle(
+                            color = Color.White,
+                            radius = 10.dp.toPx(),
+                            center = pointerCenter,
+                            style = Stroke(width = 2.5.dp.toPx()),
+                        )
+                        drawCircle(
+                            color = currentColor,
+                            radius = 6.dp.toPx(),
+                            center = pointerCenter,
                         )
                     }
                 }
-            }
 
-            if (isUpdateAvailable && !updateInfo?.releaseNotes.isNullOrBlank()) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("What's new", style = MaterialTheme.typography.labelLarge, color = accent, fontWeight = FontWeight.SemiBold)
-                    val notes = updateInfo!!.releaseNotes
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = "Hue Spectrum",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                hue = (down.position.x / size.width * 360f).coerceIn(0f, 360f)
+                                down.consume()
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val change = event.changes.firstOrNull() ?: break
+                                    if (!change.pressed) break
+                                    hue = (change.position.x / size.width * 360f).coerceIn(0f, 360f)
+                                    change.consume()
+                                }
+                            }
+                        },
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val rainbow = listOf(
+                            Color.Red,
+                            Color.Yellow,
+                            Color.Green,
+                            Color.Cyan,
+                            Color.Blue,
+                            Color.Magenta,
+                            Color.Red,
+                        )
+                        drawRect(brush = Brush.horizontalGradient(rainbow))
+
+                        val thumbX = ((hue / 360f) * size.width).coerceIn(12.dp.toPx(), size.width - 12.dp.toPx())
+                        val thumbCenter = Offset(thumbX, size.height / 2)
+
+                        drawCircle(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            radius = 14.dp.toPx(),
+                            center = thumbCenter,
+                            style = Stroke(width = 3.dp.toPx()),
+                        )
+                        drawCircle(
+                            color = Color.White,
+                            radius = 12.dp.toPx(),
+                            center = thumbCenter,
+                            style = Stroke(width = 3.dp.toPx()),
+                        )
+                        val currentHueColor = Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, 1f, 1f)))
+                        drawCircle(
+                            color = currentHueColor,
+                            radius = 8.dp.toPx(),
+                            center = thumbCenter,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                val hexStr = remember(currentColor) {
+                    String.format("#%06X", 0xFFFFFF and currentColor.toArgb())
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
                     Text(
-                        notes.take(300).let { if (notes.length > 300) "$it…" else it },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = onContainer.copy(alpha = 0.75f),
+                        text = "Hex Code",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = hexStr,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
-            }
 
-            when {
-                isUpdateAvailable -> PetalButton(onClick = onDownloadClick, modifier = Modifier.fillMaxWidth()) {
-                    Icon(PetalIcons.Download, null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Download & Install")
-                }
-                isDownloaded -> PetalButton(onClick = onDownloadClick, modifier = Modifier.fillMaxWidth()) {
-                    Icon(PetalIcons.InstallApk, null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Install Now")
-                }
-                !isChecking && !isDownloading -> PetalButton(
-                    onClick = onCheckClick,
-                    style = PetalButtonStyle.TONAL,
+                Spacer(Modifier.height(20.dp))
+
+                Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Rounded.Refresh, null, modifier = Modifier.size(18.dp))
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
                     Spacer(Modifier.width(8.dp))
-                    Text(if (updateCheckState is UpdateCheckState.UpToDate || updateCheckState is UpdateCheckState.Error) "Check Again" else "Check for Updates")
+                    Button(
+                        onClick = { onColorSelected(currentColor) },
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Select Color")
+                    }
                 }
             }
         }
     }
 }
 
-/** Seed colour picker: swatches morph from a circle to a cookie when selected. */
 @Composable
-private fun ColorSwatches(selectedColor: Color, onColorSelected: (Color) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PresetColors.chunked(6).forEach { rowColors ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                rowColors.forEach { color ->
-                    val isSelected = selectedColor.toArgb() == color.toArgb()
-                    val context = LocalContext.current
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(if (isSelected) PetalMaterialShapes.Cookie9Sided.toShape() else CircleShape)
-                            .background(color)
-                            .clickable {
-                                context.performHapticClick()
-                                onColorSelected(color)
-                            },
-                        contentAlignment = Alignment.Center,
+private fun CreateBackupDialog(
+    onDismiss: () -> Unit,
+    onShare: () -> Unit,
+    onSave: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                FeatureIcon(
+                    icon = Icons.Rounded.Backup,
+                    tint = MaterialTheme.colorScheme.primary,
+                    size = 56.dp,
+                    iconSize = 28.dp,
+                    shape = PetalMaterialShapes.Cookie9Sided,
+                )
+                Text(
+                    text = "Create Backup",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = "Backup all Ever Haptics configurations, custom haptic sequences, sensitivities, and excluded apps.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    PetalButton(
+                        onClick = onShare,
+                        style = PetalButtonStyle.TONAL,
+                        modifier = Modifier.weight(1f),
                     ) {
-                        if (isSelected) {
-                            Icon(
-                                PetalIcons.Check,
-                                contentDescription = null,
-                                tint = if (color.luminance() > 0.5f) Color.Black else Color.White,
-                                modifier = Modifier.size(22.dp),
-                            )
+                        Icon(Icons.Rounded.Share, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Share")
+                    }
+                    PetalButton(
+                        onClick = onSave,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Rounded.Save, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Save")
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RestoreBackupDialog(
+    info: BackupInfo,
+    onDismiss: () -> Unit,
+    onRestore: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                FeatureIcon(
+                    icon = Icons.Rounded.Restore,
+                    tint = MaterialTheme.colorScheme.primary,
+                    size = 56.dp,
+                    iconSize = 28.dp,
+                    shape = PetalMaterialShapes.Clover4Leaf,
+                )
+                Text(
+                    text = "Restore Configuration",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Backup Date:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(info.formattedDate, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                         }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("App Version:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("v${info.appVersion}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Active Features:", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${info.activeFeaturesCount} configured", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+                Text(
+                    text = "This will replace your current settings and restore all custom patterns and configurations from the backup file.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
+                        Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    PetalButton(
+                        onClick = onRestore,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text("Restore")
                     }
                 }
             }
